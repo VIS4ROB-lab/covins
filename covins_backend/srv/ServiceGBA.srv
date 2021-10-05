@@ -1,0 +1,4 @@
+int64 map_id
+int64 action
+---
+int64 retval

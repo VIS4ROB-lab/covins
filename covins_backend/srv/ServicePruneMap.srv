@@ -1,0 +1,4 @@
+int64 map_id
+int64 max_num_kfs
+---
+int64 retval

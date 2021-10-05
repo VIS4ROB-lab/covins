@@ -1,0 +1,31 @@
+%YAML:1.0
+
+#--------------------------------------------------------------------------------------------
+# System Control
+#--------------------------------------------------------------------------------------------
+
+sys.port: '9033' # should not be necessary to be changed
+sys.server_ip: '192.168.1.19' # The (public) IP of the machine where the COVINS back-end is running
+
+#--------------------------------------------------------------------------------------------
+# Communicator
+#--------------------------------------------------------------------------------------------
+
+comm.send_updates: 1 # send updates from server to client
+comm.data_to_client: 0 # send data to the agent
+
+comm.start_sending_after_kf: 50 # start sending KFs when n KFs are present the agent's map
+comm.kf_buffer_withold: 5 # only send a KF if there are n more recntly created ones
+comm.max_sent_kfs_per_iteration: 2 # max. num. KFs sent per iteration of the communicator
+comm.update_window_size: 5 # send only pose updates for the most n recently created KFs
+
+comm.to_agent_freq: 5 # freq. in Hz - data from server to agent
+
+comm.start_drift_estimation_after_kf: 100 #non-os
+
+#--------------------------------------------------------------------------------------------
+# ORB
+#--------------------------------------------------------------------------------------------
+
+orb.activate_visualization: 0 # activate / deactivate visualization of ORB-SLAM3
+orb.imu_stamp_max_diff: 2.0 #ORB-SLAM3 resets tracking in case mCurrentFrame.mTimeStamp>mLastFrame.mTimeStamp+<THIS VALUE>. Default of ORB3 is 1.0, for our experiments with EuRoC, 2.0 was working fine as well and caused less resets (which are a problem for COVINS)

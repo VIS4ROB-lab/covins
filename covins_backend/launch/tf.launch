@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<launch>
+
+
+  <group ns="cvislam">
+
+<!--    <node pkg="tf" type="static_transform_publisher" name="linkS_broadcaster" args="0 0 0 -1.571 0 0 world odom 100" /> -->
+    <node pkg="tf" type="static_transform_publisher" name="linkS_broadcaster" args="0 0 0 0 0 0 world odom 100" />
+
+    <node pkg="tf" type="static_transform_publisher" name="linkAlign_broadcaster" args="20 20 0 -1.571 0 0 world odomAlign 100" />
+
+  </group>
+</launch>

@@ -1,0 +1,83 @@
+# NOTE: This is an example source dependency, remove it before adding the
+# dependencies.rosinstall file to your repository.
+#
+# The 'wstool' utility is the preferred way of adding elements to this file. To
+# add all repositories from an existing workspace, you can use `wstool scrape`.
+
+- git:
+    local-name: catkin_simple
+    uri: https://github.com/catkin/catkin_simple.git
+
+- git:
+    local-name: eigen_catkin
+    uri: https://github.com/ethz-asl/eigen_catkin.git
+
+- git:
+    local-name: eigen_checks
+    uri: https://github.com/ethz-asl/eigen_checks.git
+
+- git:
+    local-name: gflags_catkin
+    uri: https://github.com/ethz-asl/gflags_catkin.git
+
+- git:
+    local-name: glog_catkin
+    uri: https://github.com/ethz-asl/glog_catkin.git
+
+- git:
+    local-name: doxygen_catkin
+    uri: https://github.com/ethz-asl/doxygen_catkin.git
+
+- git:
+    local-name: opencv3_catkin
+    uri: https://github.com/ethz-asl/opencv3_catkin.git
+
+- git:
+    local-name: suitesparse
+    uri: https://github.com/ethz-asl/suitesparse
+
+- git:
+    local-name: ceres_catkin
+    uri: https://github.com/ethz-asl/ceres_catkin
+
+- git:
+    local-name: opengv
+    uri: https://github.com/ethz-asl/opengv.git
+
+- git:
+    local-name: yaml_cpp_catkin
+    uri: https://github.com/ethz-asl/yaml_cpp_catkin.git
+
+- git:
+    local-name: catkin_boost_python_buildtool
+    uri: https://github.com/ethz-asl/catkin_boost_python_buildtool.git
+
+- git:
+    local-name: minkindr
+    uri: https://github.com/ethz-asl/minkindr.git
+
+- git:
+    local-name: protobuf_catkin
+    uri: https://github.com/ethz-asl/protobuf_catkin.git
+
+- git:
+    local-name: aslam_cv2
+    uri: https://github.com/ethz-asl/aslam_cv2.git
+
+- git:
+    local-name: libnabo
+    uri: https://github.com/ethz-asl/libnabo.git
+
+- git:
+    local-name: robopt_open
+    uri: https://github.com/VIS4ROB-lab/robopt_open.git
+    version: fix_imu_residual
+
+- git:
+    local-name: numpy_eigen
+    uri: https://github.com/ethz-asl/numpy_eigen.git
+
+- git:
+    local-name: pangolin
+    uri: https://github.com/stevenlovegrove/Pangolin.git
+    version: b8abe866819b343a4d50d062c494e4357e4a9aa4

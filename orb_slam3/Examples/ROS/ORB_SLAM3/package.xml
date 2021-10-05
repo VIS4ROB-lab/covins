@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package format="2">
+  <name>ORB_SLAM3</name>
+  <version>0.5.0</version>
+  <description>ORB_SLAM3</description>
+  <author>Carlos Campos, Richard Elvira, Juan J. Gomez, Jose M.M. Montiel, Juan D. Tardos</author>
+  <maintainer email="pschmuck@ethz.ch"></maintainer>
+  <license>GPLv3</license>
+  <depend>covins_comm</depend>
+  <depend>cv_bridge</depend>
+  <depend>image_transport</depend>
+  <depend>roscpp</depend>
+  <depend>sensor_msgs</depend>
+  <depend>tf</depend>
+</package>
+
+
+
