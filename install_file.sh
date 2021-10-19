@@ -19,7 +19,6 @@ wstool up
 chmod +x covins/fix_eigen_deps.sh
 ./covins/fix_eigen_deps.sh
 
-set -e
 cd ${BASEDIR}/../..
 catkin build ${CATKIN_JOBS} eigen_catkin opencv3_catkin
 cd ${BASEDIR}/../..
