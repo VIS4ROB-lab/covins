@@ -1,2 +1,1 @@
 [05/10/2020] COVINS V1.0
-[19/10/2020] Docker implementation temporarily removed for revision (build process failing on some machines)

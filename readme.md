@@ -21,10 +21,11 @@ COVINS provides a server back-end for collaborative SLAM, running on a local mac
     * [Parameters](#run_params)
     * [Output Files](#run_out)
     * [Running COVINS with ROS](#run_ros)
-5. [Extended Functionalities](#extended)
+5. [Docker Implementation](#docker)
+6. [Extended Functionalities](#extended)
     * [Interfacing a Custom VIO System with COVINS](#ext_comm)
     * [Map Re-Use Onboard the Agent](#ext_reuse)
-6. [Limitations and Known Issues](#issues)
+7. [Limitations and Known Issues](#issues)
 
 <a name="related_publications"></a>
 ## 1 Related Publications
@@ -227,8 +228,46 @@ The user should not be required to change any parameters to run COVINS, except p
 * run the rosbag file, e.g. ```rosbag play MH_01_easy.bag```
     * When using COVINS with ROS, we recommend skipping the initialization sequence performed at the beginning of each EuRoC MH trajectory. ORB-SLAM3 often performs a map reset after this sequence, which is not supported by COVINS and will therefore cause an error. For example, for MH1, this can be easily done by running ```rosbag play MH_01_easy.bag --start 45```. (Start at: MH01: 45s; MH02: 35s; MH03-05: 15s)
 
+<a name="docker"></a>
+## 5 Docker Implementation
+
+We provide COVINS also as a Docker implementation. A guide how to install docker can be found [here](https://docs.docker.com/engine/install/). To avoid the need of `sudo` when running the commands below you can add your user to the `docker` group.
+
+```sudo usermod -aG docker $USER``` (see https://docs.docker.com/engine/install/linux-postinstall/)
+
+### Building the Docker Image
+
+**NOTE:** The provided docker implementation will **not build** if you have previously built your cloned version of COVINS in a catkin workspace using the instructions provided above. If you want to use the docker implementation, please **perform the docker build with a freshly cloned version of COVINS**
+
+Build the docker file using the Make file provided in the `docker` folder. Provide the number of jobs `make` and `catkin build` should use. This can take a while. If the build fails try again with a reduced number of jobs value.
+
+* ```make build NR_JOBS=14```
+    
+### Running the Docker Image
+The docker image can be used to run different parts of COVINS (e.g. server, ORB-SLAM3 front-end, ...).
+
+#### ROSCORE
+To start the roscore one can either use the host system ROS implementation (if ROS is installed). Otherwise, it can be started using the docker image.
+* ```./run.sh -c```
+
+#### COVINS Server Back-End
+The convins server back-end needs a running roscore, how to start one see above. Furthermore, the server needs two configuration files, one for the communication server on one for the back-end. These two files need to be linked when running the docker image.
+* ```./run.sh -s ../covins_comm/config/config_comm.yaml ../covins_backend/config/config_backend.yaml```
+
+#### ORB-SLAM3 Front-End
+The ORB-SLAM3 front-end client needs the communication server config file, the file which should be executed, and the path to the dataset. The dataset has to be given seperately since the file system of the docker container differs from the host system. Hence, the `pathDatasetEuroc` variable in the run script gets adapted automatically inside the docker container.
+* ```./run.sh -o ../covins_comm/config/config_comm.yaml ../orb_slam3/covins_examples/euroc_examples_mh1 <dataset_path, e.g. /home/pschmuck/data/euroc>```
+
+#### ORB-SLAM3 ROS Front-End
+The ROS wrapper of the ORB-SLAM3 front-end can also be started in the docker container. It requires the server config file and the ROS launch file. A bag file can then for example be played on the host system.
+* ```./run.sh -r ../covins_comm/config/config_comm.yaml ../orb_slam3/Examples/ROS/ORB_SLAM3/launch/launch_docker_ros_euroc.launch```
+
+#### Terminal
+A terminal within the docker image can also be opened. This can for example be used to send `rosservice` commands.
+* ```./run.sh -t```
+
 <a name="extended"></a>
-## 5 Extended Functionalities
+## 6 Extended Functionalities
 
 <a name="ext_comm"></a>
 ### Interfacing a Custom VIO System with COVINS
@@ -250,7 +289,7 @@ By default, COVINS is configured to not send any data back to the agent. By sett
 * In the function ```ProcessKeyframeMessages()``` in ```orb_slam3/src/```, the processing of the received keyframe can be specified.
 
 <a name="issues"></a>
-## 6 Limitations and Known Issues
+## 7 Limitations and Known Issues
 
 * [**MAP RESET**] ORB-SLAM3 has the functionality to **start a new map** when tracking is lost, in order to improve robustness. This functionality is **not supported** by COVINS. The COVINS server back-end assumes that keyframes arriving from a specific agent are shared in a continuous fashion and belong to the same map, and if the agent map is reset and a second keyframe with a previously used ID arrives again at the server side, the back-end will detect this inconsistency and throw an error. We have almost never experienced this behavior on the EuRoC sequences when using the ASL dataset format, and rarely when using rosbag files. 
     * Too little computational resources available to the front-end can be a reason for more frequent map resets.
