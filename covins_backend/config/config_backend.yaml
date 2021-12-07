@@ -105,6 +105,7 @@ vis.showtraj: 1
 vis.showkeyframes: 1
 
 vis.covgraph_minweight: 10 # min. weight of covisibility edges to be displayed
+vis.covgraph_shared_edges_only: 0 # only display covisibility edges between trajectories from different agents
 
 vis.scalefactor: 1.0 # scale the visalized map by this factor
 

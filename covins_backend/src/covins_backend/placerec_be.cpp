@@ -536,6 +536,9 @@ auto PlaceRecognition::Run()->void {
 
         usleep(1000);
     }
+
+    std::unique_lock<std::mutex> lock(mtx_finish_);
+    is_finished_ = true;
 }
 
 

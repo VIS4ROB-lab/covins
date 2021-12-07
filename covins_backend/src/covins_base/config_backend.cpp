@@ -102,6 +102,7 @@ auto ShowParamsBackend()->void
     std::cout << "showtraj: " << (int)covins_params::vis::showtraj << std::endl;
     std::cout << "showkeyframes: " << (int)covins_params::vis::showkeyframes << std::endl;
     std::cout << "covgraph_minweight: " << covins_params::vis::covgraph_minweight << std::endl;
+    std::cout << "covgraph_shared_edges_only: " << (int)covins_params::vis::covgraph_shared_edges_only << std::endl;
     std::cout << "scalefactor: " << covins_params::vis::scalefactor << std::endl;
     std::cout << "trajmarkersize: " << covins_params::vis::trajmarkersize << std::endl;
     std::cout << "covmarkersize: " << covins_params::vis::covmarkersize << std::endl;

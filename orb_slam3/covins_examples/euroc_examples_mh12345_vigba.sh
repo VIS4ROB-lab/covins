@@ -21,5 +21,7 @@ sleep 30
 
 #rosservice call /covins_savemap 0
 
+
+echo "Waiting for Global BA to finish"
 rosservice call /covins_gba 0 1
 

@@ -47,7 +47,10 @@ AgentHandler::AgentHandler(int client_id, int newfd, VisPtr vis, ManagerPtr man)
     comm_.reset(new Communicator(client_id_,newfd,man,vis,placerec_));
 
     thread_placerec_.reset(new std::thread(&PlacerecBase::Run,placerec_));
+    thread_placerec_->detach(); // Thread will be cleaned up when exiting main()
+
     thread_comm_.reset(new std::thread(&Communicator::Run,comm_));
+    thread_comm_->detach(); // Thread will be cleaned up when exiting main()
 }
 
 } //end ns

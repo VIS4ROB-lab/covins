@@ -181,6 +181,7 @@ namespace vis {
     const bool showtraj                                 = estd2::GetValFromYaml<bool>(conf,"vis.showtraj");
     const bool showkeyframes                            = estd2::GetValFromYaml<bool>(conf,"vis.showkeyframes"); //-1=no KFs;0=frusta;1=spheres
     const int covgraph_minweight                        = estd2::GetValFromYaml<int>(conf,"vis.covgraph_minweight");
+const bool covgraph_shared_edges_only = estd2::GetValFromYaml<bool>(conf,"vis.covgraph_shared_edges_only"); // show only cov edges between trajectories from different agents
 
     const precision_t scalefactor                       = estd2::GetValFromYaml<precision_t>(conf,"vis.scalefactor");
     const precision_t trajmarkersize                    = estd2::GetValFromYaml<precision_t>(conf,"vis.trajmarkersize");

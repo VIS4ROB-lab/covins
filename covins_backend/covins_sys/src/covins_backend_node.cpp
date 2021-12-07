@@ -52,6 +52,7 @@ int main(int argc, char* argv[]) {
 
     std::shared_ptr<covins::CovinsBackend> backend(new covins::CovinsBackend());
     covins::CovinsBackend::ThreadPtr main_thread(new std::thread(&covins::CovinsBackend::Run,backend));
+    main_thread->detach(); // Thread will be cleaned up when exiting main()
 
     ros::spin();
 

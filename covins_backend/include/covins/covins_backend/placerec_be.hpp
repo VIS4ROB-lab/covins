@@ -94,6 +94,8 @@ public:
         std::unique_lock<std::mutex> lock(mtx_finish_); finish_ = true;}
     auto ShallFinish()                                                                  ->bool override {
         std::unique_lock<std::mutex> lock(mtx_finish_); return finish_;}
+    virtual auto IsFinished()                                                           ->bool override{
+        std::unique_lock<std::mutex> lock(mtx_finish_); return is_finished_;}
 
 protected:
     virtual auto CheckBuffer()                                                          ->bool;
@@ -135,6 +137,7 @@ protected:
     std::mutex                  mtx_finish_;
 
     bool                        finish_                                                 = false;
+    bool is_finished_ = false;
 };
 
 } //end ns
