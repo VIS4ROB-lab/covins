@@ -71,15 +71,15 @@ Visualization Manager:
       Namespaces:
         CovGraph0_be: true
         CovGraph1_be: true
-        CovGraph2_be: false
+        CovGraph2_be: true
         CovGraph3_be: true
         CovGraph4_be: true
         CovGraphSharedEdges0_be: true
         KFs0_be: false
         KFs1_be: false
         KFs2_be: false
-        KFs3_be: true
-        KFs4_be: true
+        KFs3_be: false
+        KFs4_be: false
         "LoopEdges_inter_0_be\n": true
         Traj0_be: true
         Traj1_be: true
@@ -200,25 +200,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 28.487552642822266
+      Distance: 35.2202033996582
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 4.38085412979126
-        Y: 1.5221534967422485
-        Z: 1.284956693649292
+        X: 3.437276601791382
+        Y: -4.057714462280273
+        Z: 0.7934163212776184
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.4747964143753052
+      Pitch: 1.4647964239120483
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 4.925319671630859
+      Yaw: 4.930319786071777
     Saved: ~
 Window Geometry:
   Displays:
