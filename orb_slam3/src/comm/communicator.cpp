@@ -104,6 +104,7 @@ auto Communicator::ProcessNewLandmarks()->void {
 
 auto Communicator::Run()->void {
     std::thread thread_recv(&Communicator::RecvMsg, this);
+    thread_recv.detach();
 
     while(true)
     {
@@ -131,9 +132,10 @@ auto Communicator::Run()->void {
         usleep(1000);
     }
 
-    std::cout << "Comm " << client_id_ << ": wait for recv thread" << std::endl;
-    thread_recv.join();
-    std::cout << "Comm " << client_id_ << ": leave" << std::endl;
+    std::cout << "Comm " << client_id_ << ": leave " << __PRETTY_FUNCTION__ << std::endl;
+
+    std::unique_lock<std::mutex> lock(mtx_finish_);
+    is_finished_ = true;
 }
 
 } //end ns

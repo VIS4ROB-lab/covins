@@ -102,6 +102,8 @@ public:
         std::unique_lock<std::mutex> lock(mtx_finish_); finish_ = true;}
     virtual auto ShallFinish()                                                          ->bool {
         std::unique_lock<std::mutex> lock(mtx_finish_); return finish_;}
+    virtual auto IsFinished()                                                           ->bool {
+        std::unique_lock<std::mutex> lock(mtx_finish_); return is_finished_;}
 
 protected:
 
@@ -145,6 +147,7 @@ protected:
     std::mutex                  mtx_in_;
 
     bool                        finish_                                                 = false;
+    bool                        is_finished_                                            = false;
 
     //message passing
     std::vector<char>           recv_buf_;

@@ -64,6 +64,8 @@ If you use COVINS in an academic work, please cite:
 ## 3 Basic Setup
 This section explains how you can build the COVINS server back-end, as well as the provided version of the ORB-SLAM3 front-end able to communicate with the back-end. COVINS was developed under Ubuntu *18.04*, and we provide installation instructions for *18.04* as well as *20.04*. Note that we also provide a [Docker implementation](#docker) for simplified deployment of COVINS.
 
+**Note**: Please pay attention to the ```CMAKE_BUILD_TYPE```. Particularly, building parts of the code with ```march=native``` can cause problems on some machines.
+
 <a name="setup_env"></a>
 ### Environment Setup
 
@@ -124,7 +126,8 @@ If you want to use `rosbag` files to pass sensor data to COVINS, you need to exp
         * *U20/Noetic*: ```git checkout noetic```
     * Go to ```~/ws/covins_ws/src/vision_opencv/cv_bridge/CMakeLists.txt```
     * Add the ```opencv3_catkin``` dependency: change the line ```find_package(catkin REQUIRED COMPONENTS rosconsole sensor_msgs)``` to ```find_package(catkin REQUIRED COMPONENTS rosconsole sensor_msgs opencv3_catkin)```
-    * If you are running **Ubuntu 20** (or generally have OpenCV 4 installed): remove the lines that search for an OpenCV 4 version in the ```CMakeLists.txt```
+    * If you are running **Ubuntu 20** (or generally have OpenCV 4 installed): remove the lines that search for an OpenCV 4 version in the ```CMakeLists.txt```. It should look like this:
+    ![cv_bridge OpenCV dependencies](.aux/cv_bridge_opencv_dependency.png)
     * ```source ~/ws/covins_ws/devel/setup.bash```
     * ```catkin build cv_bridge```
     * [Optional] Check correct linkage:
@@ -142,6 +145,8 @@ If you want to use `rosbag` files to pass sensor data to COVINS, you need to exp
 
 This section explains how to run COVINS on the [EuRoC dataset](https://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets). If you want to use a different dataset, please do not forget to use a correct parameter file instead of ```covins/orb_slam3/Examples/Monocular-Inertial/EuRoC.yaml```.
 
+**Note**: We strongly recommend running every agent and the server back-end in a separate terminal each.
+
 #### Setting up the environment
 
 * In ```~/ws/covins_ws/src/covins/covins_comm/config/config_comm.yaml```: adjust the value of ```sys.server_ip``` to the IP of the machine where the COVINS back-end is running.
@@ -153,7 +158,7 @@ This section explains how to run COVINS on the [EuRoC dataset](https://projects.
 
 * Source your workspace: ```source ~/ws/covins_ws/devel/setup.bash```
 * In a terminal, start a roscore: ```roscore```
-* Start the COVINS backend by executing ```rosrun covins_backend covins_backend_node```
+* In a new terminal, start the COVINS backend by executing ```rosrun covins_backend covins_backend_node```
 
 <a name="run_fe"></a>
 ### Running the ORB-SLAM3 Front-End
@@ -161,12 +166,13 @@ This section explains how to run COVINS on the [EuRoC dataset](https://projects.
 Example scripts are provided in ```orb_slam3/covins_examples/```. Don't forget to correctly set the dataset path in every script you want to use (see above: *Setting up the environment*). You can also check the original [ORB-SLAM3 Repo](https://github.com/UZ-SLAMLab/ORB_SLAM3) for help on how to use the ORB-SLAM3 front-end.
 
 * Download the [EuRoC dataset](https://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets) (ASL dataset format)
+* Open a a new terminal.
 * Source your workspace: ```source ~/ws/covins_ws/devel/setup.bash```
 * Execute one of the example scripts provided in the ```orb_slam3/``` folder, such as ```euroc_examples_mh123_vigba```
     * ```euroc_examples_mhX.sh``` runs the front-end with a single sequence from EuRoC MH1-5.
     * ```euroc_examples_mh123_vigba.sh``` runs a 3-agent collaborative SLAM session (sequential) followed by Bundle Adjustment.
     * ```euroc_examples_mh12345_vigba.sh``` runs a 5-agent collaborative SLAM session (sequential) followed by Bundle Adjustment.
-    * Multiple front-ends can run in parallel. The front-ends can run on the same machine, or on different machines connected through a wireless network. However, when running multiple front-ends on the same machine, note that the performance of COVINS might degrade if the computational resources are overloaded by running too many agents simultaneously.
+    * Multiple front-ends can run in parallel. The front-ends can run on the same machine, or on different machines connected through a wireless network. However, when running multiple front-ends on the same machine, note that the performance of COVINS might degrade if the computational resources are overloaded by running too many agents simultaneously. We recommend running every front-end instance in a separate terminal.
     * Common error sources:
         * If the front-end is stuck after showing ```Loading images for sequence 0...LOADED!```, most likely your dataset path is wrong.
         * If the front-end is stuck after showing ```--> Connect to server
@@ -179,11 +185,15 @@ COVINS does not support resetting the map onboard the agent. Since map resets ar
 
 COVINS provides a config file for visualization with RVIZ (```covins.rviz``` in ```covins_backend/config/```)
 
-* Run ```tf.launch``` in ```covins_backend/launch/``` to set up the coordinate frames for visualization: ```roslaunch ~/ws/covins_ws/src/covins/covins_backend/launch/tf.launch```
-* Launch RVIZ: ```rviz -d ~/ws/covins_ws/src/covins/covins_backend/config/covins.rviz```
-    * Covisibility edges between keyframes of from different agents are shown in red, while edges between keyframes from the same agent are colored gray (those are not shown by default, but can be activated in RVIZ).
+* In a new terminal: run ```tf.launch``` in ```covins_backend/launch/``` to set up the coordinate frames for visualization: ```roslaunch ~/ws/covins_ws/src/covins/covins_backend/launch/tf.launch```
+* In a new terminal: launch RVIZ: ```rviz -d ~/ws/covins_ws/src/covins/covins_backend/config/covins.rviz```
+    * Covisibility edges between keyframes from different agents are shown in red, while edges between keyframes from the same agent are colored gray (those are not shown by default, but can be activated by setting ```vis.covgraph_shared_edges_only``` to ```0``` in ```config_backend.yaml```).
     * In case keyframes are visualized, removed keyframes are displayed in red (keyframes are not shown by default, but can be activated in RVIZ).
     * The section _VISUALIZATION_ in ```config_backend.yaml``` provides several options to modify the visualization.
+
+![Covisibilty graphs](.aux/cov_graph_examples.png)
+
+**NOTE**: When running multiple agents in parallel, and the maps are not merged yet, the visualization in RVIZ might toggle between the visualization of both trajectories.
 
 <a name="run_intercation"></a>
 ### User Interaction
@@ -224,9 +234,24 @@ The user should not be required to change any parameters to run COVINS, except p
 
 * Make sure your workspace is sourced: ```source ~/ws/covins_ws/devel/setup.bash```
 * In ```~/ws/covins_ws/src/covins/orb_slam3/Examples/ROS/ORB_SLAM3/launch/launch_ros_euroc.launch```: adjust the paths for ```voc``` and ```cam```
-* cd to ```orb_slam3/``` and run ```roslaunch ORB_SLAM3 launch_ros_euroc.launch```
-* run the rosbag file, e.g. ```rosbag play MH_01_easy.bag```
+* ```cd``` to ```orb_slam3/``` and run ```roslaunch ORB_SLAM3 launch_ros_euroc.launch```
+* In a new terminal: run the rosbag file, e.g. ```rosbag play MH_01_easy.bag```
     * When using COVINS with ROS, we recommend skipping the initialization sequence performed at the beginning of each EuRoC MH trajectory. ORB-SLAM3 often performs a map reset after this sequence, which is not supported by COVINS and will therefore cause an error. For example, for MH1, this can be easily done by running ```rosbag play MH_01_easy.bag --start 45```. (Start at: MH01: 45s; MH02: 35s; MH03-05: 15s)
+
+#### Running a second agent in parallel with ROS
+
+When you want to run 2 (or more) agents in parallel, you need to adjust the launch files that you will be using in parallel to work in this setup. Particularly
+* You need to **change the name of the ROS node**, since no 2 ROS nodes with the same name can exist simultaneously. 
+* You need to **remap the input topics**, so that ROS nodes for different agents listen to different camera and IMU topics
+* You need to **remap the topics of the bagfiles** for the individual agents, so that they 1) match the topics specified in the launch files and 2) the rosbag files played in parallel do not publish IMU and camera data under the same topic.
+
+We provide an example for two agents. For the first agent, you can execute the launch file and play the bag file as described above. For the second agent, we provide ```launch_ros_euroc_second_agent.launch```.
+* ```name``` is changed to ```ORB_SLAM3_monoi1```
+* Expected input topics are changed to ```/cam0/image_raw1``` and ```/imu1```
+* Run with ```roslaunch ORB_SLAM3 launch_ros_euroc_second_agent.launch``` 
+* Play the bag file of your choice with remapped topics by appending ```/cam0/image_raw:=/cam0/image_raw1 /cam1/image_raw:=/cam1/image_raw1 /imu0:=/imu1```. For example, for ```MH_02_easy.bag```, you would run it with ```rosbag play MH_02_easy.bag --start 35 /cam0/image_raw:=/cam0/image_raw1 /cam1/image_raw:=/cam1/image_raw1 /imu0:=/imu1```
+
+Note: if you **run multiple agents sequentially**, you only need to use ```launch_ros_euroc.launch```. After one agent has finished, just start it again using ```roslaunch ORB_SLAM3 launch_ros_euroc.launch``` and run your bagfile.
 
 <a name="docker"></a>
 ## 5 Docker Implementation
@@ -291,6 +316,7 @@ By default, COVINS is configured to not send any data back to the agent. By sett
 <a name="issues"></a>
 ## 7 Limitations and Known Issues
 
+* [**TOGGLING VISUALIZATION**] When running multiple agents in parallel, and the maps are not merged yet, the visualization in RVIZ might toggle between the visualization of both trajectories.
 * [**MAP RESET**] ORB-SLAM3 has the functionality to **start a new map** when tracking is lost, in order to improve robustness. This functionality is **not supported** by COVINS. The COVINS server back-end assumes that keyframes arriving from a specific agent are shared in a continuous fashion and belong to the same map, and if the agent map is reset and a second keyframe with a previously used ID arrives again at the server side, the back-end will detect this inconsistency and throw an error. We have almost never experienced this behavior on the EuRoC sequences when using the ASL dataset format, and rarely when using rosbag files. 
     * Too little computational resources available to the front-end can be a reason for more frequent map resets.
     * Map resets are more frequent at the beginning of a dataset, and occur less when the VIO front-end is well initialized and already tracking the agent's pose over some time. Therefore, the communication module will only start sending data to the server once a pre-specified number of keyframes was created by the VIO front-end. This number is specified by ```comm.start_sending_after_kf``` in ```covins/covins_comm/config/config_comm.yaml```, and is currently set to 50.

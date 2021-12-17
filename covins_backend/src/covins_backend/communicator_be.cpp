@@ -213,6 +213,7 @@ auto Communicator::ProcessNewLandmarks()->void {
 
 auto Communicator::Run()->void {
     std::thread thread_recv(&Communicator::RecvMsg, this);
+    thread_recv.detach();
 
     auto last = std::chrono::steady_clock::now();
     double wait_time = 1.0/covins_params::comm::to_agent_freq;
@@ -253,7 +254,8 @@ auto Communicator::Run()->void {
         usleep(1000);
     }
 
-    thread_recv.join();
+    std::unique_lock<std::mutex> lock(mtx_finish_);
+    is_finished_ = true;
 }
 
 } //end ns

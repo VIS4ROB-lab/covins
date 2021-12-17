@@ -1,1 +1,2 @@
-[05/10/2020] COVINS V1.0
+[05/10/2021] COVINS V1.0
+[17/10/2021] Patchset 1: Correct thread handling, visualization of covisibility edges of same agent, ROS launch file for second agent, readme update

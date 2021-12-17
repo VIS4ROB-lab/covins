@@ -413,9 +413,9 @@ void System::Shutdown()
 {
     mpLocalMapper->RequestFinish();
     #ifdef COVINS_MOD
-    #ifndef NO_LOOP_FINDER
+//    #ifndef NO_LOOP_FINDER
     mpLoopCloser->RequestFinish();
-    #endif
+//    #endif
     #else
     mpLoopCloser->RequestFinish();
     #endif
@@ -428,19 +428,19 @@ void System::Shutdown()
 
     // Wait until all thread have effectively stopped
     #ifdef COVINS_MOD
-    #ifndef NO_LOOP_FINDER
+//    #ifndef NO_LOOP_FINDER
     while(!mpLocalMapper->isFinished() || !mpLoopCloser->isFinished() || mpLoopCloser->isRunningGBA())
     #else
-    while(!mpLocalMapper->isFinished())
-    #endif
-    #else
+//    while(!mpLocalMapper->isFinished())
+//    #endif
+//    #else
     while(!mpLocalMapper->isFinished() || !mpLoopCloser->isFinished() || mpLoopCloser->isRunningGBA())
     #endif
     {
         if(!mpLocalMapper->isFinished())
             cout << "mpLocalMapper is not finished" << endl;
         #ifdef COVINS_MOD
-        #ifndef NO_LOOP_FINDER
+//        #ifndef NO_LOOP_FINDER
         if(!mpLoopCloser->isFinished())
             cout << "mpLoopCloser is not finished" << endl;
         if(mpLoopCloser->isRunningGBA()){
@@ -448,7 +448,7 @@ void System::Shutdown()
             cout << "break anyway..." << endl;
             break;
         }
-        #endif
+//        #endif
         #else
         if(!mpLoopCloser->isFinished())
             cout << "mpLoopCloser is not finished" << endl;
@@ -460,6 +460,29 @@ void System::Shutdown()
         #endif
         usleep(5000);
     }
+
+    #ifdef COVINS_MOD
+    comm_->SetFinish();
+    while(!comm_->IsFinished()) {
+        cout << "comm_ is not finished" << endl;
+        usleep(5000);
+    }
+    #endif
+
+    #ifdef COVINS_MOD
+    std::cout << "Joining Threads" << std::endl;
+    std::cout << "--> Join Mapping Thread" << std::endl;
+    mptLocalMapping->join();
+    std::cout << "--> Join LC Thread" << std::endl;
+    mptLoopClosing->join();
+    std::cout << "--> Join Comm Thread" << std::endl;
+    thread_comm_->join();
+    if(mpViewer) {
+        std::cout << "--> Join Viewer Thread" << std::endl;
+        mptViewer->join();
+    }
+    std::cout << "Done" << std::endl;
+    #endif
 
     if(mpViewer)
         pangolin::BindToContext("ORB-SLAM2: Map Viewer");

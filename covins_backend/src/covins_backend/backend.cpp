@@ -48,6 +48,7 @@ CovinsBackend::CovinsBackend() {
     //+++++ Create MapManager +++++
     mapmanager_.reset(new MapManager(voc_));
     thread_mapmanager_.reset(new std::thread(&MapManager::Run,mapmanager_));
+    thread_mapmanager_->detach(); // Thread will be cleaned up when exiting main()
 
     service_gba_ = nh_.advertiseService("covins_gba",&CovinsBackend::CallbackGBA, this);
     service_savemap_ = nh_.advertiseService("covins_savemap",&CovinsBackend::CallbackSaveMap, this);
@@ -58,6 +59,7 @@ CovinsBackend::CovinsBackend() {
     if(covins_params::vis::active){
         vis_.reset(new Visualizer("_be"));
         thread_vis_.reset(new std::thread(&Visualizer::Run,vis_));
+        thread_vis_->detach(); // Thread will be cleaned up when exiting main()
     }
 }
 

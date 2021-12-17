@@ -62,6 +62,7 @@ public:
     // Synchronization
     virtual auto SetFinish()                                                            ->void      = 0;
     virtual auto ShallFinish()                                                          ->bool      = 0;
+    virtual auto IsFinished()                                                           ->bool      = 0;
 };
 
 } //end ns
