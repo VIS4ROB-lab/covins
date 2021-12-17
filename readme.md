@@ -121,13 +121,13 @@ If you want to use `rosbag` files to pass sensor data to COVINS, you need to exp
     * ```cd ~/ws/covins_ws/src```
     * Clone: ```git clone https://github.com/ros-perception/vision_opencv.git```
     * **Check out the correct branch**
-        * ```cd cd vision_opencv/```
+        * ```cd vision_opencv/```
         * *U18/Melodic*: ```git checkout melodic```
         * *U20/Noetic*: ```git checkout noetic```
-    * Go to ```~/ws/covins_ws/src/vision_opencv/cv_bridge/CMakeLists.txt```
-    * Add the ```opencv3_catkin``` dependency: change the line ```find_package(catkin REQUIRED COMPONENTS rosconsole sensor_msgs)``` to ```find_package(catkin REQUIRED COMPONENTS rosconsole sensor_msgs opencv3_catkin)```
-    * If you are running **Ubuntu 20** (or generally have OpenCV 4 installed): remove the lines that search for an OpenCV 4 version in the ```CMakeLists.txt```. It should look like this:
-    ![cv_bridge OpenCV dependencies](.aux/cv_bridge_opencv_dependency.png)
+    * Open ```~/ws/covins_ws/src/vision_opencv/cv_bridge/CMakeLists.txt```
+        * Add the ```opencv3_catkin``` dependency: change the line ```find_package(catkin REQUIRED COMPONENTS rosconsole sensor_msgs)``` to ```find_package(catkin REQUIRED COMPONENTS rosconsole sensor_msgs opencv3_catkin)```
+        * If you are running **Ubuntu 20** (or generally have OpenCV 4 installed): remove the lines that search for an OpenCV 4 version in the ```CMakeLists.txt```. It should look like this:
+        ![cv_bridge OpenCV dependencies](.aux/cv_bridge_opencv_dependency.png)
     * ```source ~/ws/covins_ws/devel/setup.bash```
     * ```catkin build cv_bridge```
     * [Optional] Check correct linkage:
@@ -168,7 +168,9 @@ Example scripts are provided in ```orb_slam3/covins_examples/```. Don't forget t
 * Download the [EuRoC dataset](https://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets) (ASL dataset format)
 * Open a a new terminal.
 * Source your workspace: ```source ~/ws/covins_ws/devel/setup.bash```
-* Execute one of the example scripts provided in the ```orb_slam3/``` folder, such as ```euroc_examples_mh123_vigba```
+* ```cd``` to the folder with the example scripts:```cd ~/ws/covins_ws/src/covins/orb_slam3/covins_examples/```
+* Execute one of the example scripts provided in the ```orb_slam3/covins_examples/``` folder, such as ```euroc_examples_mh123_vigba```
+    * **Note**: The example scripts **must be executed from inside the ```covins_examples``` folder**
     * ```euroc_examples_mhX.sh``` runs the front-end with a single sequence from EuRoC MH1-5.
     * ```euroc_examples_mh123_vigba.sh``` runs a 3-agent collaborative SLAM session (sequential) followed by Bundle Adjustment.
     * ```euroc_examples_mh12345_vigba.sh``` runs a 5-agent collaborative SLAM session (sequential) followed by Bundle Adjustment.
