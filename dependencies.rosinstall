@@ -65,10 +65,6 @@
     uri: https://github.com/ethz-asl/aslam_cv2.git
 
 - git:
-    local-name: libnabo
-    uri: https://github.com/ethz-asl/libnabo.git
-
-- git:
     local-name: robopt_open
     uri: https://github.com/VIS4ROB-lab/robopt_open.git
     version: fix_imu_residual
