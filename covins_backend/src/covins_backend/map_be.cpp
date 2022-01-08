@@ -930,12 +930,21 @@ auto Map::UpdateCovisibilityConnections(idpair kf_id)->void {
     }
 }
 
-auto Map::WriteKFsToFile(std::string prefix)->void{
+auto Map::WriteKFsToFile(std::string suffix)->void{
     for(std::set<size_t>::iterator sit = associated_clients_.begin();sit!=associated_clients_.end();++sit){
         int client_id = *sit;
-        std::stringstream ss;
-        ss << covins_params::sys::output_dir << "KF_" << client_id << prefix << ".csv";
-        this->WriteStateToCsv(ss.str(),client_id);
+        if(covins_params::sys::trajectory_format == "EUROC") {
+            std::stringstream ss;
+            ss << covins_params::sys::output_dir << "KF_" << client_id << suffix << "_feuroc" << ".csv";
+            this->WriteStateToCsv(ss.str(),client_id);
+        } else if(covins_params::sys::trajectory_format == "TUM") {
+            std::stringstream ss;
+            ss << covins_params::sys::output_dir << "KF_" << client_id << suffix << "_ftum" << ".csv";
+            this->WriteStateToCsvTUM(ss.str(),client_id);
+        } else {
+            std::cout << COUTFATAL << "trajectory_format '" << covins_params::sys::trajectory_format << "' not in { EUROC | TUM }" << std::endl;
+            exit(-1);
+        }
     }
 }
 
@@ -970,12 +979,52 @@ auto Map::WriteStateToCsv(const std::string& filename, const size_t client_id)->
             const Eigen::Matrix4d Tws = kf->GetPoseTws();
             const Eigen::Quaterniond q(Tws.block<3,3>(0,0));
 
-            keyframes_file << std::setprecision(25) << stamp << ",";
+            keyframes_file << std::setprecision(25) << stamp * 1e9f << ",";
             keyframes_file << Tws(0,3) << "," << Tws(1,3) << "," << Tws(2,3) << ",";
             keyframes_file << q.w() << "," << q.x() << "," << q.y() << "," << q.z() << ",";
             keyframes_file << vel[0] << "," << vel[1] << "," << vel[2] << ",";
             keyframes_file << bias_gyro[0] << "," << bias_gyro[1] << "," << bias_gyro[2] << ",";
             keyframes_file << bias_accel[0] << "," << bias_accel[1] << "," << bias_accel[2] << std::endl;
+        }
+        keyframes_file.close();
+    }
+    else
+        std::cout << COUTERROR << ": Unable to open file: " << filename << std::endl;
+}
+
+auto Map::WriteStateToCsvTUM(const std::string& filename, const size_t client_id)->void {
+    // TUM format for EVO: stamp tx ty tz qx qy qz qw - separated by spaces
+
+    KeyframeVector found_kfs;
+    found_kfs.reserve(keyframes_.size());
+    // Get all frames from the required client
+    for (KeyframeMap::const_iterator mit = keyframes_.begin(); mit != keyframes_.end(); ++mit) {
+        KeyframePtr kf = mit->second;
+        idpair curr_id = mit->first;
+        if (curr_id.second == client_id) {
+            found_kfs.push_back(kf);
+        }
+    }
+
+    if(found_kfs.empty()) //do not overwrite files from other maps with empty files
+    return;
+
+    // Sort the keyframes by timestamp
+    std::sort(found_kfs.begin(), found_kfs.end(), Keyframe::CompStamp);
+
+    // Write out the keyframe data
+    std::ofstream keyframes_file;
+    keyframes_file.open(filename, std::ios::out | std::ios::trunc);
+    if (keyframes_file.is_open()) {
+        for (KeyframeVector::const_iterator vit = found_kfs.begin(); vit != found_kfs.end(); ++vit) {
+            KeyframePtr kf = (*vit);
+            const double stamp = kf->timestamp_;
+            const Eigen::Matrix4d Tws = kf->GetPoseTws();
+            const Eigen::Quaterniond q(Tws.block<3,3>(0,0));
+
+            keyframes_file << std::setprecision(25) << stamp << " ";
+            keyframes_file << Tws(0,3) << " " << Tws(1,3) << " " << Tws(2,3) << " ";
+            keyframes_file << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << std::endl;
         }
         keyframes_file.close();
     }

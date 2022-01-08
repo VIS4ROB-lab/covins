@@ -4,7 +4,7 @@
 
 COVINS is an accurate, scalable, and versatile visual-inertial collaborative SLAM system, that enables a group of agents to simultaneously co-localize and jointly map an environment.
 
-COVINS provides a server back-end for collaborative SLAM, running on a local machine or a remote cloud instance, generating collaborative estimates from map data contributed by different agents running Visual-Inertial Odomety (VIO) and sharing their map with the back-end. COVINS also provides a generic communication module to interface the keyframe-based VIO of your choice. Here, we provide an example of COVINS interfaced with the VIO front-end of [ORB-SLAM3](https://github.com/UZ-SLAMLab/ORB_SLAM3). We provide guidance and examples how to run COVINS on the [EuRoC dataset](https://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets).
+COVINS provides a server back-end for collaborative SLAM, running on a local machine or a remote cloud instance, generating collaborative estimates from map data contributed by different agents running Visual-Inertial Odomety (VIO) and sharing their map with the back-end. COVINS also provides a generic communication module to interface the keyframe-based VIO of your choice. Here, we provide an example of COVINS interfaced with the VIO front-end of [ORB-SLAM3](https://github.com/UZ-SLAMLab/ORB_SLAM3). We provide guidance and examples how to run COVINS on the [EuRoC dataset](https://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets), as well as information beyond basic deployment, for example how the COVINS back-end can be deployed on a remote cloud computing instance.
 
 ## Index
 1. [Related Publications](#related_publications)
@@ -23,6 +23,7 @@ COVINS provides a server back-end for collaborative SLAM, running on a local mac
     * [Running COVINS with ROS](#run_ros)
 5. [Docker Implementation](#docker)
 6. [Extended Functionalities](#extended)
+    * [Deployment of the COVINS Back-End in an AWS Cloud Instance](#ext_aws)
     * [Interfacing a Custom VIO System with COVINS](#ext_comm)
     * [Map Re-Use Onboard the Agent](#ext_reuse)
 7. [Limitations and Known Issues](#issues)
@@ -72,7 +73,7 @@ This section explains how you can build the COVINS server back-end, as well as t
 #### Dependencies
 
 * ```sudo apt-get update```
-* Install dependencies: ```sudo apt-get install doxygen libsuitesparse-dev libyaml-cpp-dev libvtk6-dev python3-wstool libomp-dev libglew-dev```
+* Install dependencies: ```sudo apt-get install libpthread-stubs0-dev build-essential cmake git doxygen libsuitesparse-dev libyaml-cpp-dev libvtk6-dev python3-wstool libomp-dev libglew-dev```
 * _catkin_tools_ (from the [catkin_tools manual](https://catkin-tools.readthedocs.io/en/latest/installing.html))
     * ```sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu `lsb_release -sc` main" > /etc/apt/sources.list.d/ros-latest.list'```
     * ```wget http://packages.ros.org/ros.key -O - | sudo apt-key add -```
@@ -229,7 +230,15 @@ The user should not be required to change any parameters to run COVINS, except p
 <a name="run_out"></a>
 ### Output Files
 
-* COVINS automatically saves the trajectory estimates of each agent to a file in ```covins_backend/output```. The file ```KF_<AGENT_ID>.csv``` stores the poses associated to the agent specified by ```AGENT_ID```.
+* COVINS automatically saves the trajectory estimate of each agent to a file in ```covins_backend/output```. The file ```KF_<AGENT_ID>.csv``` stores the poses associated to the agent specified by ```AGENT_ID```. Each row represents a single pose.
+* COVINS can save the trajectory in 2 formats: *EuRoC format* and *TUM format*. Which one is used can be controlled via the parameter ```trajectory_format``` in ```config_backend.yaml```. 
+    * **TUM format** (default): ```timestamp[s] t_x t_y t_z q_x q_y q_z q_w```
+    * **EuRoC format**: ```timestamp[ns], t_x, t_y, t_z, q_w, q_x, q_y, q_z, vel_x, vel_y, vel_z, bias_gyro_x, bias_gyro_y, bias_gyro_z, bias_acc_x, bias_acc_y, bias_acc_z```
+    * Each output file contains a suffix indicating the format: ```_ftum``` or  ```_feuroc```
+* Trajectories in *TUM format* can be directly evaluated using the [evo evaluation tool](https://github.com/MichaelGrupp/evo).
+    * Run the evaluation e.g. as ```evo_ape euroc KF_0_ftum.csv gt_data.csv -vas``` to perform a Sim(3) alignment reporting trajectory RMSE and scale error.
+    * The ground truth data for the individual EuRoC sequences can be found in ```<sequence>/mav0/state_groundtruth_estimate0/data.csv```
+    * To evaluate a multi-agents estimate, the individual trajectory files must be combined, e.g. with ```cat KF_0_ftum.csv KF_1_ftum.csv KF_2_ftum.csv > mh123_est.csv```. Also, the individual ground truth information from the EuRoC sequences used to generate the estimate must be combined into a single file. We recommend doing this manually, since every file contains a header describing the data, which should not be copied multiple times.
 
 <a name="run_ros"></a>
 ### Running COVINS with ROS
@@ -295,6 +304,53 @@ A terminal within the docker image can also be opened. This can for example be u
 
 <a name="extended"></a>
 ## 6 Extended Functionalities
+
+<a name="ext_aws"></a>
+### Deployment of the COVINS Back-End in an AWS Cloud Instance
+
+We have tested COVINS with remote cloud servers provides by [Amazons AWS](https://aws.amazon.com/). We recommend using [screen](https://linuxize.com/post/how-to-use-linux-screen/) to run COVINS remotely on a cloud instance, since this allows to return to previous sessions evens after disconnecting from the remote instance.
+[Tutorial: Get started with Amazon EC2 Linux instances](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EC2_GetStarted.html)
+
+#### Cloud Setup
+
+* Choose an AWS instance to launch (EC2 instance, Ubuntu 18 or 20 virtual machine, for example a ```c4.4xlarge``` with 30 GB storage is a good starting point)
+* AWS virtual machines by default block most incoming and outgoing traffic, so you need to adjust the security groups. Don't forget to modify both inbound and outbound rules.
+    * Some information on setting security groups can be found [here](https://aws.amazon.com/premiumsupport/knowledge-center/connect-http-https-ec2/).
+    * As a straightforward solution, you can just allow **any** traffic: In *Step 6: Configure Security Group* of the AWS instance launch process, add a rule as follows (note that this leaves your remote server also unprotected against unauthorized access):
+![AWS security group setup](.aux/aws_rule_all_traffic.png)
+<!--
+    * The following rules will allow **any** traffic (note that this leaves your remote server also unprotected against unauthorized access):
+![AWS security group setup](.aux/aws_securiy_rules.png)
+-->
+* Launch your instance and install COVINS
+* On your local machine (or any other machine where you would like to run the front-end), set ```sys.server_ip``` in ```config_comm.yaml``` to the **public** IPv4 address of your instance
+    * Try to ping the IP from your local machine. If this does not work, the security groups are definitely not set up correctly and the back-end on the remote instance will not be reachable.
+* Start the covins back-end on the remote instance as usual using ```rosrun covins_backend covins_backend_node```
+* Start the front-end on your local machine as usual using one of the provided example files.
+* The front-end should be able to connect to the cloud server, and you should see the server displaying messages that data is arriving there.
+
+#### Visualization
+
+We will use [screen](https://linuxize.com/post/how-to-use-linux-screen/) to run COVINS remotely on a cloud server
+
+* On the **remote server** (connect via ssh - your AWS instance will give instructions how to do this)
+    * ```screen -S covins```
+    * ```roscore```
+    * New window: ```Ctrl+a```, then ```c```
+    * ```export ROS_IP=public_IP_of_!SERVER!```
+    * ```cd ~/ws/covins_ws/```
+    * ```source devel/setup.bash```
+    * ```roslaunch src/covins/covins_backend/launch/tf.launch```
+    * New window: ```Ctrl+a```, then ```c```
+    * ```export ROS_IP=public_IP_of_!SERVER!```
+    * ```cd ~/ws/covins_ws/```
+    * ```source devel/setup.bash```
+    * Run the back-end using ```rosrun covins_backend covins_backend_node```
+* In a shell on your **local machine**
+    * ```export ROS_IP=IP_of_your_!LOCAL!_machine```
+    * ```export ROS_MASTER_URI=http://IP_of_the_!SERVER!:11311```
+    * Launch RVIZ: ```rviz -d ~/ws/covins_ws/src/covins/covins_backend/config/covins.rviz``` (you need to have ```covins.rviz```  locally.
+* Now you should be able to remotely visualize the RVIZ topics published from the COVINS backend running on the cloud server.
 
 <a name="ext_comm"></a>
 ### Interfacing a Custom VIO System with COVINS

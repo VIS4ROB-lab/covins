@@ -46,6 +46,7 @@ auto ShowParamsBackend()->void
     std::cout << "ORB Voc dir: " << covins_params::sys::voc_orb_dir << std::endl;
     std::cout << "--------------------------" << std::endl;
     std::cout << "output_dir: " << covins_params::sys::output_dir << std::endl;
+    std::cout << "trajectory_format: " << covins_params::sys::trajectory_format << std::endl;
     std::cout << std::endl;
     std::cout << "++++++++++ Feature Extraction ++++++++++" << std::endl;
     std::cout << "feature type: " << covins_params::features::type << std::endl;

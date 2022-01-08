@@ -185,7 +185,7 @@ public:
     virtual auto ConvertToMsgFileExport(MsgMap &msg)                                    ->void;
 
     // Write-Out
-    auto WriteKFsToFile(std::string prefix = std::string())                             ->void;
+    auto WriteKFsToFile(std::string suffix = std::string())                             ->void;
 
 protected:
     // Outlier Removal
@@ -193,6 +193,8 @@ protected:
 
     // Write-Out
     auto WriteStateToCsv(const std::string& filename,
+                         const size_t client_id)                                        ->void;
+    auto WriteStateToCsvTUM(const std::string& filename,
                          const size_t client_id)                                        ->void;
 
     // Loop Correction

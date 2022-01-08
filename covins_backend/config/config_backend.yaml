@@ -9,6 +9,11 @@ sys.threads_server: 8
 
 sys.covis_thres: 10 # Threshold for min. number of shared edges to include a covisibility edge
 
+# Format for the trajectory output file
+sys.trajectory_format: 'TUM' # {EUROC|TUM}
+# EUROC: EuRoC format - stamp[ns], tx, ty, tz, qw, qx, qy, qz
+# TUM: TUM format - stamp[s] tx ty tz qx qy qz qw
+
 #--------------------------------------------------------------------------------------------
 # Data input
 #--------------------------------------------------------------------------------------------
@@ -20,7 +25,7 @@ sys.map_path0: '/home/pschmuck/ws/covins_ws/src/covins/covins_backend/output/map
 # Features
 #--------------------------------------------------------------------------------------------
 
-feat.type: 'ORB' # this allows to integrate other PR algorithms. Cuurently, only 'ORB' is supported
+feat.type: 'ORB' # this allows to integrate other PR algorithms. Currently, only 'ORB' is supported
 feat.desc_length: 32 # [Byte] COVINS-ORB: 32
 
 feat.num_octaves: 1 # Number of levels in the scale pyramid

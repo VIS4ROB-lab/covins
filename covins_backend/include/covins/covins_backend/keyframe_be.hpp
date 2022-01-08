@@ -107,10 +107,10 @@ protected:
 
     // Interfaces
     friend class Map;
-    virtual auto SetInvalid()                                                           ->bool;     // This funtion should only be called by the map
+    virtual auto SetInvalid()                                                           ->bool;     // This function should only be called by the map
 
-    // Covisibility Graph Funtions
-    virtual auto UpdateCovisibilityConnections()                                        ->void;     // This funtion should only be called by the map
+    // Covisibility Graph Functions
+    virtual auto UpdateCovisibilityConnections()                                        ->void;     // This function should only be called by the map
 
     // Infrastructure
     bool                        pose_optimized_                                         = false;    // Indicates that this LM was part of an optimization process (important for landmark culling)

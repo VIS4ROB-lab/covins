@@ -72,7 +72,7 @@ protected:
 
     // Interfaces
     friend class Map;
-    virtual auto SetInvalid()                                                           ->bool;     // This funtion should only be called by the map
+    virtual auto SetInvalid()                                                           ->bool;     // This function should only be called by the map
 
     bool                        optimized_                                              = false;    // Indicates that this LM was part of an optimization process (important for landmark culling)
 };

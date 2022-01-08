@@ -1,2 +1,3 @@
 [05/10/2021] COVINS V1.0
 [17/10/2021] Patchset 1: Correct thread handling, visualization of covisibility edges of same agent, ROS launch file for second agent, readme update
+[08/01/2022] Changed format for trajectory write-out to TUM format by default; readme update: evaluation using evo, AWS instructions
