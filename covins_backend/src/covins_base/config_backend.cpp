@@ -46,6 +46,7 @@ auto ShowParamsBackend()->void
     std::cout << "ORB Voc dir: " << covins_params::sys::voc_orb_dir << std::endl;
     std::cout << "--------------------------" << std::endl;
     std::cout << "output_dir: " << covins_params::sys::output_dir << std::endl;
+    std::cout << "trajectory_format: " << covins_params::sys::trajectory_format << std::endl;
     std::cout << std::endl;
     std::cout << "++++++++++ Feature Extraction ++++++++++" << std::endl;
     std::cout << "feature type: " << covins_params::features::type << std::endl;
@@ -102,6 +103,7 @@ auto ShowParamsBackend()->void
     std::cout << "showtraj: " << (int)covins_params::vis::showtraj << std::endl;
     std::cout << "showkeyframes: " << (int)covins_params::vis::showkeyframes << std::endl;
     std::cout << "covgraph_minweight: " << covins_params::vis::covgraph_minweight << std::endl;
+    std::cout << "covgraph_shared_edges_only: " << (int)covins_params::vis::covgraph_shared_edges_only << std::endl;
     std::cout << "scalefactor: " << covins_params::vis::scalefactor << std::endl;
     std::cout << "trajmarkersize: " << covins_params::vis::trajmarkersize << std::endl;
     std::cout << "covmarkersize: " << covins_params::vis::covmarkersize << std::endl;

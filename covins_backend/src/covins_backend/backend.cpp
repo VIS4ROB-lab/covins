@@ -39,8 +39,13 @@ AgentPackage::AgentPackage(size_t client_id, int newfd, VisPtr vis, ManagerPtr m
 
 CovinsBackend::CovinsBackend() {
 
+    //+++++ Parameters +++++
     covins_params::ShowParamsComm();
     covins_params::ShowParamsBackend();
+    if(!(covins_params::sys::trajectory_format == "TUM" || covins_params::sys::trajectory_format == "EUROC")) {
+        std::cout << COUTFATAL << "trajectory_format '" << covins_params::sys::trajectory_format << "' not in { EUROC | TUM }" << std::endl;
+        exit(-1);
+    }
 
     //+++++ Load Vocabulary +++++
     this->LoadVocabulary();

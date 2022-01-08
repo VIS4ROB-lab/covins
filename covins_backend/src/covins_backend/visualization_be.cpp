@@ -89,7 +89,7 @@ auto Visualizer::PubCovGraph()->void {
     for(KeyframeMap::iterator mit = curr_bundle_.keyframes.begin();mit!=curr_bundle_.keyframes.end();++mit) {
         KeyframePtr kf = mit->second;
         if(kf->IsInvalid()) continue;
-//        kf->UpdateCovisibilityConnections(); // one must no call funtions that change KFs/LMs/Map here!
+//        kf->UpdateCovisibilityConnections(); // one must no call functions that change KFs/LMs/Map here!
         KeyframeVector connected_kfs = kf->GetConnectedKeyframesByWeight(covins_params::vis::covgraph_minweight);
 
         for(KeyframeVector::iterator vit2 = connected_kfs.begin();vit2!=connected_kfs.end();++vit2) {
@@ -133,7 +133,7 @@ auto Visualizer::PubCovGraph()->void {
         }
     }
 
-    if(!cov_graph_msg.points.empty()) {
+    if(!covins_params::vis::covgraph_shared_edges_only && !cov_graph_msg.points.empty()) {
         pub_marker_.publish(cov_graph_msg);
     }
     if(!shared_edge_msg.points.empty()) {

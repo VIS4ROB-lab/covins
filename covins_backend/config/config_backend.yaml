@@ -16,6 +16,11 @@ sys.covis_thres: 10 # Threshold for min. number of shared edges to include a cov
 # maps are loaded from here (use absolute path)
 sys.map_path0: '/home/pschmuck/ws/covins_ws/src/covins/covins_backend/output/map_data'
 
+# Format for the trajectory output file
+sys.trajectory_format: 'TUM' # {EUROC|TUM}
+# EUROC: EuRoC format - stamp[ns], tx, ty, tz, qw, qx, qy, qz
+# TUM: TUM format - stamp[s] tx ty tz qx qy qz qw
+
 #--------------------------------------------------------------------------------------------
 # Features
 #--------------------------------------------------------------------------------------------
@@ -53,7 +58,7 @@ mapping.kf_culling_max_time_dist: 1.0 #s - max. allowed time distance between 2 
 # activate / deactivate place recognition
 placerec.active: 1
 
-placerec.type: 'COVINS' # this allows to integrate other PR algorithms. Cuurently, only 'COVINS' is supported
+placerec.type: 'COVINS' # this allows to integrate other PR algorithms. Currently, only 'COVINS' is supported
 
 placerec.start_after_kf: 10 # map matching skips the first x KFs after map initialization
 placerec.consecutive_loop_dist: 10 # after finding a loop, the next x KFs are not considered loop closure query
@@ -105,6 +110,7 @@ vis.showtraj: 1
 vis.showkeyframes: 1
 
 vis.covgraph_minweight: 10 # min. weight of covisibility edges to be displayed
+vis.covgraph_shared_edges_only: 1 # only display covisibility edges between trajectories from different agents
 
 vis.scalefactor: 1.0 # scale the visalized map by this factor
 
