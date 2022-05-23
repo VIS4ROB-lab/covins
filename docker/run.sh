@@ -146,13 +146,13 @@ elif [ $CLIENT -eq 1 ]; then
         --rm \
         --net=host \
         --volume "${CONFIG_FILE_COMM}:${CATKIN_WS}/src/covins/covins_comm/config/config_comm.yaml" \
-        --volume "${START_FILE}:${CATKIN_WS}/src/covins/orb_slam3/run.sh" \
+        --volume "${START_FILE}:${CATKIN_WS}/src/covins/orb_slam3/covins_examples/run.sh" \
         --volume "${DATASET}:${CATKIN_WS}/Dataset" \
         covins \
         /bin/bash -c \
                 "cd ${CATKIN_WS}; \
                  source devel/setup.bash; \
-                 cd ${CATKIN_WS}/src/covins/orb_slam3 ; \
+                 cd ${CATKIN_WS}/src/covins/orb_slam3/covins_examples ; \
                  cp run.sh run_copy.sh; \
                  sed -i '2d' run_copy.sh; \
                  sed -i '1apathDatasetEuroc="${CATKIN_WS}/Dataset"' run_copy.sh; \
