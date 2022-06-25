@@ -37,10 +37,11 @@ namespace covins {
 // Constructor
 ImageMatchingAlgorithm::ImageMatchingAlgorithm(
     float distanceThreshold,
+    float distanceRatioThreshold,
     bool epipoleCheck,
     bool triangCheck) :
   mbCheckEpi(epipoleCheck), mbCheckTriang(triangCheck),
-  distanceThreshold_(distanceThreshold)
+  distanceThreshold_(distanceThreshold), distanceRatioThreshold_(distanceRatioThreshold)
 {
     //...
 }
@@ -78,11 +79,12 @@ void ImageMatchingAlgorithm::doSetup() {
   raySigmasA_.resize(numA);
   const double sqrtOfsqrtOf2 = std::sqrt(std::sqrt(2.0));
   for (size_t k = 0; k < numA; ++k) {
-    double keypointAStdDev = 0.8 * (kfPtrA_->keypoints_aors_[k][1] + 1);
-    raySigmasA_[k] = sqrtOfsqrtOf2 * keypointAStdDev / fA_;
-    if (kfPtrA_->GetLandmark(k)) {
-      skipA_[k] = true;
-    }
+    raySigmasA_[k] = 0.002;
+    // double keypointAStdDev = 0.8 * (kfPtrA_->keypoints_aors_[k][1] + 1);
+    // raySigmasA_[k] = sqrtOfsqrtOf2 * keypointAStdDev / fA_;
+    // if (kfPtrA_->GetLandmark(k)) {
+    //   skipA_[k] = true;
+    // }
   }
 
   // Prepare the bookkeeping for frame B
@@ -92,11 +94,12 @@ void ImageMatchingAlgorithm::doSetup() {
   // Compute the ray uncertainty for frame B
   raySigmasB_.resize(numB);
   for (size_t k = 0; k < numB; ++k) {
-    double keypointBStdDev = 0.8 * (kfPtrA_->keypoints_aors_[k][1] + 1);
-    raySigmasB_[k] = sqrtOfsqrtOf2 * keypointBStdDev / fB_;
-    if (kfPtrB_->GetLandmark(k)) {
-      skipB_[k] = true;
-    }
+    raySigmasB_[k] = 0.002;
+    // double keypointBStdDev = 0.8 * (kfPtrA_->keypoints_aors_[k][1] + 1);
+    // raySigmasB_[k] = sqrtOfsqrtOf2 * keypointBStdDev / fB_;
+    // if (kfPtrB_->GetLandmark(k)) {
+    //   skipB_[k] = true;
+    // }
   }
 }
 
@@ -118,6 +121,11 @@ void ImageMatchingAlgorithm::setDistanceThreshold(
 // Get the distance threshold for which matches exceeding it will not be returned as matches.
 float ImageMatchingAlgorithm::distanceThreshold() const {
   return distanceThreshold_;
+}
+
+// Get the distance threshold ratio for getting distinctive matches
+float ImageMatchingAlgorithm::distanceRatioThreshold() const {
+  return distanceRatioThreshold_;
 }
 
 // Geometric verification of a match.

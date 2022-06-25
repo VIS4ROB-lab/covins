@@ -153,6 +153,7 @@ namespace TypeDefs {
 
     using Matrix3Type                   = Eigen::Matrix<precision_t,3,3>;
     using Matrix4Type                   = Eigen::Matrix<precision_t,4,4>;
+    using Matrix6Type                   = Eigen::Matrix<precision_t,6,6>;
     using TransformType                 = Matrix4Type;
     using DynamicMatrixType             = Eigen::Matrix<precision_t,Eigen::Dynamic,Eigen::Dynamic>;
 
@@ -261,14 +262,17 @@ enum eCamModel
 class Keyframe;
 
 struct LoopConstraint {
-    using TransformType                 = TypeDefs::TransformType;
-    using KeyframePtr                   = std::shared_ptr<Keyframe>;
-
-    LoopConstraint(KeyframePtr k1, KeyframePtr k2, TransformType T_12)
-        : kf1(k1),kf2(k2),T_s1_s2(T_12) {}
-    KeyframePtr                 kf1;
-    KeyframePtr                 kf2;
-    TransformType               T_s1_s2;
+    using TransformType             = TypeDefs::TransformType;
+    using KeyframePtr               = std::shared_ptr<Keyframe>;
+    using Matrix6Type               = TypeDefs::Matrix6Type;
+    
+    LoopConstraint(KeyframePtr k1, KeyframePtr k2, TransformType T_12, double relative_yaw_smatch_squery = 0, Matrix6Type covm = Matrix6Type::Identity())
+        : kf1(k1),kf2(k2),T_s1_s2(T_12), relative_yaw_smatch_squery(relative_yaw_smatch_squery), cov_mat(covm) {}
+    KeyframePtr         kf1;
+    KeyframePtr         kf2;
+    TransformType       T_s1_s2;
+    double              relative_yaw_smatch_squery;
+    Matrix6Type         cov_mat;
 };
 
 struct VICalibration {

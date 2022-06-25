@@ -38,15 +38,11 @@
 #include "covins_backend/map_be.hpp"
 #include "covins_backend/optimization_be.hpp"
 #include "covins_backend/Se3Solver.h"
-#include "covins_backend/RelPosSolver.hpp"
-#include "covins_backend/RelNonCentralPosSolver.hpp"
 
 // Thirdparty
 #include "matcher/MatchingAlgorithm.h"
 #include "matcher/ImageMatchingAlgorithm.h"
 #include "matcher/LandmarkMatchingAlgorithm.h"
-
-#include <covins/covins_base/utils_base.hpp>
 
 namespace covins {
 
@@ -67,14 +63,15 @@ auto PlaceRecognition::CheckBuffer()->bool {
 auto PlaceRecognition::ComputeSE3()->bool {
     const size_t nInitialCandidates = mvpEnoughConsistentCandidates.size();
 
+    // We compute first ORB matches for each candidate
+    // If enough matches are found, we setup a Sim3Solver
+    FeatureMatcher matcher(0.75,true);
 
-    std::cout << "----> Query " << kf_query_ << " : nInitialCandidates: " << nInitialCandidates << std::endl;
+    vecVecMP vvpMapPointMatches;
+    vvpMapPointMatches.resize(nInitialCandidates);
     vector<bool> vbDiscarded;
     vbDiscarded.resize(nInitialCandidates);
-    int nCandidates = 0; // candidates with enough matches
-    Eigen::Matrix4d Tc1c2; // Relative TF between the frames
-    Eigen::Matrix<double, 6, 6> cov_loop; // Covariance Matrix for the Loop
-    bool foundRelTransform;
+    int nCandidates=0; //candidates with enough matches
 
     for (size_t i = 0; i < nInitialCandidates; i++) {
         KeyframePtr pKF = mvpEnoughConsistentCandidates[i];
@@ -87,23 +84,13 @@ auto PlaceRecognition::ComputeSE3()->bool {
         }
 
         // Setup the threaded BF matcher
-
-        std::shared_ptr<ImageMatchingAlgorithm> matchingAlgorithmImage(
-            new ImageMatchingAlgorithm(covins_params::features::img_match_thres)); // default: 50.0
-
-        std::unique_ptr<estd2::DenseMatcher> imgMatcherThreaded(
-            new estd2::DenseMatcher(8, 2, true));
-
-        matchingAlgorithmImage->setFrames(kf_query_, pKF);
-        imgMatcherThreaded->match<ImageMatchingAlgorithm>(
-            *matchingAlgorithmImage);
-
-
-        Matches img_matches = matchingAlgorithmImage->getMatches();
-        int nmatches = img_matches.size();
-
-        std::cout << "------> num_img features: " << kf_query_->keypoints_undistorted_.size() << std::endl;
-        std::cout << "------> num_img matches: " << nmatches << std::endl;
+        std::shared_ptr<LandmarkMatchingAlgorithm> matchingAlgorithm
+                (new LandmarkMatchingAlgorithm(50.0)); // default: 50.0
+        std::unique_ptr<estd2::DenseMatcher> matcherThreaded (new estd2::DenseMatcher(8));
+        matchingAlgorithm->setFrames(kf_query_, pKF);
+        matcherThreaded->match<LandmarkMatchingAlgorithm>(*matchingAlgorithm);
+        Matches matchesThreaded = matchingAlgorithm->getMatches();
+        int nmatches = matchesThreaded.size();
 
         if(kf_query_->id_.second == pKF->id_.second && nmatches < covins_params::placerec::matches_thres) {
           vbDiscarded[i] = true;
@@ -111,6 +98,18 @@ auto PlaceRecognition::ComputeSE3()->bool {
         } else if(nmatches < covins_params::placerec::matches_thres_merge) {
             vbDiscarded[i] = true;
             continue;
+        }
+
+        // Extract the matches and format it to mapPointMatches
+        vvpMapPointMatches[i] = LandmarkVector(kf_query_->keypoints_distorted_.size(), static_cast<LandmarkPtr>(NULL));
+        for (Matches::iterator itr = matchesThreaded.begin(); itr !=matchesThreaded.end(); ++itr) {
+            const size_t idxA = (*itr).idxA;
+            const size_t idxB = (*itr).idxB;
+            if (kf_query_->GetLandmark(idxA) && pKF->GetLandmark(idxB)) {
+                if (!kf_query_->GetLandmark(idxA)->IsInvalid() && !pKF->GetLandmark(idxB)->IsInvalid()) {
+                    vvpMapPointMatches[i][idxA] = pKF->GetLandmark(idxB);
+                }
+            }
         }
         nCandidates++;
     }
@@ -123,43 +122,51 @@ auto PlaceRecognition::ComputeSE3()->bool {
 
         KeyframePtr pKFi = mvpEnoughConsistentCandidates[i];
 
-        // Setup the Rel Pose Estimation Problem
-        Tc1c2 = Eigen::Matrix4d::Identity();
-        RelNonCentralPosSolver rel_pose_solver;
-        foundRelTransform = rel_pose_solver.computeNonCentralRelPose(
-            kf_query_, pKFi, covins_params::placerec::rel_pose::error_thres,
-            Tc1c2, cov_loop);
+        // Setup the RANSAC problem
+        Eigen::Matrix4d Twc1;
+        Se3Solver se3solver(covins_params::placerec::ransac::min_inliers,
+                            covins_params::placerec::ransac::probability,
+                            covins_params::placerec::ransac::max_iterations);
+        int numMatches = 0;
+        for (LandmarkVector::iterator itr = vvpMapPointMatches[i].begin(); itr != vvpMapPointMatches[i].end(); ++itr) {
+            if ((*itr)) {
+                ++numMatches;
+            }
+        }
 
-        if (!foundRelTransform) {
+        bool foundTransform = se3solver.projectiveAlignment(kf_query_, vvpMapPointMatches[i], covins_params::placerec::ransac::class_threshold, Twc1); //def: 25
+
+        if (!foundTransform) {
           vbDiscarded[i] = true;
           continue;
         }
 
-        bMatch = true;
-        Eigen::Matrix4d T12 = Tc1c2;
-        mcov_mat = cov_loop;
+        // We have a potential Match --> search additional correspondences
         const Eigen::Matrix4d Twc2 = pKFi->GetPoseTwc();
-        Eigen::Matrix4d Twc1corr = Twc2 * T12.inverse();
-        mTsw = (Twc1corr*kf_query_->GetStateExtrinsics().inverse()).inverse();
-        mTcw = Twc1corr.inverse();
-        kf_match_ = pKFi;
+        Eigen::Matrix4d T12 = Twc1.inverse()*Twc2;
 
-        TransformType T_smatch_squery = kf_match_->GetPoseTsw() * mTsw.inverse();
-        TransformType T_w_s_cand = kf_match_->GetPoseTws();
-        auto yaw_match =  Utils::R2ypr(T_w_s_cand.block<3,3>(0,0)).x();
-        TransformType corrected_Tws_query = T_w_s_cand * T_smatch_squery;
-        auto yaw_query = Utils::R2ypr(corrected_Tws_query.block<3, 3>(0, 0)).x();
-        mrelative_yaw = Utils::normalizeAngle(yaw_query - yaw_match);
+        matcher.SearchBySE3(kf_query_, pKFi, vvpMapPointMatches[i], T12, covins_params::matcher::search_radius_SE3);
 
-        std::cout << "Norm: " << T_smatch_squery.block<3,1>(0,3).norm() << "Yaw" << mrelative_yaw << std::endl;
-        if (abs(mrelative_yaw) > 30.0 || T_smatch_squery.block<3,3>(0,0).norm() > 2.0)
-          bMatch = false;
+        size_t numInitialMatches = 0;
+        for (LandmarkVector::iterator itr = vvpMapPointMatches[i].begin(); itr != vvpMapPointMatches[i].end(); ++itr) {
+            if ((*itr)) {
+                ++numInitialMatches;
+            }
+        }
 
-        if (bMatch) {
-            break;
+        const int numInliersOpt = Optimization::OptimizeRelativePose(kf_query_, pKFi, vvpMapPointMatches[i], T12, 4.0f);
+
+        if (numInliersOpt < covins_params::placerec::inliers_thres) {
+              vbDiscarded[i] = true;
+              continue;
         } else {
-            vbDiscarded[i] = true;
-            continue;
+            bMatch = true;
+            Eigen::Matrix4d Twc1corr = Twc2 * T12.inverse();
+            mTsw = (Twc1corr*kf_query_->GetStateExtrinsics().inverse()).inverse();
+            mTcw = Twc1corr.inverse();
+            kf_match_ = pKFi;
+            mvpCurrentMatchedPoints = vvpMapPointMatches[i];
+            break;
         }
     }
 
@@ -171,8 +178,51 @@ auto PlaceRecognition::ComputeSE3()->bool {
         return false;
     }
 
-    return true;
+    // Retrieve MapPoints seen in Loop Keyframe and neighbors
+    KeyframeVector vpLoopConnectedKFs = kf_match_->GetConnectedKeyframesByWeight(0);
+    vpLoopConnectedKFs.push_back(kf_match_);
+    mvpLoopMapPoints.clear();
+    for (KeyframeVector::iterator vit = vpLoopConnectedKFs.begin(); vit != vpLoopConnectedKFs.end(); ++vit) {
+        KeyframePtr pKF = *vit;
+        LandmarkVector vpMapPoints = pKF->GetLandmarks();
+        for (size_t i = 0; i < vpMapPoints.size(); ++i) {
+        LandmarkPtr pMP = vpMapPoints[i];
+            if (pMP) {
+                if(!pMP->IsInvalid() && pMP->loop_point_for_kf_!=kf_query_->id_) {
+                    mvpLoopMapPoints.push_back(pMP);
+                    pMP->loop_point_for_kf_ = kf_query_->id_;
+                }
+            }
+        }
+    }
 
+    // Find more matches projecting with the computed Sim3
+    matcher.SearchByProjection(kf_query_, kf_query_->GetStateExtrinsics().inverse()*mTsw,
+                                   mvpLoopMapPoints, mvpCurrentMatchedPoints,covins_params::matcher::search_radius_proj);
+
+    // If enough matches accept Loop
+    int nTotalMatches = 0;
+    for (size_t i = 0; i < mvpCurrentMatchedPoints.size(); ++i) {
+        if(mvpCurrentMatchedPoints[i]) {
+            nTotalMatches++;
+        }
+    }
+
+    if (nTotalMatches >= covins_params::placerec::total_matches_thres) {
+        for (size_t i = 0; i < nInitialCandidates; i++) {
+            if (mvpEnoughConsistentCandidates[i]!=kf_match_) {
+                mvpEnoughConsistentCandidates[i]->SetErase();
+            }
+        }
+        return true;
+    } else {
+        for (size_t i = 0; i < nInitialCandidates; i++) {
+            mvpEnoughConsistentCandidates[i]->SetErase();
+        }
+        kf_query_->SetErase();
+
+        return false;
+    }
 }
 
 auto PlaceRecognition::ConnectLoop(KeyframePtr kf_query, KeyframePtr kf_match, TransformType T_smatch_squery, PoseMap &corrected_poses, MapPtr map)->void {
@@ -187,6 +237,54 @@ auto PlaceRecognition::ConnectLoop(KeyframePtr kf_query, KeyframePtr kf_match, T
         TransformType T_sq_si = T_w_squery.inverse() * T_wq_si;
         TransformType T_w_sicorr = T_w_sqcorr * T_sq_si;
         corrected_poses[kfi->id_] = T_w_sicorr;
+    }
+
+    if(1) {
+        //check whether matches are ok
+        std::set<idpair> lms_query, lms_match;
+        for (size_t i = 0; i < mvpCurrentMatchedPoints.size(); ++i) {
+            auto lm_m = mvpCurrentMatchedPoints[i];
+            if(!lm_m) continue;
+            if(!lms_match.insert(lm_m->id_).second) {
+            }
+            if (lm_m->GetFeatureIndex(kf_query) != -1) {
+                continue;
+            }
+            if(kf_query->GetLandmarkIndex(lm_m) != -1) {
+                continue;
+            }
+            auto lm_q = kf_query->GetLandmark(i);
+            if(!lm_q) {
+                continue;
+            }
+            if(!lms_query.insert(lm_q->id_).second) {
+            }
+            if(lm_q->GetFeatureIndex(kf_match) != -1) {
+                continue;
+            }
+            if(kf_match->GetLandmarkIndex(lm_q) != -1) {
+                continue;
+            }
+        }
+    }
+
+    // Update matched map points and replace if duplicated
+    for (size_t i = 0; i < mvpCurrentMatchedPoints.size(); ++i) {
+        if (mvpCurrentMatchedPoints[i]) {
+            if (mvpCurrentMatchedPoints[i]->GetFeatureIndex(kf_query_) != -1) {
+                continue; //don't add MPs to mpCurrentKF that already exists there
+            }
+
+            LandmarkPtr pLoopMP = mvpCurrentMatchedPoints[i];
+            LandmarkPtr pCurMP = kf_query->GetLandmark(i);
+            if(pCurMP) {
+                FuseLandmark(pLoopMP,pCurMP,map);
+            } else {
+                kf_query->AddLandmark(pLoopMP,i);
+                pLoopMP->AddObservation(kf_query,i);
+                pLoopMP->ComputeDescriptor();
+            }
+        }
     }
 
     corrected_poses[kf_query->id_] = T_w_sqcorr;
@@ -224,16 +322,14 @@ auto PlaceRecognition::CorrectLoop()->bool {
     this->ConnectLoop(kf_query_,kf_match_,T_smatch_squery,corrected_poses,map_query);
 
     if(map_query->GetKeyframe(kf_match_->id_)){
-        LoopConstraint lc(kf_match_,kf_query_,T_smatch_squery, mrelative_yaw, mcov_mat) ;
+        LoopConstraint lc(kf_match_,kf_query_,T_smatch_squery);
         map_query->AddLoopConstraint(lc);
         if(perform_pgo_)
         {
             KeyframeVector current_connections_query = kf_query_->GetConnectedKeyframesByWeight(0);
-            
             for(auto kfi : current_connections_query) {
                 map_query->UpdateCovisibilityConnections(kfi->id_);
             }
-
             Optimization::PoseGraphOptimization(map_query, corrected_poses);
             map_query->WriteKFsToFile("_aft_PGO");
             map_query->WriteKFsToFileAllAg();

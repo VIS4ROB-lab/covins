@@ -131,7 +131,9 @@ protected:
     LandmarkVector              mvpLoopMapPoints;
     TransformType               mTcw;
     TransformType               mTsw;
-
+    TypeDefs::Matrix6Type       mcov_mat;
+    double                      mrelative_yaw = -1.0;
+    
     // Sync
     std::mutex                  mtx_in_;
     std::mutex                  mtx_finish_;

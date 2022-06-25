@@ -63,7 +63,7 @@ class ImageMatchingAlgorithm : public MatchingAlgorithm {
 
   ///@brief Constructor.
   ///@param distanceThreshold   Descriptor distance threshold.
-  ImageMatchingAlgorithm(float distanceThreshold,
+  ImageMatchingAlgorithm(float distanceThreshold,  float distanceRatioThreshold = 0.8,
                          bool epipoleCheck = false,
                          bool triangCheck = false);
 
@@ -91,6 +91,10 @@ class ImageMatchingAlgorithm : public MatchingAlgorithm {
 
   /// \brief Get the distance threshold for which matches exceeding it will not be returned as matches.
   virtual float distanceThreshold() const;
+
+  /// \brief Get the distance threshold ratio for getting distinctive matches
+  virtual float distanceRatioThreshold() const;
+
   /// \brief Set the distance threshold for which matches exceeding it will not be returned as matches.
   void setDistanceThreshold(float distanceThreshold);
 
@@ -112,15 +116,20 @@ class ImageMatchingAlgorithm : public MatchingAlgorithm {
    * @remark Points that absolutely don't match will return float::max.
    */
   virtual float distance(size_t indexA, size_t indexB) const {
-    const float dist = static_cast<float>(specificDescriptorDistance(
-        kfPtrA_->GetDescriptor(indexA),
-        kfPtrB_->GetDescriptor(indexB)));
 
-    if (dist < distanceThreshold_) {
+    if (covins_params::features::type == "ORB") {
+     const float dist = static_cast<float>(
+          DescriptorDistanceHamming(kfPtrA_->GetDescriptorCV(indexA),
+                                    kfPtrB_->GetDescriptorCV(indexB)));
+      if (dist < distanceThreshold_) {
       if (verifyMatch(indexA, indexB))
         return dist;
     }
     return std::numeric_limits<float>::max();
+    } else {
+      std::cout << "Descriptor Not Supported Currently. Select ORB" << std::endl;
+            exit(-1);
+    }
   }
 
   /// \brief Geometric verification of a match.
@@ -167,6 +176,9 @@ class ImageMatchingAlgorithm : public MatchingAlgorithm {
   /// Distances above this threshold will not be returned as matches.
   float distanceThreshold_;
 
+  /// If Best Match dist / Second-best match is above this, reject the match
+  float distanceRatioThreshold_;
+
   /// The number of matches.
   size_t numMatches_ = 0;
   /// The number of uncertain matches.
@@ -198,6 +210,12 @@ class ImageMatchingAlgorithm : public MatchingAlgorithm {
   Matches matches_;
 
   bool validRelativeUncertainty_ = false;
+
+  /// \brief Calculates the distance between two descriptors.
+  u_int32_t DescriptorDistanceHamming(cv::Mat descriptorA,
+                              cv::Mat descriptorB) const {
+    return cv::norm(descriptorA, descriptorB, cv::NORM_HAMMING);
+  }
 
   /// \brief Calculates the distance between two descriptors.
   // copy from BriskDescriptor.hpp

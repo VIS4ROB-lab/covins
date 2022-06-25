@@ -948,6 +948,21 @@ auto Map::WriteKFsToFile(std::string suffix)->void{
     }
 }
 
+auto Map::WriteKFsToFileAllAg(std::string prefix) -> void {
+    for(std::set<size_t>::iterator sit = associated_clients_.begin();sit!=associated_clients_.end();++sit){
+        int client_id = *sit;
+        std::stringstream ss;
+        ss << covins_params::sys::output_dir /*<< covins_params::sys::time*/
+           << "stamped_traj_estimate" << prefix << ".txt";
+        if(sit == associated_clients_.begin())
+          this->WriteStateToCsvTUM(ss.str(), client_id);
+        else {
+         this->WriteStateToCsvTUM(ss.str(), client_id, false);
+        }
+          
+    }
+}
+
 auto Map::WriteStateToCsv(const std::string& filename, const size_t client_id)->void {
     KeyframeVector found_kfs;
     found_kfs.reserve(keyframes_.size());
@@ -992,9 +1007,7 @@ auto Map::WriteStateToCsv(const std::string& filename, const size_t client_id)->
         std::cout << COUTERROR << ": Unable to open file: " << filename << std::endl;
 }
 
-auto Map::WriteStateToCsvTUM(const std::string& filename, const size_t client_id)->void {
-    // TUM format for EVO: stamp tx ty tz qx qy qz qw - separated by spaces
-
+auto Map::WriteStateToCsvTUM(const std::string& filename, const size_t client_id, const bool trnc)->void {
     KeyframeVector found_kfs;
     found_kfs.reserve(keyframes_.size());
     // Get all frames from the required client
@@ -1006,7 +1019,7 @@ auto Map::WriteStateToCsvTUM(const std::string& filename, const size_t client_id
         }
     }
 
-    if(found_kfs.empty()) //do not overwrite files from other maps with empty files
+    if(found_kfs.empty()) //would overwrite files from other maps with empty files
     return;
 
     // Sort the keyframes by timestamp
@@ -1014,22 +1027,33 @@ auto Map::WriteStateToCsvTUM(const std::string& filename, const size_t client_id
 
     // Write out the keyframe data
     std::ofstream keyframes_file;
-    keyframes_file.open(filename, std::ios::out | std::ios::trunc);
+    if(trnc)
+      keyframes_file.open(filename, std::ios::out | std::ios::trunc);
+    else
+      keyframes_file.open(filename, std::ios::out | std::ios::app);
+    
     if (keyframes_file.is_open()) {
         for (KeyframeVector::const_iterator vit = found_kfs.begin(); vit != found_kfs.end(); ++vit) {
             KeyframePtr kf = (*vit);
             const double stamp = kf->timestamp_;
+            Eigen::Vector3d bias_accel, bias_gyro;
+            kf->GetStateBias(bias_accel, bias_gyro);
+            Eigen::Vector3d vel = kf->GetStateVelocity();
             const Eigen::Matrix4d Tws = kf->GetPoseTws();
             const Eigen::Quaterniond q(Tws.block<3,3>(0,0));
 
             keyframes_file << std::setprecision(25) << stamp << " ";
             keyframes_file << Tws(0,3) << " " << Tws(1,3) << " " << Tws(2,3) << " ";
-            keyframes_file << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << std::endl;
+            keyframes_file << q.x() << " " << q.y() << " " << q.z() << " " << q.w() 
+            << std::endl;
         }
         keyframes_file.close();
     }
     else
         std::cout << COUTERROR << ": Unable to open file: " << filename << std::endl;
 }
+
+
+
 
 } //end ns

@@ -30,6 +30,7 @@ feat.desc_length: 32 # [Byte] COVINS-ORB: 32
 
 feat.num_octaves: 1 # Number of levels in the scale pyramid
 feat.scale_factor: 2.0 # Scale factor between levels in the scale pyramid
+extractor.img_match_thres: 40.0 # Use 30-40 for ORB Features (Hamming Distance) and use 500 for SIFT Features
 
 #--------------------------------------------------------------------------------------------
 # Feature Matching
@@ -60,24 +61,40 @@ placerec.active: 1
 
 placerec.type: 'COVINS' # this allows to integrate other PR algorithms. Cuurently, only 'COVINS' is supported
 
-placerec.start_after_kf: 10 # map matching skips the first x KFs after map initialization
+placerec.start_after_kf: 7 # map matching skips the first x KFs after map initialization
 placerec.consecutive_loop_dist: 10 # after finding a loop, the next x KFs are not considered loop closure query
-placerec.min_loop_dist: 10 # minimum number of KFs between the two ends of the loop to accept loop
+placerec.min_loop_dist: 50 # minimum number of KFs between the two ends of the loop to accept loop
 placerec.cov_consistency_thres: 3
 
 placerec.solver_iterations: 5
-placerec.matches_thres: 20
-placerec.matches_thres_merge: 20
+placerec.matches_thres: 25
+placerec.matches_thres_merge: 25
 placerec.inliers_thres: 20
 
 placerec.total_matches_thres: 40
 
-placerec.ransac.min_inliers: 6
+placerec.use_4dof: 0
+
+placerec.ransac.min_inliers: 6 #def 6
 placerec.ransac.probability: 0.99
 placerec.ransac.max_iterations: 300
-placerec.ransac.class_threshold: 25
+placerec.ransac.class_threshold: 25 #def:25 - threshold for inlier classification
 
-placerec.exclude_kfs_with_id_less_than: 10
+# New parameters for 17 PT (non_central_rel_pose)
+placerec.nc_rel_pose.rp_error: 10 # In Pixels
+placerec.nc_rel_pose.min_inliers: 100 # Min inliers for succesful Ransac solution
+placerec.nc_rel_pose.max_iters: 4000 # Ransac Max Iteration
+placerec.nc_rel_pose.cov_thres: 10 #Max Covariance Matrix trace for accepting loop
+placerec.nc_rel_pose.cov_iters: 30 #No. of iterations for building the covariance Matrix
+
+# New parameters for 5 PT  (rel_pose)
+placerec.rel_pose.error_thres: 16 # threshold for inlier classification
+placerec.rel_pose.min_inliers: 20 # Min inliers for succesful Ransac solution
+placerec.rel_pose.max_iters: 200 # Ransac Max Iteration
+placerec.rel_pose.min_img_matches: 20 # Min image matches required to proceed for 5 PT Ransac
+
+
+placerec.exclude_kfs_with_id_less_than: 7
 placerec.inter_map_matches_only: 0
 
 #--------------------------------------------------------------------------------------------
@@ -96,6 +113,14 @@ opt.perform_pgo: 1
 opt.pgo_fix_kfs_after_gba: 1 #KFs that were part of a GBA are fixed in future PGO runs
 opt.pgo_fix_poses_loaded_maps: 0
 opt.gba_fix_poses_loaded_maps: 0
+
+opt.wt_kf_R: 1e1
+opt.wt_kf_T: 1
+opt.wt_lp_R1: 1
+opt.wt_lp_T1: 0.5
+opt.wt_lp_R2: 1
+opt.wt_lp_T2: 0.1
+opt.cov_switch: 0.2
 
 #--------------------------------------------------------------------------------------------
 # Visualization

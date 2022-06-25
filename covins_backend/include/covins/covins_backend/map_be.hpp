@@ -187,6 +187,8 @@ public:
     // Write-Out
     auto WriteKFsToFile(std::string suffix = std::string())                             ->void;
 
+    auto WriteKFsToFileAllAg(std::string prefix = std::string())                        ->void;
+
 protected:
     // Outlier Removal
     virtual auto RemoveLandmarkOutliers()                                               ->int;
@@ -195,7 +197,7 @@ protected:
     auto WriteStateToCsv(const std::string& filename,
                          const size_t client_id)                                        ->void;
     auto WriteStateToCsvTUM(const std::string& filename,
-                         const size_t client_id)                                        ->void;
+                         const size_t client_id, const bool truncate = true)            ->void;
 
     // Loop Correction
     LoopVector                  loop_constraints_;

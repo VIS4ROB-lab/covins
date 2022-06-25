@@ -53,6 +53,100 @@
 
 namespace covins {
 
+
+inline double radToDeg(double angle) {
+    return angle * 180.0 / M_PI;
+}
+
+inline double degToRad(double angle) {
+    return angle * M_PI / 180.0;
+}
+
+
+static TypeDefs::Matrix3Type ypr2R(const TypeDefs::Vector3Type &ypr) {
+    auto y = ypr(0) / 180.0 * M_PI;
+    auto p = ypr(1) / 180.0 * M_PI;
+    auto r = ypr(2) / 180.0 * M_PI;
+
+    TypeDefs::Matrix3Type Rz;
+    Rz << cos(y), -sin(y), 0,
+        sin(y), cos(y), 0,
+        0, 0, 1;
+
+    TypeDefs::Matrix3Type Ry;
+    Ry << cos(p), 0., sin(p),
+        0., 1., 0.,
+        -sin(p), 0., cos(p);
+
+    TypeDefs::Matrix3Type Rx;
+    Rx << 1., 0., 0.,
+        0., cos(r), -sin(r),
+        0., sin(r), cos(r);
+
+    return Rz * Ry * Rx;
+}
+
+
+TypeDefs::QuaternionType eulerAnglesToQuat(double yaw, double pitch, double roll) {
+    // Code follows example in https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+
+    // transform degre to rad
+    yaw = degToRad(yaw);
+    pitch = degToRad(pitch);
+    roll = degToRad(roll);
+
+    // Abbreviations for the various angular functions
+    double cy = std::cos(yaw / 2.0);
+    double sy = std::sin(yaw / 2.0);
+    double cp = std::cos(pitch / 2.0);
+    double sp = std::sin(pitch / 2.0);
+    double cr = std::cos(roll / 2.0);
+    double sr = std::sin(roll / 2.0);
+
+    TypeDefs::QuaternionType quat;
+    quat.w() = static_cast<TypeDefs::precision_t>(cy * cp * cr + sy * sp * sr);
+    quat.x() = static_cast<TypeDefs::precision_t>(cy * cp * sr - sy * sp * cr);
+    quat.y() = static_cast<TypeDefs::precision_t>(sy * cp * sr + cy * sp * cr);
+    quat.z() = static_cast<TypeDefs::precision_t>(sy * cp * cr - cy * sp * sr);
+
+    if (quat.w() < 0) {
+        quat.w() = -quat.w();
+        quat.x() = -quat.x();
+        quat.y() = -quat.y();
+        quat.z() = -quat.z();
+    }
+
+    return quat;
+}
+
+
+std::array<double, 3> quatToEulerAngles(const TypeDefs::QuaternionType& quat) {
+    // Code follows example in https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+
+    // yaw (z-axis rotation)
+    double siny_cosp = 2 * (quat.w() * quat.z() + quat.x() * quat.y());
+    double cosy_cosp = 1 - 2 * (quat.y() * quat.y() + quat.z() * quat.z());
+    double yaw = std::atan2(siny_cosp, cosy_cosp);
+
+    // pitch (y-axis rotation)
+    double sinp = 2 * (quat.w() * quat.y() - quat.z() * quat.x());
+    double pitch;
+    if (std::abs(sinp) >= 1)
+        pitch = std::copysign(M_PI / 2, sinp); // use 90 degrees if out of range
+    else
+        pitch = std::asin(sinp);
+
+    // roll (x-axis rotation)
+    double sinr_cosp = 2 * (quat.w() * quat.x() + quat.y() * quat.z());
+    double cosr_cosp = 1 - 2 * (quat.x() * quat.x() + quat.y() * quat.y());
+    double roll = std::atan2(sinr_cosp, cosr_cosp);
+
+
+    std::array<double, 3> angles = {radToDeg(yaw), radToDeg(pitch), radToDeg(roll)};
+    return angles;
+}
+
+
 auto Optimization::GlobalBundleAdjustment(MapPtr map, int interations_limit, double time_limit, bool visual_only, bool outlier_removal, bool estimate_bias)->void {
     std::cout << "+++ GBA: Start +++" << std::endl;
 
@@ -830,11 +924,426 @@ auto Optimization::OptimizeRelativePose(KeyframePtr kf1, KeyframePtr kf2, Landma
     return numCorrespondences - numBad;
 }
 
-auto Optimization::PoseGraphOptimization(MapPtr map, PoseMap corrected_poses)->void {
+// auto Optimization::PoseGraphOptimization(MapPtr map, PoseMap corrected_poses)->void {
+
+//     ceres::Problem::Options problem_options;
+//     problem_options.enable_fast_removal = true;
+//     ceres::Problem problem(problem_options);
+
+//     ceres::LocalParameterization *local_pose_param = new robopt::local_param::PoseQuaternionLocalParameterization();
+
+//     KeyframeVector keyframes = map->GetKeyframesVec();
+//     LandmarkVector landmarks = map->GetLandmarksVec();
+
+//     // Add Keyframes
+//     for (size_t i = 0; i < keyframes.size(); ++i) {
+//         KeyframePtr kf = keyframes[i];
+//         if(kf->IsInvalid()) continue;
+
+//         TransformType T_ws_init;
+//         PoseMap::iterator mit = corrected_poses.find(kf->id_);
+//         if(mit != corrected_poses.end()) T_ws_init = mit->second;
+//         else T_ws_init = kf->GetPoseTws();
+
+//         // Add parameter blocks
+//         kf->UpdateCeresFromState(kf->ceres_pose_,kf->ceres_velocity_and_bias_,kf->ceres_extrinsics_);
+//         QuaternionType q_ws_init(T_ws_init.block<3,3>(0,0));
+//         kf->ceres_pose_[0] = q_ws_init.x();
+//         kf->ceres_pose_[1] = q_ws_init.y();
+//         kf->ceres_pose_[2] = q_ws_init.z();
+//         kf->ceres_pose_[3] = q_ws_init.w();
+//         kf->ceres_pose_[4] = T_ws_init(0,3);
+//         kf->ceres_pose_[5] = T_ws_init(1,3);
+//         kf->ceres_pose_[6] = T_ws_init(2,3);
+//         problem.AddParameterBlock(kf->ceres_pose_, robopt::defs::pose::kPoseBlockSize, local_pose_param);
+//         if(kf->id_.first == 0 && kf->id_.second == map->id_map_)
+//             problem.SetParameterBlockConstant(kf->ceres_pose_);
+//         problem.AddParameterBlock(kf->ceres_extrinsics_, robopt::defs::pose::kPoseBlockSize, local_pose_param);
+//         problem.SetParameterBlockConstant(kf->ceres_extrinsics_);
+
+//         if(kf->is_gba_optimized_ && covins_params::opt::pgo_fix_kfs_after_gba) {
+//             if(kf->id_.first % 50 == 0) std::cout << COUTNOTICE << "Set GBA KFs constant" << std::endl;
+//             problem.SetParameterBlockConstant(kf->ceres_pose_);
+//         } else if(kf->is_loaded_ && covins_params::opt::pgo_fix_poses_loaded_maps) {
+//             if(kf->id_.first % 50 == 0) std::cout << COUTNOTICE << "Set loaded KFs constant" << std::endl;
+//             problem.SetParameterBlockConstant(kf->ceres_pose_);
+//         }
+//     }
+
+//     Eigen::Matrix<precision_t,6,6> sqrt_info = Eigen::Matrix<precision_t,6,6>::Identity();
+//     sqrt_info.topLeftCorner<3,3>() *= 100.0;
+//     sqrt_info.bottomRightCorner<3,3>() *= 1e4;
+//     std::set<std::pair<KeyframePtr,KeyframePtr>> inserted_edges;
+
+//     // Current loop edges
+//     {
+//         Map::LoopVector loops = map->GetLoopConstraints();
+//         auto i = loops[loops.size()-1];
+//         KeyframePtr kf1 = i.kf1;
+//         KeyframePtr kf2 = i.kf2;
+//         TransformType T_12 = i.T_s1_s2;
+//         Vector3Type t_12 = T_12.block<3,1>(0,3);
+//         QuaternionType q_12(T_12.block<3,3>(0,0));
+//         ceres::CostFunction* f = new robopt::posegraph::SixDofBetweenError(q_12, t_12, sqrt_info, robopt::defs::pose::PoseErrorType::kImu);
+//         problem.AddResidualBlock(f, NULL, kf1->ceres_pose_, kf2->ceres_pose_, kf1->ceres_extrinsics_, kf2->ceres_extrinsics_);
+//     }
+
+//     // Set keyframe edges
+//     for (size_t i = 0; i < keyframes.size(); ++i) {
+//         KeyframePtr kf = keyframes[i];
+//         if(kf->IsInvalid()) continue;
+
+//         TransformType T_w_si = kf->GetPoseTws();
+
+//         // Edge to successor
+//         KeyframePtr succ = kf->GetSuccessor();
+//         if(!succ) continue;
+//         TransformType T_w_ssucc = succ->GetPoseTws();
+//         TransformType T_si_ssucc = T_w_si.inverse() * T_w_ssucc;
+//         Vector3Type t_si_ssucc = T_si_ssucc.block<3,1>(0,3);
+//         QuaternionType q_si_ssucc(T_si_ssucc.block<3,3>(0,0));
+
+//         std::pair<KeyframePtr,KeyframePtr> kf_pair = std::make_pair(kf,succ);
+//         if(inserted_edges.count(kf_pair)) {
+//             std::cout << COUTWARN << "KF edge already added" << std::endl;
+//             continue;
+//         } else {
+//             inserted_edges.insert(kf_pair);
+//         }
+
+//         ceres::CostFunction* f = new robopt::posegraph::SixDofBetweenError(q_si_ssucc, t_si_ssucc, sqrt_info, robopt::defs::pose::PoseErrorType::kImu);
+//         problem.AddResidualBlock(f, NULL, kf->ceres_pose_, succ->ceres_pose_, kf->ceres_extrinsics_, succ->ceres_extrinsics_);
+//     }
+
+//     // Solve
+//     ceres::Solver::Options solver_options;
+//     solver_options.linear_solver_type = ceres::SPARSE_SCHUR;
+//     solver_options.num_threads = covins_params::sys::threads_server;
+//     solver_options.num_linear_solver_threads = covins_params::sys::threads_server;
+//     solver_options.trust_region_strategy_type = ceres::DOGLEG;
+//     solver_options.max_num_iterations = covins_params::opt::pgo_iteration_limit;
+//     ceres::Solver::Summary summary;
+// //    std::cout << "--> Solve" << std::endl;
+//     ceres::Solve(solver_options, &problem, &summary);
+
+//     // Recover the optimized data
+
+//     PoseMap non_corrected_poses;
+
+//     // Keyframes
+//     for (size_t i = 0; i < keyframes.size(); ++i) {
+//         KeyframePtr kf = keyframes[i];
+//         if(kf->IsInvalid()) {
+//             continue;
+//         }
+//         TransformType T_ws_uncorrected = kf->GetPoseTws();
+//         non_corrected_poses[kf->id_] = T_ws_uncorrected;
+//         TransformType T_ws_corrected = Utils::Ceres2Transform(kf->ceres_pose_);
+//         kf->UpdateFromCeres(kf->ceres_pose_,kf->ceres_velocity_and_bias_,kf->ceres_extrinsics_);
+//         Vector3Type velocity_corrected = T_ws_corrected.block<3,3>(0,0) * T_ws_uncorrected.inverse().block<3,3>(0,0) * kf->GetStateVelocity();
+//         kf->SetStateVelocity(velocity_corrected);
+
+//         kf->SetPoseOptimized();
+//     }
+
+//     // Landmarks
+//     int removed_lms = 0;
+//     for(auto lm : landmarks) {
+//         if(lm->IsInvalid()) {
+//             continue;
+//         }
+//         KeyframePtr kf_ref = lm->GetReferenceKeyframe();
+//         if(!kf_ref){
+//             if(!lm->GetObservations().empty())
+//             map->EraseLandmark(lm);
+//             removed_lms++;
+//             continue;
+//         }
+//         TransformType T_ws_uncorrected;
+//         PoseMap::iterator mit = non_corrected_poses.find(kf_ref->id_);
+//         if(mit != non_corrected_poses.end()) T_ws_uncorrected = mit->second;
+//         else{
+//             map->EraseLandmark(lm);
+//             removed_lms++;
+//             continue;
+//         }
+//         TransformType T_sw_uncorrected = T_ws_uncorrected.inverse();
+
+//         Vector3Type pos_w_uncorrected = lm->GetWorldPos();
+//         Vector3Type pos_s = T_sw_uncorrected.block<3,3>(0,0) * pos_w_uncorrected + T_sw_uncorrected.block<3,1>(0,3);
+
+//         TransformType T_ws_corrected = kf_ref->GetPoseTws();
+//         Vector3Type pos_w_corrected = T_ws_corrected.block<3,3>(0,0) * pos_s + T_ws_corrected.block<3,1>(0,3);
+//         lm->SetWorldPos(pos_w_corrected);
+//         lm->SetOptimized();
+//     }
+
+//     std::cout << "--> PGO removed " << removed_lms << " LMs" << std::endl;
+// }
+
+
+// 4 DOF PGO
+auto Optimization::PoseGraphOptimization4DoF(MapPtr map, PoseMap corrected_poses)->void {
+    std::cout << "+++ 4 DoF PGO: Start +++" << std::endl;
 
     ceres::Problem::Options problem_options;
     problem_options.enable_fast_removal = true;
     ceres::Problem problem(problem_options);
+
+    ceres::LossFunction *loss_function;
+    // loss_function = new ceres::CauchyLoss(1.0);
+    loss_function = new ceres::HuberLoss(0.1);
+
+    ceres::LocalParameterization *angle_local_parameterization = AngleLocalParameterization::Create();
+
+    KeyframeVector keyframes = map->GetKeyframesVec();
+    LandmarkVector landmarks = map->GetLandmarksVec();
+
+    std::map<TypeDefs::idpair, QuaternionType> q_ws_map;
+    // Add Keyframes
+    for (size_t i = 0; i < keyframes.size(); ++i) {
+
+        KeyframePtr kf = keyframes[i];
+        if(kf->IsInvalid())
+            continue;
+
+        TransformType T_ws_init;
+        T_ws_init = kf->GetPoseTws();
+
+        // Add parameter blocks
+        kf->UpdateCeresFromState(kf->ceres_pose_,kf->ceres_velocity_and_bias_,kf->ceres_extrinsics_);
+        QuaternionType q_ws_init(T_ws_init.block<3,3>(0,0));
+        q_ws_map[kf->id_] = q_ws_init;
+
+        auto ypr = Utils::R2ypr(T_ws_init.block<3,3>(0,0));
+        kf->ceres_pose_[1] = ypr.x();
+        kf->ceres_pose_[2] = ypr.y();
+        kf->ceres_pose_[3] = ypr.z();
+        kf->ceres_pose_[4] = T_ws_init(0,3);
+        kf->ceres_pose_[5] = T_ws_init(1,3);
+        kf->ceres_pose_[6] = T_ws_init(2,3);
+
+        problem.AddParameterBlock(&kf->ceres_pose_[1], 1, angle_local_parameterization);
+        problem.AddParameterBlock(&kf->ceres_pose_[4], 3);
+
+        if(kf->id_.first == 0 && kf->id_.second == map->id_map_) {
+            problem.SetParameterBlockConstant(&kf->ceres_pose_[1]);
+            problem.SetParameterBlockConstant(&kf->ceres_pose_[4]);
+        }
+
+        if(kf->is_gba_optimized_ && covins_params::opt::pgo_fix_kfs_after_gba) {
+            if(kf->id_.first % 50 == 0)
+                std::cout << COUTNOTICE << "Set GBA KFs constant" << std::endl;
+            problem.SetParameterBlockConstant(&kf->ceres_pose_[1]);
+            problem.SetParameterBlockConstant(&kf->ceres_pose_[4]);
+        } else if(kf->is_loaded_ && covins_params::opt::pgo_fix_poses_loaded_maps) {
+            if(kf->id_.first % 50 == 0)
+                std::cout << COUTNOTICE << "Set loaded KFs constant" << std::endl;
+            problem.SetParameterBlockConstant(&kf->ceres_pose_[1]);
+            problem.SetParameterBlockConstant(&kf->ceres_pose_[4]);
+        }
+
+    }
+
+    std::set<std::pair<KeyframePtr,KeyframePtr>> inserted_edges;
+
+    // Set loop constraints
+    Map::LoopVector loops = map->GetLoopConstraints();
+
+    for(auto i : loops) {
+        KeyframePtr kf1 = i.kf1;
+        KeyframePtr kf2 = i.kf2;
+        TransformType T_12 = i.T_s1_s2;
+        double relative_yaw = i.relative_yaw_smatch_squery;
+        double cov = i.cov_mat.block<3,3>(3,3).trace();
+        double weight = 1;
+
+        // if (cov < 0.2) {
+        //   weight = 0.5;
+        // } else if (cov < 0.5) {
+        //   weight = 0.1;
+        // } else
+        //   weight = 0.01;
+
+        Vector3Type t_12 = T_12.block<3,1>(0,3);
+        auto euler_conncected = Utils::R2ypr(q_ws_map[kf1->id_].toRotationMatrix());
+
+
+        ceres::CostFunction* cost_function = FourDOFWeightError::Create(t_12.x(), t_12.y(), t_12.z(),
+                                                                        relative_yaw, euler_conncected.y(), euler_conncected.z(), weight);
+
+        problem.AddResidualBlock(cost_function, loss_function,
+                                 &kf1->ceres_pose_[1],
+                                 &kf1->ceres_pose_[4],
+                                 &kf2->ceres_pose_[1],
+                                 &kf2->ceres_pose_[4]);
+
+    }
+
+    // Set keyframe edges
+    for (size_t i = 0; i < keyframes.size(); ++i) {
+        KeyframePtr kf = keyframes[i];
+        if(kf->IsInvalid()) continue;
+
+        TransformType T_w_si = kf->GetPoseTws();
+
+        // Edge to successor
+        KeyframePtr succ = kf->GetSuccessor();
+        if(!succ) continue;
+        
+        TransformType T_w_ssucc = succ->GetPoseTws();
+        TransformType T_si_ssucc = T_w_si.inverse() * T_w_ssucc;
+        Vector3Type t_si_ssucc = T_si_ssucc.block<3,1>(0,3);
+        QuaternionType q_si_ssucc(T_si_ssucc.block<3, 3>(0, 0));
+
+        Vector3Type relative_t = t_si_ssucc;
+        double relative_yaw = succ->ceres_pose_[1] - kf->ceres_pose_[1];
+        QuaternionType q_ws = q_ws_map[kf->id_];
+        Vector3Type euler_conncected = Utils::R2ypr(q_ws.toRotationMatrix());
+        
+        std::pair<KeyframePtr,KeyframePtr> kf_pair = std::make_pair(kf,succ);
+        if(inserted_edges.count(kf_pair)) {
+            std::cout << COUTWARN << "KF edge already added" << std::endl;
+            continue;
+        } else {
+            inserted_edges.insert(kf_pair);
+        }
+
+        ceres::CostFunction *cost_function = FourDOFError::Create(
+            relative_t.x(), relative_t.y(), relative_t.z(), relative_yaw,
+            euler_conncected.y(), euler_conncected.z());
+        
+        problem.AddResidualBlock(cost_function, NULL, &kf->ceres_pose_[1],
+                                 &kf->ceres_pose_[4], &succ->ceres_pose_[1],
+                                 &succ->ceres_pose_[4]);
+    }
+
+    // Set Additonal Keyframe edges
+    for (size_t i = 0; i < keyframes.size(); ++i) {
+            KeyframePtr kf = keyframes[i];
+            if(kf->IsInvalid()) continue;
+
+            TransformType T_w_si = kf->GetPoseTws();
+
+            KeyframeVector connections;
+            KeyframePtr temp_kf = keyframes[i];
+            // Use 4 Previous KFs for additional Edges as done in VINS Fusion
+            for (int j = 1; j < 5; ++j) {
+              if (int(kf->id_.first) - j > 0) {
+                temp_kf = temp_kf->GetPredecessor();
+                connections.push_back(temp_kf);
+
+                }
+            }
+
+            for(auto kfc : connections) {
+
+                TransformType T_w_sc = kfc->GetPoseTws();
+                TransformType T_si_sc = T_w_si.inverse() * T_w_sc;
+                Vector3Type t_si_sc = T_si_sc.block<3,1>(0,3);
+                QuaternionType q_si_sc(T_si_sc.block<3,3>(0,0));
+
+                Vector3Type relative_t = t_si_sc;
+                double relative_yaw = kfc->ceres_pose_[1] - kf->ceres_pose_[1];
+                QuaternionType q_ws = q_ws_map[kf->id_];
+                Vector3Type euler_conncected = Utils::R2ypr(q_ws.toRotationMatrix());
+
+                std::pair<KeyframePtr,KeyframePtr> kf_pair = std::make_pair(kf,kfc);
+                if(inserted_edges.count(kf_pair)) {
+                    continue;
+                } else {
+                    inserted_edges.insert(kf_pair);
+                }
+
+                ceres::CostFunction *cost_function = FourDOFError::Create(
+                    relative_t.x(), relative_t.y(), relative_t.z(),
+                    relative_yaw, euler_conncected.y(), euler_conncected.z());
+        
+                problem.AddResidualBlock(cost_function, NULL, &kf->ceres_pose_[1],
+                                 &kf->ceres_pose_[4], &kfc->ceres_pose_[1],
+                                 &kfc->ceres_pose_[4]);
+            }
+        }
+
+
+    // Solve
+    ceres::Solver::Options solver_options;
+    solver_options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
+    solver_options.num_threads = covins_params::sys::threads_server;
+    solver_options.num_linear_solver_threads = covins_params::sys::threads_server;
+    solver_options.max_num_iterations = covins_params::opt::pgo_iteration_limit;
+    ceres::Solver::Summary summary;
+    // std::cout << "--> Solve" << std::endl;
+    ceres::Solve(solver_options, &problem, &summary);
+    // std::cout << summary.FullReport() << std::endl;
+
+    // Recover the optimized data
+    PoseMap non_corrected_poses;
+
+    // Keyframes
+    for (size_t i = 0; i < keyframes.size(); ++i) {
+        KeyframePtr kf = keyframes[i];
+        if(kf->IsInvalid()) {
+            std::cout << COUTWARN << kf << ": invalid" << std::endl;
+            continue;
+        }
+        TransformType T_ws_uncorrected = kf->GetPoseTws();
+        non_corrected_poses[kf->id_] = T_ws_uncorrected;
+
+        QuaternionType q = eulerAnglesToQuat(kf->ceres_pose_[1], kf->ceres_pose_[2], kf->ceres_pose_[3]);
+        kf->ceres_pose_[0] = q.x();
+        kf->ceres_pose_[1] = q.y();
+        kf->ceres_pose_[2] = q.z();
+        kf->ceres_pose_[3] = q.w();
+
+        TransformType T_ws_corrected = Utils::Ceres2Transform(kf->ceres_pose_);
+        kf->UpdateFromCeres(kf->ceres_pose_,kf->ceres_velocity_and_bias_,kf->ceres_extrinsics_);
+        Vector3Type velocity_corrected = T_ws_corrected.block<3,3>(0,0) * T_ws_uncorrected.inverse().block<3,3>(0,0) * kf->GetStateVelocity();
+        kf->SetStateVelocity(velocity_corrected);
+    }
+
+    // Landmarks
+    for(auto lm : landmarks) {
+        if(lm->IsInvalid()) {
+            std::cout << COUTWARN << lm << ": invalid" << std::endl;
+            continue;
+        }
+        KeyframePtr kf_ref = lm->GetReferenceKeyframe();
+        if(!kf_ref){
+            std::cout << COUTWARN << lm << " has no ref-KF" << std::endl;
+            continue;
+        }
+        TransformType T_ws_uncorrected;
+        PoseMap::iterator mit = non_corrected_poses.find(kf_ref->id_);
+        if(mit != non_corrected_poses.end()) T_ws_uncorrected = mit->second;
+        else{
+            std::cout << COUTERROR << "mit == non_corrected_poses.end()" << std::endl;
+            exit(-1);
+        }
+        TransformType T_sw_uncorrected = T_ws_uncorrected.inverse();
+
+        Vector3Type pos_w_uncorrected = lm->GetWorldPos();
+        Vector3Type pos_s = T_sw_uncorrected.block<3,3>(0,0) * pos_w_uncorrected + T_sw_uncorrected.block<3,1>(0,3);
+
+        TransformType T_ws_corrected = kf_ref->GetPoseTws();
+        Vector3Type pos_w_corrected = T_ws_corrected.block<3,3>(0,0) * pos_s + T_ws_corrected.block<3,1>(0,3);
+        lm->SetWorldPos(pos_w_corrected);
+    }
+
+    std::cout << "+++ 4 DoF PGO: End +++" << std::endl;
+}
+
+auto Optimization::PoseGraphOptimization(
+    MapPtr map, PoseMap corrected_poses) -> void {
+  
+    std::cout << "+++ PGO: Start +++" << std::endl;
+
+    ceres::Problem::Options problem_options;
+    problem_options.enable_fast_removal = true;
+    ceres::Problem problem(problem_options);
+
+    ceres::LossFunction *loss_function;
+    loss_function = new ceres::CauchyLoss(1.0);
 
     ceres::LocalParameterization *local_pose_param = new robopt::local_param::PoseQuaternionLocalParameterization();
 
@@ -866,33 +1375,83 @@ auto Optimization::PoseGraphOptimization(MapPtr map, PoseMap corrected_poses)->v
             problem.SetParameterBlockConstant(kf->ceres_pose_);
         problem.AddParameterBlock(kf->ceres_extrinsics_, robopt::defs::pose::kPoseBlockSize, local_pose_param);
         problem.SetParameterBlockConstant(kf->ceres_extrinsics_);
-
-        if(kf->is_gba_optimized_ && covins_params::opt::pgo_fix_kfs_after_gba) {
-            if(kf->id_.first % 50 == 0) std::cout << COUTNOTICE << "Set GBA KFs constant" << std::endl;
-            problem.SetParameterBlockConstant(kf->ceres_pose_);
-        } else if(kf->is_loaded_ && covins_params::opt::pgo_fix_poses_loaded_maps) {
-            if(kf->id_.first % 50 == 0) std::cout << COUTNOTICE << "Set loaded KFs constant" << std::endl;
-            problem.SetParameterBlockConstant(kf->ceres_pose_);
-        }
     }
 
+    // COV MAT for KF Edges
+    // TypeDefs::Matrix6Type cov_mat_kf = TypeDefs::Matrix6Type::Identity();
+    
+    // cov_mat_kf(0, 0) = 0.00030785;
+    // cov_mat_kf(1, 1) = 0.00018436;
+    // cov_mat_kf(2, 2) = 0.00020151;
+    // cov_mat_kf(3, 3) = 0.00209302;
+    // cov_mat_kf(4, 4) = 0.00349413;
+    // cov_mat_kf(5, 5) = 0.00305899;
+    TypeDefs::Matrix6Type cov_mat_kf;
+
+    cov_mat_kf << 2.51591680e-07, 1.34384891e-07, 3.16908987e-08,
+    1.78271135e-07, 1.51987977e-07, 2.51930336e-07, 1.34384891e-07,
+    1.13111621e-07, 1.98938689e-08, 1.24654191e-07, 6.00688406e-08,
+    7.60118872e-08, 3.16908987e-08, 1.98938689e-08, 2.94108871e-08,
+    3.45849866e-08, 2.78271812e-08, 2.26388210e-08, 1.78271135e-07,
+    1.24654191e-07, 3.45849866e-08, 5.30247779e-06, 2.37292772e-06,
+    8.45597210e-06, 1.51987977e-07, 6.00688406e-08, 2.78271812e-08,
+    2.37292772e-06, 9.42999233e-06, 6.21689203e-06, 2.51930336e-07,
+    7.60118872e-08, 2.26388210e-08, 8.45597210e-06, 6.21689203e-06,
+    3.01405541e-05;
+
+
+    // Eigen::LLT<TypeDefs::Matrix6Type> lltofcov_mat(cov_mat_kf.inverse());
+    // TypeDefs::Matrix6Type sqrt_info = lltofcov_mat.matrixL();
+    // std::cout << "The LT Mat: " << std::endl;
+    // std::cout << sqrt_info << std::endl;
+
     Eigen::Matrix<precision_t,6,6> sqrt_info = Eigen::Matrix<precision_t,6,6>::Identity();
-    sqrt_info.topLeftCorner<3,3>() *= 100.0;
-    sqrt_info.bottomRightCorner<3,3>() *= 1e4;
+    sqrt_info.topLeftCorner<3,3>() *= covins_params::opt::wt_kf_r;
+    sqrt_info.bottomRightCorner<3, 3>() *= covins_params::opt::wt_kf_t;
+
+    Eigen::Matrix<precision_t,6,6> sqrt_info_l = Eigen::Matrix<precision_t, 6, 6>::Identity();
+    sqrt_info_l.topLeftCorner<3,3>() *= covins_params::opt::wt_lp_r2;
+    sqrt_info_l.bottomRightCorner<3,3>() *= covins_params::opt::wt_lp_t2;
+
     std::set<std::pair<KeyframePtr,KeyframePtr>> inserted_edges;
 
-    // Current loop edges
-    {
-        Map::LoopVector loops = map->GetLoopConstraints();
-        auto i = loops[loops.size()-1];
+    // Set loop constraints
+    Map::LoopVector loops = map->GetLoopConstraints();
+
+
+    for (auto i : loops) {
+      
+        sqrt_info_l = Eigen::Matrix<precision_t, 6, 6>::Identity();
         KeyframePtr kf1 = i.kf1;
         KeyframePtr kf2 = i.kf2;
         TransformType T_12 = i.T_s1_s2;
+        // For Covaraince Matrix Weighting
+        // Eigen::LLT<TypeDefs::Matrix6Type> lltofA(i.cov_mat.inverse());
+        // TypeDefs::Matrix6Type sqrt_info_l = lltofA.matrixL();
+        // std::cout << "The LT Mat loop: " << std::endl;
+        // std::cout << sqrt_info_l << std::endl;
+
         Vector3Type t_12 = T_12.block<3,1>(0,3);
-        QuaternionType q_12(T_12.block<3,3>(0,0));
-        ceres::CostFunction* f = new robopt::posegraph::SixDofBetweenError(q_12, t_12, sqrt_info, robopt::defs::pose::PoseErrorType::kImu);
-        problem.AddResidualBlock(f, NULL, kf1->ceres_pose_, kf2->ceres_pose_, kf1->ceres_extrinsics_, kf2->ceres_extrinsics_);
+        QuaternionType q_12(T_12.block<3, 3>(0, 0));
+
+        double cov = i.cov_mat.block<3,3>(3,3).trace();
+        double weight = 1;
+
+         if (cov < covins_params::opt::cov_switch) {
+           weight = covins_params::opt::wt_lp_t1;
+         } else if (cov < 0.5) {
+           weight = covins_params::opt::wt_lp_t2;
+         } else
+           weight = 0.01;
+
+        sqrt_info_l.topLeftCorner<3,3>() *= weight;
+        sqrt_info_l.bottomRightCorner<3, 3>() *= weight;
+         
+        // std::cout << sqrt_info_l << std::endl;        
+        ceres::CostFunction* f = new robopt::posegraph::SixDofBetweenError(q_12, t_12, sqrt_info_l, robopt::defs::pose::PoseErrorType::kImu);
+        problem.AddResidualBlock(f, loss_function, kf1->ceres_pose_, kf2->ceres_pose_, kf1->ceres_extrinsics_, kf2->ceres_extrinsics_);
     }
+
 
     // Set keyframe edges
     for (size_t i = 0; i < keyframes.size(); ++i) {
@@ -900,11 +1459,12 @@ auto Optimization::PoseGraphOptimization(MapPtr map, PoseMap corrected_poses)->v
         if(kf->IsInvalid()) continue;
 
         TransformType T_w_si = kf->GetPoseTws();
-
+        // TransformType T_w_si = GetPoseTwsGT(kf, gt);
         // Edge to successor
         KeyframePtr succ = kf->GetSuccessor();
         if(!succ) continue;
         TransformType T_w_ssucc = succ->GetPoseTws();
+        // TransformType T_w_ssucc = GetPoseTwsGT(succ, gt);
         TransformType T_si_ssucc = T_w_si.inverse() * T_w_ssucc;
         Vector3Type t_si_ssucc = T_si_ssucc.block<3,1>(0,3);
         QuaternionType q_si_ssucc(T_si_ssucc.block<3,3>(0,0));
@@ -918,8 +1478,49 @@ auto Optimization::PoseGraphOptimization(MapPtr map, PoseMap corrected_poses)->v
         }
 
         ceres::CostFunction* f = new robopt::posegraph::SixDofBetweenError(q_si_ssucc, t_si_ssucc, sqrt_info, robopt::defs::pose::PoseErrorType::kImu);
-        problem.AddResidualBlock(f, NULL, kf->ceres_pose_, succ->ceres_pose_, kf->ceres_extrinsics_, succ->ceres_extrinsics_);
+        problem.AddResidualBlock(f, /*lossFunction*/NULL, kf->ceres_pose_, succ->ceres_pose_, kf->ceres_extrinsics_, succ->ceres_extrinsics_);
     }
+
+    // Add 4 Neighbors like VINS
+    for (size_t i = 0; i < keyframes.size(); ++i) {
+            KeyframePtr kf = keyframes[i];
+            if(kf->IsInvalid()) continue;
+
+            TransformType T_w_si = kf->GetPoseTws();
+
+            KeyframeVector connections;
+            KeyframePtr temp_kf = keyframes[i];
+            // Use 4 Previous KFs for additional Edges as done in VINS Fusion
+
+            for (int j = 1; j < 5; ++j) {
+              if (int(kf->id_.first) - j > 0) {
+                temp_kf = temp_kf->GetPredecessor();
+                connections.push_back(temp_kf);
+
+                }
+            }
+            
+            // std::cout << "Connections Size" << connections.size() << std::endl;
+            for(auto kfc : connections) {
+
+                TransformType T_w_sc = kfc->GetPoseTws();
+                TransformType T_si_sc = T_w_si.inverse() * T_w_sc;
+                Vector3Type t_si_sc = T_si_sc.block<3,1>(0,3);
+                QuaternionType q_si_sc(T_si_sc.block<3,3>(0,0));
+
+                std::pair<KeyframePtr,KeyframePtr> kf_pair = std::make_pair(kf,kfc);
+                if(inserted_edges.count(kf_pair)) {
+                    continue;
+                } else {
+                    inserted_edges.insert(kf_pair);
+                }
+
+                ceres::CostFunction* f = new robopt::posegraph::SixDofBetweenError(q_si_sc, t_si_sc, sqrt_info, robopt::defs::pose::PoseErrorType::kImu);
+                problem.AddResidualBlock(f, /*lossFunction*/NULL, kf->ceres_pose_, kfc->ceres_pose_, kf->ceres_extrinsics_, kfc->ceres_extrinsics_);
+            }
+    }
+    
+
 
     // Solve
     ceres::Solver::Options solver_options;
@@ -929,17 +1530,18 @@ auto Optimization::PoseGraphOptimization(MapPtr map, PoseMap corrected_poses)->v
     solver_options.trust_region_strategy_type = ceres::DOGLEG;
     solver_options.max_num_iterations = covins_params::opt::pgo_iteration_limit;
     ceres::Solver::Summary summary;
-//    std::cout << "--> Solve" << std::endl;
+    // std::cout << "--> Solve" << std::endl;
     ceres::Solve(solver_options, &problem, &summary);
+    // std::cout << summary.FullReport() << std::endl;
 
     // Recover the optimized data
-
     PoseMap non_corrected_poses;
 
     // Keyframes
     for (size_t i = 0; i < keyframes.size(); ++i) {
         KeyframePtr kf = keyframes[i];
         if(kf->IsInvalid()) {
+            std::cout << COUTWARN << kf << ": invalid" << std::endl;
             continue;
         }
         TransformType T_ws_uncorrected = kf->GetPoseTws();
@@ -948,30 +1550,25 @@ auto Optimization::PoseGraphOptimization(MapPtr map, PoseMap corrected_poses)->v
         kf->UpdateFromCeres(kf->ceres_pose_,kf->ceres_velocity_and_bias_,kf->ceres_extrinsics_);
         Vector3Type velocity_corrected = T_ws_corrected.block<3,3>(0,0) * T_ws_uncorrected.inverse().block<3,3>(0,0) * kf->GetStateVelocity();
         kf->SetStateVelocity(velocity_corrected);
-
-        kf->SetPoseOptimized();
     }
 
     // Landmarks
-    int removed_lms = 0;
     for(auto lm : landmarks) {
         if(lm->IsInvalid()) {
+            std::cout << COUTWARN << lm << ": invalid" << std::endl;
             continue;
         }
         KeyframePtr kf_ref = lm->GetReferenceKeyframe();
         if(!kf_ref){
-            if(!lm->GetObservations().empty())
-            map->EraseLandmark(lm);
-            removed_lms++;
+            std::cout << COUTWARN << lm << " has no ref-KF" << std::endl;
             continue;
         }
         TransformType T_ws_uncorrected;
         PoseMap::iterator mit = non_corrected_poses.find(kf_ref->id_);
         if(mit != non_corrected_poses.end()) T_ws_uncorrected = mit->second;
         else{
-            map->EraseLandmark(lm);
-            removed_lms++;
-            continue;
+            std::cout << COUTERROR << "mit == non_corrected_poses.end()" << std::endl;
+            exit(-1);
         }
         TransformType T_sw_uncorrected = T_ws_uncorrected.inverse();
 
@@ -981,10 +1578,10 @@ auto Optimization::PoseGraphOptimization(MapPtr map, PoseMap corrected_poses)->v
         TransformType T_ws_corrected = kf_ref->GetPoseTws();
         Vector3Type pos_w_corrected = T_ws_corrected.block<3,3>(0,0) * pos_s + T_ws_corrected.block<3,1>(0,3);
         lm->SetWorldPos(pos_w_corrected);
-        lm->SetOptimized();
     }
 
-    std::cout << "--> PGO removed " << removed_lms << " LMs" << std::endl;
+    std::cout << "+++ PGO: End +++" << std::endl;
 }
+
 
 } //end ns

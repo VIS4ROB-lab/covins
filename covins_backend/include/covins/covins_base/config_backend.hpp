@@ -116,6 +116,7 @@ namespace features {
     const int desc_length                               = estd2::GetValFromYaml<int>(conf,"feat.desc_length");
     const int num_octaves                               = estd2::GetValFromYaml<int>(conf,"feat.num_octaves");
     const precision_t scale_factor                      = estd2::GetValFromYaml<precision_t>(conf,"feat.scale_factor");
+    const float img_match_thres                         = estd2::GetValFromYaml<float>(conf,"extractor.img_match_thres");
 }
 
 namespace matcher {
@@ -149,11 +150,28 @@ namespace placerec {
     const int exclude_kfs_with_id_less_than             = estd2::GetValFromYaml<size_t>(conf,"placerec.exclude_kfs_with_id_less_than");
 
     namespace ransac {
-        const int min_inliers                           = estd2::GetValFromYaml<int>(conf,"placerec.ransac.min_inliers");
-        const precision_t probability                   = estd2::GetValFromYaml<precision_t>(conf,"placerec.ransac.probability");
-        const int max_iterations                        = estd2::GetValFromYaml<int>(conf,"placerec.ransac.max_iterations");
-        const int class_threshold                       = estd2::GetValFromYaml<int>(conf,"placerec.ransac.class_threshold");
-    }
+        const int min_inliers               = estd2::GetValFromYaml<int>(conf,"placerec.ransac.min_inliers");
+        const precision_t probability       = estd2::GetValFromYaml<precision_t>(conf,"placerec.ransac.probability");
+        const int max_iterations            = estd2::GetValFromYaml<int>(conf,"placerec.ransac.max_iterations");
+        const int class_threshold           = estd2::GetValFromYaml<int>(conf,"placerec.ransac.class_threshold");
+    } // namespace ransac
+
+    namespace nc_rel_pose {
+        const int cov_iters                 = estd2::GetValFromYaml<int>(conf,"placerec.nc_rel_pose.cov_iters");
+        const int max_iters                 = estd2::GetValFromYaml<int>(conf,"placerec.nc_rel_pose.max_iters");
+        const int min_inliers               = estd2::GetValFromYaml<int>(conf,"placerec.nc_rel_pose.min_inliers");
+        const float cov_thres               = estd2::GetValFromYaml<float>(conf,"placerec.nc_rel_pose.cov_thres");
+        const float rp_error                = estd2::GetValFromYaml<float>(conf,"placerec.nc_rel_pose.rp_error");
+    } //namespace nc_rel_pose
+
+    namespace rel_pose {
+        const int max_iters                 = estd2::GetValFromYaml<int>(conf,"placerec.rel_pose.max_iters");
+        const int min_inliers               = estd2::GetValFromYaml<int>(conf,"placerec.rel_pose.min_inliers");
+        const float error_thres             = estd2::GetValFromYaml<float>(conf,"placerec.rel_pose.error_thres");
+        const int min_img_matches           = estd2::GetValFromYaml<int>(conf,"placerec.rel_pose.min_img_matches");
+    } //namespace nc_rel_pose
+    
+    const bool use_4dof                     = estd2::GetValFromYaml<bool>(conf,"placerec.use_4dof");
 }
 
 namespace opt {
@@ -173,6 +191,15 @@ namespace opt {
     const bool pgo_use_loop_edges                       = estd2::GetValFromYaml<bool>(conf,"opt.pgo_use_loop_edges");
 
     const bool gba_use_map_loop_constraints             = estd2::GetValFromYaml<bool>(conf,"opt.gba_use_map_loop_constraints");
+
+    // For Weighting Loops and KFs in PGO
+    const float wt_kf_r             = estd2::GetValFromYaml<float>(conf,"opt.wt_kf_R");
+    const float wt_kf_t             = estd2::GetValFromYaml<float>(conf,"opt.wt_kf_T");
+    const float wt_lp_r1            = estd2::GetValFromYaml<float>(conf,"opt.wt_lp_R1");
+    const float wt_lp_t1            = estd2::GetValFromYaml<float>(conf,"opt.wt_lp_T1");
+    const float wt_lp_r2            = estd2::GetValFromYaml<float>(conf,"opt.wt_lp_R2");
+    const float wt_lp_t2            = estd2::GetValFromYaml<float>(conf,"opt.wt_lp_T2");
+    const float cov_switch          = estd2::GetValFromYaml<float>(conf,"opt.cov_switch");
 }
 
 namespace vis {
