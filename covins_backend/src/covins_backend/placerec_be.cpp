@@ -102,7 +102,7 @@ auto PlaceRecognition::ComputeSE3()->bool {
         Matches img_matches = matchingAlgorithmImage->getMatches();
         int nmatches = img_matches.size();
 
-        std::cout << "------> num_img features: " << kf_query_->keypoints_undistorted_.size() << std::endl;
+        std::cout << "------> num_img features: " << kf_query_->keypoints_undistorted_add_.size() << std::endl;
         std::cout << "------> num_img matches: " << nmatches << std::endl;
 
         if(kf_query_->id_.second == pKF->id_.second && nmatches < covins_params::placerec::matches_thres) {
@@ -280,7 +280,7 @@ auto PlaceRecognition::DetectLoop()->bool {
     // Compute reference BoW similarity score
     // This is the lowest score to a connected keyframe in the covisibility graph
     // We will impose loop candidates to have a higher similarity than this
-    const auto vpConnectedKeyFrames = kf_query_->GetConnectedKeyframesByWeight(0);
+    const auto vpConnectedKeyFrames = kf_query_->GetConnectedKeyframesByWeight(10);
     const DBoW2::BowVector &CurrentBowVec = kf_query_->bow_vec_;
     float minScore = 1;
     for (size_t i = 0; i < vpConnectedKeyFrames.size(); i++) {
@@ -297,7 +297,7 @@ auto PlaceRecognition::DetectLoop()->bool {
 
     // Query the database imposing the minimum score
     auto database = mapmanager_->GetDatabase();
-    KeyframeVector vpCandidateKFs = database->DetectCandidates(kf_query_, minScore*0.8);
+    KeyframeVector vpCandidateKFs = database->DetectCandidates(kf_query_, minScore*0.7);
 
     // If there are no loop candidates, just add new keyframe and return false
     if (vpCandidateKFs.empty()) {

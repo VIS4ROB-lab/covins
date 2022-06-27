@@ -103,6 +103,15 @@ public:
     // Bearing vectors
     std::vector<Vector3Type> bearings_;
 
+    AorsVector                  keypoints_aors_add_;        //Angle,Octave,Response,Size
+    KeypointVector              keypoints_distorted_add_;
+    KeypointVector              keypoints_undistorted_add_;
+    cv::Mat                     descriptors_add_;
+    std::vector<Vector3Type>    bearings_add_;
+
+    auto GetDescriptorAddCV(size_t ind) -> cv::Mat;
+    const unsigned char *GetDescriptorAdd(size_t ind);
+
 protected:
 
     // Interfaces

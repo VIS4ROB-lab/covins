@@ -27,8 +27,8 @@ FrameRelativeAdapter::FrameRelativeAdapter(
   for (covins::Matches::iterator itr = matches_A_B_.begin(); itr !=matches_A_B_.end(); ++itr) {
       const size_t idxA = (*itr).idxA;
       const size_t idxB = (*itr).idxB;
-      Eigen::Vector3d tmp_bearing_A = frame_A->bearings_[idxA];
-      Eigen::Vector3d tmp_bearing_B = frame_B->bearings_[idxB];
+      Eigen::Vector3d tmp_bearing_A = frame_A->bearings_add_[idxA];
+      Eigen::Vector3d tmp_bearing_B = frame_B->bearings_add_[idxB];
       bearing_vectors1_.push_back(tmp_bearing_A.normalized());
       bearing_vectors2_.push_back(tmp_bearing_B.normalized());
   //   // For now, just say all the bearing vectors have the same uncertainty

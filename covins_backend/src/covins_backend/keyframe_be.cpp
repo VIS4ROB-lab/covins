@@ -92,6 +92,50 @@ Keyframe::Keyframe(MsgKeyframe msg, MapPtr map, VocabularyPtr voc)
 
     img_ = msg.img;
 
+    // Add additional Keypoints and Features
+    keypoints_aors_add_ = msg.keypoints_aors_add;
+    keypoints_distorted_add_ = msg.keypoints_distorted_add;
+
+    if(keypoints_distorted_add_.empty()) {
+        std::cout << COUTERROR << "keypoints_distorted_.empty()" << std::endl;
+        std::cout << COUTNOTICE << "Note: if you want to work only on undistorted KP, you can fill 'keypoints_distorted_' with the undistorted KPs and set the distortion coefficients to 0.0" << std::endl;
+        exit(-1);
+    }
+    if(keypoints_aors_add_.size() != keypoints_distorted_add_.size()) {
+        std::cout << COUTERROR << "keypoints given: " << std::endl;
+        std::cout << "keypoints_distorted_.size(): " << keypoints_distorted_add_.size() << std::endl;
+        std::cout << "keypoints_aors_.size(): " << keypoints_aors_add_.size() << std::endl;
+        exit(-1);
+    }
+
+    keypoints_undistorted_add_ = msg.keypoints_undistorted_add;
+    if(keypoints_distorted_add_.size() != keypoints_undistorted_add_.size()) {
+        if(!keypoints_undistorted_add_.empty()) {
+            std::cout << COUTERROR << "keypoints given: " << std::endl;
+            std::cout << "keypoints_distorted_.size(): " << keypoints_distorted_add_.size() << std::endl;
+            std::cout << "keypoints_undistorted_.size(): " << keypoints_undistorted_add_.size() << std::endl;
+            exit(-1);
+        } else {
+            //Undistort
+            keypoints_undistorted_add_.reserve(keypoints_distorted_add_.size());
+            for(size_t idx_kp=0;idx_kp<keypoints_distorted_add_.size();++idx_kp) {
+                Eigen::Vector2d kp_eigen = Utils::FromKeypointType(keypoints_distorted_add_[idx_kp]);
+                Vector3Type p3D;
+                camera_->backProject3(kp_eigen,&p3D);
+                const Eigen::Vector3d p3_un = calibration_.K*p3D;
+                if(p3_un(2) != 1.0) {
+                    std::cout << COUTERROR << "p3_un: " << p3_un.transpose() << std::endl;
+                    exit(-1);
+                }
+                TypeDefs::KeypointType kp_as_kptype = Utils::ToKeypointType(p3_un.block<1,2>(0,0));
+                keypoints_undistorted_add_.push_back(kp_as_kptype);
+            }
+        }
+    }
+
+    descriptors_add_ = msg.descriptors_add.clone();
+
+    ///////////////
     this->AssignFeaturesToGrid();
 
     if(msg.save_to_file) {
@@ -107,7 +151,7 @@ Keyframe::Keyframe(MsgKeyframe msg, MapPtr map, VocabularyPtr voc)
             cout << COUTERROR << " !mBowVec.empty() || !mFeatVec.empty()" << endl;
             exit(-1);
         }
-        vector<cv::Mat> current_desc = Utils::ToDescriptorVector(descriptors_);
+        vector<cv::Mat> current_desc = Utils::ToDescriptorVector(descriptors_add_);
         // Feature vector associate features with nodes in the 4th level (from leaves up)
         // We assume the vocabulary tree has 6 levels, change the 4 otherwise
         voc->transform(current_desc,bow_vec_,feat_vec_,4);
@@ -146,6 +190,13 @@ Keyframe::Keyframe(MsgKeyframe msg, MapPtr map, VocabularyPtr voc)
     for(size_t idx=0;idx<keypoints_undistorted_.size();++idx) {
         Vector3Type tmpBearing((keypoints_undistorted_[idx](0)-cx)*invfx, (keypoints_undistorted_[idx](1)-cy)*invfy, 1.0);
         bearings_[idx] = tmpBearing.normalized();
+    }
+
+    // Additional Bearing Vectors
+    bearings_add_.resize(keypoints_undistorted_add_.size());
+    for(size_t idx=0;idx<keypoints_undistorted_add_.size();++idx) {
+        Vector3Type tmpBearing((keypoints_undistorted_add_[idx](0)-cx)*invfx, (keypoints_undistorted_add_[idx](1)-cy)*invfy, 1.0);
+        bearings_add_[idx] = tmpBearing.normalized();
     }
 }
 
@@ -522,6 +573,14 @@ auto Keyframe::UpdatePoseFromMsg(MsgKeyframe &msg, MapPtr map)->void {
         bias_accel_ = msg.bias_accel;
         bias_gyro_ = msg.bias_gyro;
     }
+}
+
+auto Keyframe::GetDescriptorAddCV(size_t ind)->cv::Mat {
+    return descriptors_add_.row(ind).clone();
+}
+
+const unsigned char* Keyframe::GetDescriptorAdd(size_t ind) {
+  return descriptors_add_.data + descriptors_add_.cols*ind;
 }
 
 } //end ns

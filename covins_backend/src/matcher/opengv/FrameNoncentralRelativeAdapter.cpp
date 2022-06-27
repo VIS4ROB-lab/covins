@@ -43,8 +43,8 @@ FrameNoncentralRelativeAdapter::FrameNoncentralRelativeAdapter(
 
     for (size_t j : inlierInd) {
 
-      Eigen::Vector3d tmp_bearing_A = KF1->bearings_[matches[j].idxA];
-      Eigen::Vector3d tmp_bearing_B = KF2->bearings_[matches[j].idxB];
+      Eigen::Vector3d tmp_bearing_A = KF1->bearings_add_[matches[j].idxA];
+      Eigen::Vector3d tmp_bearing_B = KF2->bearings_add_[matches[j].idxB];
       _bearingVectors1.push_back(tmp_bearing_A.normalized());
       _bearingVectors2.push_back(tmp_bearing_B.normalized());
 
@@ -97,8 +97,8 @@ FrameNoncentralRelativeAdapter::FrameNoncentralRelativeAdapter(
       
       for (size_t k : inlierInd) {
 
-      Eigen::Vector3d tmp_bearing_A = KF1->bearings_[matches[k].idxA];
-      Eigen::Vector3d tmp_bearing_B = KF2->bearings_[matches[k].idxB];
+      Eigen::Vector3d tmp_bearing_A = KF1->bearings_add_[matches[k].idxA];
+      Eigen::Vector3d tmp_bearing_B = KF2->bearings_add_[matches[k].idxB];
       _bearingVectors1.push_back(tmp_bearing_A.normalized());
       _bearingVectors2.push_back(tmp_bearing_B.normalized());
 

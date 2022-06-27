@@ -71,7 +71,7 @@ void ImageMatchingAlgorithm::doSetup() {
   numUncertainMatches_ = 0;
 
   // Prepare the bookkeeping for frame A
-  const size_t numA = kfPtrA_->keypoints_distorted_.size();
+  const size_t numA = kfPtrA_->keypoints_distorted_add_.size();
   skipA_.clear();
   skipA_.resize(numA, false);
 
@@ -88,7 +88,7 @@ void ImageMatchingAlgorithm::doSetup() {
   }
 
   // Prepare the bookkeeping for frame B
-  const size_t numB = kfPtrB_->keypoints_distorted_.size();
+  const size_t numB = kfPtrB_->keypoints_distorted_add_.size();
   skipB_.clear();
   skipB_.resize(numB, false);
   // Compute the ray uncertainty for frame B
@@ -105,11 +105,11 @@ void ImageMatchingAlgorithm::doSetup() {
 
 // What is the size of list A?
 size_t ImageMatchingAlgorithm::sizeA() const {
-    return kfPtrA_->keypoints_distorted_.size();
+    return kfPtrA_->keypoints_distorted_add_.size();
 }
 // What is the size of list B?
 size_t ImageMatchingAlgorithm::sizeB() const {
-    return kfPtrB_->keypoints_distorted_.size();
+    return kfPtrB_->keypoints_distorted_add_.size();
 }
 
 // Set the distance threshold for which matches exceeding it will not be returned as matches.

@@ -119,8 +119,8 @@ class ImageMatchingAlgorithm : public MatchingAlgorithm {
 
     if (covins_params::features::type == "ORB") {
      const float dist = static_cast<float>(
-          DescriptorDistanceHamming(kfPtrA_->GetDescriptorCV(indexA),
-                                    kfPtrB_->GetDescriptorCV(indexB)));
+          DescriptorDistanceHamming(kfPtrA_->GetDescriptorAddCV(indexA),
+                                    kfPtrB_->GetDescriptorAddCV(indexB)));
       if (dist < distanceThreshold_) {
       if (verifyMatch(indexA, indexB))
         return dist;

@@ -374,7 +374,7 @@ bool RelNonCentralPosSolver::computeNonCentralRelPose(
         Eigen::Quaterniond Rotquat_5pt(T_init.block<3, 3>(0, 0));
         
         std::ofstream myfile(
-            "/home/manthan/ws_vins/covins_ws/src/covins/covins_backend/output/results_tf.csv",
+            "/home/manthan/ws/covins_ws/src/covins/covins_backend/output/results_tf.csv",
             std::ios::app);
 
         // Write to File
@@ -470,10 +470,10 @@ void RelNonCentralPosSolver::plotMatches(const KeyframePtr KfPtr1,
   size_t j = 0;
   
     for (size_t i : inlierInd) {
-      cv::KeyPoint temp_kp1(float(KfPtr1->keypoints_undistorted_[ImgMatches[i].idxA].x()),
-                            float(KfPtr1->keypoints_undistorted_[ImgMatches[i].idxA].y()), 1);
-      cv::KeyPoint temp_kp2(float(KfPtr2->keypoints_undistorted_[ImgMatches[i].idxB].x()),
-                            float(KfPtr2->keypoints_undistorted_[ImgMatches[i].idxB].y()), 1);
+      cv::KeyPoint temp_kp1(float(KfPtr1->keypoints_undistorted_add_[ImgMatches[i].idxA].x()),
+                            float(KfPtr1->keypoints_undistorted_add_[ImgMatches[i].idxA].y()), 1);
+      cv::KeyPoint temp_kp2(float(KfPtr2->keypoints_undistorted_add_[ImgMatches[i].idxB].x()),
+                            float(KfPtr2->keypoints_undistorted_add_[ImgMatches[i].idxB].y()), 1);
       cv::DMatch temp_match(j, j, 0);
 
       kp_vect1_in_.push_back(temp_kp1);
@@ -515,8 +515,8 @@ kp_vect2_.reserve(num_matches);
 for (Matches::iterator itr = ImgMatches.begin(); itr !=ImgMatches.end(); ++itr) {
       const size_t idxA = (*itr).idxA;
       const size_t idxB = (*itr).idxB;
-      kp_vect1_.push_back(KfPtr1->keypoints_undistorted_[idxA]);
-      kp_vect2_.push_back(KfPtr2->keypoints_undistorted_[idxB]);
+      kp_vect1_.push_back(KfPtr1->keypoints_undistorted_add_[idxA]);
+      kp_vect2_.push_back(KfPtr2->keypoints_undistorted_add_[idxB]);
 }
 
   // Setup the openGV problem to solve

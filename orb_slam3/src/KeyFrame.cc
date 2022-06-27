@@ -109,10 +109,15 @@ auto KeyFrame::ConvertToMsg(covins::MsgKeyframe &msg, KeyFrame *kf_ref, bool is_
         msg.keypoints_aors          = this->keys_eigen_aors_;
         msg.keypoints_distorted     = this->keys_eigen_;
         msg.keypoints_undistorted   = this->keys_eigen_un_;
+        msg.keypoints_aors_add          = this->keys_eigen_aors_;
+        msg.keypoints_distorted_add     = this->keys_eigen_;
+        msg.keypoints_undistorted_add   = this->keys_eigen_un_;
+        
     }
 
     if(!is_update) {
         msg.descriptors = mDescriptors.clone();
+        msg.descriptors_add = mDescriptors.clone();
     }
 
     Eigen::Matrix4d Tws = covins::Utils::ToEigenMat44d(Twc*mImuCalib.Tcb);
