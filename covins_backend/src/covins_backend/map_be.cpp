@@ -385,9 +385,10 @@ auto Map::AddKeyframe(covins::MapBase::KeyframePtr kf, bool suppress_output)->vo
     std::unique_lock<std::mutex> lock(mtx_map_);
     keyframes_[kf->id_] = kf;
     max_id_kf_ = std::max(max_id_kf_,kf->id_.first);
-    if(!suppress_output && !(keyframes_.size() % 50)) {
+    if(!suppress_output && !(keyframes_.size() % 20)) {
         std::cout << "Map " << this->id_map_  << " : " << keyframes_.size() << " KFs | " << landmarks_.size() << " LMs" << std::endl;
         this->WriteKFsToFile();
+        this->WriteKFsToFileAllAg();
     }
 }
 

@@ -19,8 +19,13 @@
 #include "KeyFrame.h"
 #include "Converter.h"
 #include "ORBmatcher.h"
+#include "ORBextractor.h"
 #include "ImuTypes.h"
 #include<mutex>
+
+#include <opencv2/opencv.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/core/eigen.hpp>
 
 // COVINS
 #include <eigen3/Eigen/Core>
@@ -104,20 +109,52 @@ auto KeyFrame::ConvertToMsg(covins::MsgKeyframe &msg, KeyFrame *kf_ref, bool is_
     }
 
     if(!is_update){
+        cv::Mat img = imgLeft;
 
         const size_t num_keys = mvKeys.size();
         msg.keypoints_aors          = this->keys_eigen_aors_;
         msg.keypoints_distorted     = this->keys_eigen_;
         msg.keypoints_undistorted   = this->keys_eigen_un_;
-        msg.keypoints_aors_add          = this->keys_eigen_aors_;
-        msg.keypoints_distorted_add     = this->keys_eigen_;
-        msg.keypoints_undistorted_add   = this->keys_eigen_un_;
         
+        int num_feat = 300;
+        float scale_factor = 1.2;
+        int num_pyramids = 8;
+        int thres_init = 20;
+        int thres_min = 15;
+        std::vector<cv::KeyPoint> cv_keypoints_add;
+        cv_keypoints_add.reserve(num_feat);
+        cv::Mat new_descriptors_add;
+        std::shared_ptr<ORBextractor> extractor;
+        extractor.reset(new ORBextractor(num_feat, scale_factor, num_pyramids, thres_init, thres_min));
+        (*extractor)(img, cv::Mat(), cv_keypoints_add, new_descriptors_add);
+
+        // std::cout << "size: " << cv_keypoints_add.size() << std::endl;
+
+        for(size_t i=0;i<cv_keypoints_add.size();++i) {
+            covins::TypeDefs::AorsType aors; //Angle,Octave,Response,Size
+            aors << cv_keypoints_add[i].angle, static_cast<float>(cv_keypoints_add[i].octave), cv_keypoints_add[i].response, cv_keypoints_add[i].size;
+
+            covins::TypeDefs::KeypointType kp_eigen;
+            kp_eigen[0] = static_cast<float>(cv_keypoints_add[i].pt.x);
+            kp_eigen[1] = static_cast<float>(cv_keypoints_add[i].pt.y);
+
+            msg.keypoints_aors_add.push_back(aors);
+            msg.keypoints_distorted_add.push_back(kp_eigen);
+            // std::cout << kp_eigen << std::endl;
+            // msg.keypoints_undistorted_add.push_back(kp_eigen);
+        }
+        msg.descriptors_add = new_descriptors_add.clone();
+
+        if (msg.keypoints_distorted_add.size() < 1) {
+            msg.keypoints_aors_add          = this->keys_eigen_aors_;
+            msg.keypoints_distorted_add     = this->keys_eigen_;
+            msg.keypoints_undistorted_add = this->keys_eigen_un_;
+            msg.descriptors_add = mDescriptors.clone();
+        }
     }
 
     if(!is_update) {
         msg.descriptors = mDescriptors.clone();
-        msg.descriptors_add = mDescriptors.clone();
     }
 
     Eigen::Matrix4d Tws = covins::Utils::ToEigenMat44d(Twc*mImuCalib.Tcb);

@@ -25,7 +25,6 @@
 */
 
 #include "covins_backend/placerec_be.hpp"
-
 // C++
 #include <iostream>
 #include <mutex>
@@ -64,9 +63,9 @@ auto PlaceRecognition::CheckBuffer()->bool {
     return (!buffer_kfs_in_.empty());
 }
 
-auto PlaceRecognition::ComputeSE3()->bool {
-    const size_t nInitialCandidates = mvpEnoughConsistentCandidates.size();
+auto PlaceRecognition::ComputeSE3() -> bool {
 
+    const size_t nInitialCandidates = mvpEnoughConsistentCandidates.size();
 
     std::cout << "----> Query " << kf_query_ << " : nInitialCandidates: " << nInitialCandidates << std::endl;
     vector<bool> vbDiscarded;
@@ -102,7 +101,7 @@ auto PlaceRecognition::ComputeSE3()->bool {
         Matches img_matches = matchingAlgorithmImage->getMatches();
         int nmatches = img_matches.size();
 
-        std::cout << "------> num_img features: " << kf_query_->keypoints_undistorted_add_.size() << std::endl;
+        // std::cout << "------> num_img features: " << kf_query_->keypoints_undistorted_add_.size() << std::endl;
         std::cout << "------> num_img matches: " << nmatches << std::endl;
 
         if(kf_query_->id_.second == pKF->id_.second && nmatches < covins_params::placerec::matches_thres) {
@@ -123,18 +122,36 @@ auto PlaceRecognition::ComputeSE3()->bool {
 
         KeyframePtr pKFi = mvpEnoughConsistentCandidates[i];
 
+        // clock_t start, end;
+
         // Setup the Rel Pose Estimation Problem
         Tc1c2 = Eigen::Matrix4d::Identity();
+        /* Recording the starting clock tick.*/
+        // start = clock();
+
         RelNonCentralPosSolver rel_pose_solver;
         foundRelTransform = rel_pose_solver.computeNonCentralRelPose(
             kf_query_, pKFi, covins_params::placerec::rel_pose::error_thres,
             Tc1c2, cov_loop);
-
+    
+        // Recording the end clock tick.
+        // end = clock();
+        // Calculating total time taken by the program.
+        // double time_taken = double(end - start) / double(CLOCKS_PER_SEC);
+ 
         if (!foundRelTransform) {
           vbDiscarded[i] = true;
           continue;
         }
 
+        // std::ofstream myfile("/home/manthan/ws/covins_ws/src/covins/covins_backend/output/profiling.csv",
+        //                      std::ios::app);
+
+        // myfile << time_taken << endl;
+        
+        // cout << "Time taken by program is : " << fixed 
+        //     << time_taken << setprecision(5);
+        // cout << " sec " << endl;
         bMatch = true;
         Eigen::Matrix4d T12 = Tc1c2;
         mcov_mat = cov_loop;
@@ -152,7 +169,7 @@ auto PlaceRecognition::ComputeSE3()->bool {
         mrelative_yaw = Utils::normalizeAngle(yaw_query - yaw_match);
 
         std::cout << "Norm: " << T_smatch_squery.block<3,1>(0,3).norm() << "Yaw" << mrelative_yaw << std::endl;
-        if (abs(mrelative_yaw) > 30.0 || T_smatch_squery.block<3,3>(0,0).norm() > 2.0)
+        if (abs(mrelative_yaw) > 30.0 || T_smatch_squery.block<3,3>(0,0).norm() > 5.0)
           bMatch = false;
 
         if (bMatch) {
@@ -283,13 +300,13 @@ auto PlaceRecognition::DetectLoop()->bool {
     const auto vpConnectedKeyFrames = kf_query_->GetConnectedKeyframesByWeight(10);
     const DBoW2::BowVector &CurrentBowVec = kf_query_->bow_vec_;
     float minScore = 1;
+    // std::cout << "Number of neighbors: " << vpConnectedKeyFrames.size() << std::endl;
     for (size_t i = 0; i < vpConnectedKeyFrames.size(); i++) {
             KeyframePtr pKF = vpConnectedKeyFrames[i];
             if(pKF->IsInvalid()) continue;
 
             const DBoW2::BowVector &BowVec = pKF->bow_vec_;
             float score = voc_->score(CurrentBowVec, BowVec);
-
         if(score<minScore) {
             minScore = score;
         }

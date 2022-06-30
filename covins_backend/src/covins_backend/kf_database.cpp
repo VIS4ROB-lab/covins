@@ -63,6 +63,8 @@ auto KeyframeDatabase::DetectCandidates(KeyframePtr kf, precision_t min_score)->
                 KeyframePtr pKFi=*lit;
                 if(pKFi->id_ == kf->id_) continue;
                 if(covins_params::placerec::inter_map_matches_only && pKFi->id_.second == kf->id_.second) continue;
+                if (pKFi->id_.second == kf->id_.second &&
+                    abs(int(kf->id_.first) - int(pKFi->id_.first)) < covins_params::placerec::min_loop_dist) continue;
                 if(pKFi->id_.first < covins_params::placerec::exclude_kfs_with_id_less_than) continue;
                 if(!(pKFi->loop_query_==kf->id_)) {
                     pKFi->loop_words_=0;

@@ -1,5 +1,5 @@
 #!/bin/bash
-pathDatasetEuroc='/home/pschmuck/data/euroc' #Example, it is necesary to change it by the dataset path
+pathDatasetEuroc='/home/manthan/Downloads/covins_vins/Euroc' #Example, it is necesary to change it by the dataset path
 #------------------------------------
 # Monocular-Inertial Examples
 echo "Launching MH01 with Monocular-Inertial sensor"

@@ -62,7 +62,7 @@ auto PlaceRecognition::CheckBuffer()->bool {
 
 auto PlaceRecognition::ComputeSE3()->bool {
     const size_t nInitialCandidates = mvpEnoughConsistentCandidates.size();
-
+    std::cout << "----> Query " << kf_query_ << " : nInitialCandidates: " << nInitialCandidates << std::endl;
     // We compute first ORB matches for each candidate
     // If enough matches are found, we setup a Sim3Solver
     FeatureMatcher matcher(0.75,true);
@@ -120,6 +120,9 @@ auto PlaceRecognition::ComputeSE3()->bool {
             continue;
         }
 
+        // clock_t start, end;
+        // start = clock();
+        
         KeyframePtr pKFi = mvpEnoughConsistentCandidates[i];
 
         // Setup the RANSAC problem
@@ -155,7 +158,12 @@ auto PlaceRecognition::ComputeSE3()->bool {
         }
 
         const int numInliersOpt = Optimization::OptimizeRelativePose(kf_query_, pKFi, vvpMapPointMatches[i], T12, 4.0f);
-
+        // end = clock();
+        // std::ofstream myfile("/home/manthan/ws/covins_ws/src/covins/covins_backend/output/profiling.csv",
+        //                     std::ios::app);
+        // double time_taken = double(end - start) / double(CLOCKS_PER_SEC);
+        // myfile << time_taken << endl;
+    
         if (numInliersOpt < covins_params::placerec::inliers_thres) {
               vbDiscarded[i] = true;
               continue;

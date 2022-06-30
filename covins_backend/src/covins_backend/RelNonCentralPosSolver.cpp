@@ -180,16 +180,16 @@ bool RelNonCentralPosSolver::computeNonCentralRelPose(
         sacProb.max_iterations_ = mMaxIter_17PT;
         sacProb.computeModel(0);
 
-        std::cout << "17 POINT Ransac needed " << sacProb.iterations_ << " iterations and ";
-        std::cout << std::endl;
-        std::cout << "the number of inliers is: " << sacProb.inliers_.size();
-        std::cout << std::endl << std::endl;
+        // std::cout << "17 POINT Ransac needed " << sacProb.iterations_ << " iterations and ";
+        // std::cout << std::endl;
+        // std::cout << "the number of inliers is: " << sacProb.inliers_.size();
+        // std::cout << std::endl << std::endl;
 
 
         // if (sacProb.inliers_.size() < mMinInliers_17PT ||
         //     sacProb.iterations_ >= sacProb.max_iterations_) {
         if (sacProb.inliers_.size() < mMinInliers_17PT ) {
-        std::cout << "17 point FAILED - Inliers Found " << sacProb.inliers_.size() << std::endl;
+        // std::cout << "17 point FAILED - Inliers Found " << sacProb.inliers_.size() << std::endl;
         return false;
         }
 
@@ -202,8 +202,8 @@ bool RelNonCentralPosSolver::computeNonCentralRelPose(
         Tc1c2 = Eigen::Matrix4d::Identity();
         Tc1c2.block<3, 4>(0, 0) = optimized_pose;
 
-        std::cout << "T12 (17 Point RANSAC):\n " << std::setprecision(6)
-                  << Tc1c2 << std::endl;
+        // std::cout << "T12 (17 Point RANSAC):\n " << std::setprecision(6)
+        //           << Tc1c2 << std::endl;
         // return true;
         // Covariance Matrix ////////////////
         // 
@@ -361,7 +361,7 @@ bool RelNonCentralPosSolver::computeNonCentralRelPose(
 
         double sd_trans = sqrt((m_trans.array()).square().sum() / (m_trans.size()));
 
-        std::cout << "SD of Trans vector" << sd_trans << std::endl;
+        // std::cout << "SD of Trans vector" << sd_trans << std::endl;
         cov_loop = cov_mat_full;
         // std::cout << cov_mat << std::endl;
         std::cout << "Cov_Mat Trace: " << cov_mat.trace() << std::endl;

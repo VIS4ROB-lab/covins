@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<launch>
+
+
+<arg name="voc" default="/home/manthan/ws/covins_ws/src/covins/orb_slam3/Vocabulary/ORBvoc.txt" />
+<arg name="cam" default="/home/manthan/ws/covins_ws/src/covins/orb_slam3/Examples/LEE_H/EuRoC.yaml" />
+
+<node pkg="ORB_SLAM3" type="Mono_Inertial" name="ORB_SLAM3_monoi0" args="$(arg voc) $(arg cam)" output="screen"> 
+
+    <remap from="/camera/image_raw" to="/realsense/infra1/image_rect_raw"/>
+    <remap from="/imu" to="/realsense/imu"/>
+
+</node>
+
+</launch>

@@ -116,7 +116,7 @@ Keyframe::Keyframe(MsgKeyframe msg, MapPtr map, VocabularyPtr voc)
             std::cout << "keypoints_undistorted_.size(): " << keypoints_undistorted_add_.size() << std::endl;
             exit(-1);
         } else {
-            //Undistort
+            // Undistort
             keypoints_undistorted_add_.reserve(keypoints_distorted_add_.size());
             for(size_t idx_kp=0;idx_kp<keypoints_distorted_add_.size();++idx_kp) {
                 Eigen::Vector2d kp_eigen = Utils::FromKeypointType(keypoints_distorted_add_[idx_kp]);
@@ -127,7 +127,7 @@ Keyframe::Keyframe(MsgKeyframe msg, MapPtr map, VocabularyPtr voc)
                     std::cout << COUTERROR << "p3_un: " << p3_un.transpose() << std::endl;
                     exit(-1);
                 }
-                TypeDefs::KeypointType kp_as_kptype = Utils::ToKeypointType(p3_un.block<1,2>(0,0));
+                TypeDefs::KeypointType kp_as_kptype = Utils::ToKeypointType(p3_un.block<2,1>(0,0));
                 keypoints_undistorted_add_.push_back(kp_as_kptype);
             }
         }
