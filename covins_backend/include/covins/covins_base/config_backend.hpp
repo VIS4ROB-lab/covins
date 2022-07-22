@@ -107,6 +107,12 @@ namespace sys {
     //--------------------------
     const std::string voc_orb_dir                       = s1 + "config/ORBvoc.txt";
     //--------------------------
+     const std::string data_path0                       = estd2::GetStringFromYaml(conf,"sys.data_path0");
+    const std::string data_path1                        = estd2::GetStringFromYaml(conf,"sys.data_path1");
+    const std::string data_path2                        = estd2::GetStringFromYaml(conf,"sys.data_path2");
+    const std::string data_path3                        = estd2::GetStringFromYaml(conf,"sys.data_path3");
+    const std::string data_path4                        = estd2::GetStringFromYaml(conf,"sys.data_path4");
+    //--------------------------
     const std::string output_dir                        = outpath;
     const std::string trajectory_format                 = estd2::GetStringFromYaml(conf,"sys.trajectory_format");
 }
@@ -135,6 +141,7 @@ namespace mapping {
 
 namespace placerec {
     const bool active                                   = estd2::GetValFromYaml<bool>(conf,"placerec.active");
+    const bool use_gt                                   = estd2::GetValFromYaml<bool>(conf,"placerec.use_gt");
     const std::string type                              = estd2::GetStringFromYaml(conf,"placerec.type");
     const size_t start_after_kf                         = estd2::GetValFromYaml<int>(conf,"placerec.start_after_kf");
     const size_t consecutive_loop_dist                  = estd2::GetValFromYaml<int>(conf,"placerec.consecutive_loop_dist");
@@ -199,7 +206,10 @@ namespace opt {
     const float wt_lp_t1            = estd2::GetValFromYaml<float>(conf,"opt.wt_lp_T1");
     const float wt_lp_r2            = estd2::GetValFromYaml<float>(conf,"opt.wt_lp_R2");
     const float wt_lp_t2            = estd2::GetValFromYaml<float>(conf,"opt.wt_lp_T2");
+    const float wt_lp_r3            = estd2::GetValFromYaml<float>(conf,"opt.wt_lp_R3");
+    const float wt_lp_t3            = estd2::GetValFromYaml<float>(conf,"opt.wt_lp_T3");
     const float cov_switch          = estd2::GetValFromYaml<float>(conf,"opt.cov_switch");
+    const float cov_switch2         = estd2::GetValFromYaml<float>(conf,"opt.cov_switch2");
 }
 
 namespace vis {

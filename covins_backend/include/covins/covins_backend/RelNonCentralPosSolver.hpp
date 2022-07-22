@@ -15,6 +15,8 @@
 // Third Party
 #include "matcher/MatchingAlgorithm.h"
 #include "matcher/ImageMatchingAlgorithm.h"
+#include "covins_backend/optimization_be.hpp"
+#include <covins/covins_base/utils_base.hpp>
 
 namespace covins {
 
@@ -31,6 +33,10 @@ public:
   using KeyframePtr = std::shared_ptr<Keyframe>;
   using KeypointVector = TypeDefs::KeypointVector;
   using KeyframeVector = TypeDefs::KeyframeVector;
+  using Vector3Type = TypeDefs::Vector3Type;
+  using TransformType = TypeDefs::TransformType;
+  using Vector3Vector = TypeDefs::Vector3Vector;
+  using KfObservations = TypeDefs::KfObservations;
   
 public:
   /// @brief The class constructor
@@ -71,7 +77,7 @@ public:
   /// @return Whether a Transformation with sufficients inliers was found
   bool computePose(const KeyframePtr KeyframePtr1,
                    const KeyframePtr KeyframePtr2, Matches &ImgMatches,
-                   const double threshold, Eigen::Matrix4d &Tc1c2, std::vector<int> &inlierInd);
+                   const double threshold, Eigen::Matrix4d &Tc1c2, std::vector<int> &inlierInd, Vector3Vector &lms);
 
   auto findMatches(const KeyframePtr KeyframePtr1,
                    const KeyframePtr KeyframePtr2) -> Matches;

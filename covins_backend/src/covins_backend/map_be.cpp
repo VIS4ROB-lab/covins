@@ -195,6 +195,8 @@ auto MapManager::PerformMerge()->void {
     KeyframePtr kf_query;
     KeyframePtr kf_match;
     TransformType T_smatch_squery;
+    double relative_yaw_smatch_squery;
+    TypeDefs::Matrix6Type cov_mat;
 
     std::cout << "--> Fetch merge data" << std::endl;
     {
@@ -204,6 +206,8 @@ auto MapManager::PerformMerge()->void {
         kf_query = merge.kf_query;
         kf_match = merge.kf_match;
         T_smatch_squery = merge.T_smatch_squery;
+        relative_yaw_smatch_squery = merge.relative_yaw_smatch_squery;
+        cov_mat = merge.cov_mat;
     }
     std::cout << "--> Process merge data" << std::endl;
 
@@ -224,7 +228,7 @@ auto MapManager::PerformMerge()->void {
 
     MapInstancePtr map_merged(new MapInstance(map_match,map_query,T_wmatch_wquery));
 
-    LoopConstraint lc(kf_match,kf_query,T_smatch_squery);
+    LoopConstraint lc(kf_match,kf_query,T_smatch_squery,relative_yaw_smatch_squery, cov_mat);
     map_merged->map->AddLoopConstraint(lc);
 
 //    std::cout << "Map Match: Agents|KFs|LMs :" << map_match->map->associated_clients_.size() << "|" << map_match->map->GetKeyframes().size() << "|" << map_match->map->GetLandmarks().size() << std::endl;

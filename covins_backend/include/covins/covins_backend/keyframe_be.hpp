@@ -121,6 +121,9 @@ protected:
     // Covisibility Graph Functions
     virtual auto UpdateCovisibilityConnections()                                        ->void;     // This function should only be called by the map
 
+    // Connected Neighbor FUnctions
+    virtual auto UpdateNeighborConnections()                                            ->void;
+    
     // Infrastructure
     bool                        pose_optimized_                                         = false;    // Indicates that this LM was part of an optimization process (important for landmark culling)
     bool                        vel_bias_optimized_                                     = false;

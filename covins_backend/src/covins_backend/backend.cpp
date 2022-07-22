@@ -405,7 +405,7 @@ auto CovinsBackend::get_counter()->int {
 
 auto CovinsBackend::LoadVocabulary()->void {
     bool vocload = false;
-    if(covins_params::features::type == "ORB")
+    if(covins_params::features::type == "ORB" || covins_params::features::type == "SIFT")
     {
         std::cout << endl << "Loading ORB Vocabulary. This could take a while..." << std::endl;
         voc_.reset(new CovinsVocabulary::Vocabulary());

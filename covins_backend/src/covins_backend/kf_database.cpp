@@ -46,7 +46,7 @@ auto KeyframeDatabase::AddKeyframe(KeyframePtr kf)->void {
 
 auto KeyframeDatabase::DetectCandidates(KeyframePtr kf, precision_t min_score)->KeyframeVector {
     KeyframeSet connected_kfs;
-    auto connections = kf->GetConnectedKeyframesByWeight(0);
+    auto connections = kf->GetConnectedNeighborKeyframes();
     connected_kfs.insert(connections.begin(),connections.end());
     KeyframeList lKFsSharingWords;
 
@@ -123,7 +123,7 @@ auto KeyframeDatabase::DetectCandidates(KeyframePtr kf, precision_t min_score)->
     {
         KeyframePtr pKFi = it->second;
         KeyframeVector vpBestNeighs;
-        KeyframeVector all_neighs = pKFi->GetConnectedKeyframesByWeight(0);
+        KeyframeVector all_neighs = pKFi->GetConnectedNeighborKeyframes();
         if(all_neighs.size() < 10) vpBestNeighs = all_neighs;
         else vpBestNeighs = KeyframeVector(all_neighs.begin(),all_neighs.begin()+10);
 

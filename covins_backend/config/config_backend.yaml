@@ -21,12 +21,18 @@ sys.trajectory_format: 'TUM' # {EUROC|TUM}
 # maps are loaded from here (use absolute path)
 sys.map_path0: '/home/pschmuck/ws/covins_ws/src/covins/covins_backend/output/map_data'
 
+sys.data_path0: '/home/manthan/ws_vins/covins_ws/results/datasets/MH04'
+sys.data_path1: '/home/manthan/ws_vins/covins_ws/results/datasets/MH05'
+sys.data_path2: '/home/manthan/ws_vins/covins_ws/results/datasets/MH03'
+sys.data_path3: '/home/manthan/ws_vins/covins_ws/results/datasets/MH04'
+sys.data_path4: '/home/manthan/ws_vins/covins_ws/results/datasets/MH05'
+
 #--------------------------------------------------------------------------------------------
 # Features
 #--------------------------------------------------------------------------------------------
 
-feat.type: 'ORB' # this allows to integrate other PR algorithms. Currently, only 'ORB' is supported
-feat.desc_length: 32 # [Byte] COVINS-ORB: 32
+feat.type: 'ORB' # this allows to integrate other PR algorithms. Currently, only 'ORB' and 'SIFT 'is supported
+feat.desc_length: 32 # [Byte] COVINS-ORB: 32, SIFT: 128
 
 feat.num_octaves: 1 # Number of levels in the scale pyramid
 feat.scale_factor: 2.0 # Scale factor between levels in the scale pyramid
@@ -63,7 +69,7 @@ placerec.type: 'COVINS' # this allows to integrate other PR algorithms. Cuurentl
 
 placerec.start_after_kf: 7 # map matching skips the first x KFs after map initialization
 placerec.consecutive_loop_dist: 10 # after finding a loop, the next x KFs are not considered loop closure query
-placerec.min_loop_dist: 300 # minimum number of KFs between the two ends of the loop to accept loop
+placerec.min_loop_dist: 100 # minimum number of KFs between the two ends of the loop to accept loop
 placerec.cov_consistency_thres: 3
 
 placerec.solver_iterations: 5
@@ -74,7 +80,7 @@ placerec.inliers_thres: 20
 placerec.total_matches_thres: 40
 
 placerec.use_4dof: 0
-
+placerec.use_gt: 0
 placerec.ransac.min_inliers: 6 #def 6
 placerec.ransac.probability: 0.99
 placerec.ransac.max_iterations: 300
@@ -116,12 +122,14 @@ opt.gba_fix_poses_loaded_maps: 0
 
 opt.wt_kf_R: 1e1
 opt.wt_kf_T: 1
-opt.wt_lp_R1: 1
-opt.wt_lp_T1: 0.5
-opt.wt_lp_R2: 1
-opt.wt_lp_T2: 0.1
+opt.wt_lp_R1: 0.5
+opt.wt_lp_T1: 1
+opt.wt_lp_R2: 0.1
+opt.wt_lp_T2: 300
+opt.wt_lp_R3: 0.01
+opt.wt_lp_T3: 1
 opt.cov_switch: 0.5
-
+opt.cov_switch2: 1
 #--------------------------------------------------------------------------------------------
 # Visualization
 #--------------------------------------------------------------------------------------------
@@ -140,9 +148,9 @@ vis.covgraph_shared_edges_only: 1 # only display covisibility edges between traj
 vis.scalefactor: 1.0 # scale the visalized map by this factor
 
 # ROS marker sizes
-vis.trajmarkersize: 0.12
+vis.trajmarkersize: 0.08
 vis.covmarkersize: 0.008
-vis.loopmarkersize: 0.08
+vis.loopmarkersize: 0.05
 vis.camsize: 0.1
 vis.camlinesize: 0.01
 

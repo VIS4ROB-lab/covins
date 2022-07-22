@@ -78,6 +78,8 @@ public:
     using vecConsistentGroup            = std::vector<ConsistentGroup, Eigen::aligned_allocator<ConsistentGroup>>;
     using vecVecMP                      = std::vector<LandmarkVector>;
 
+    using GroundtruthData               = std::vector<std::vector<double>>;
+
 public:
     PlaceRecognition(ManagerPtr man, bool perform_pgo = true);
 
@@ -122,7 +124,7 @@ protected:
 
     KeyframePtr                 kf_query_;
     KeyframePtr                 kf_match_;
-
+    
     precision_t                 mnCovisibilityConsistencyTh;
     vecConsistentGroup          mvConsistentGroups;
     KeyframeVector              mvpEnoughConsistentCandidates;
@@ -133,6 +135,7 @@ protected:
     TransformType               mTsw;
     TypeDefs::Matrix6Type       mcov_mat;
     double                      mrelative_yaw = -1.0;
+    double                      mrelative_yaw_gt = -1.0;
     
     // Sync
     std::mutex                  mtx_in_;
@@ -140,6 +143,11 @@ protected:
 
     bool                        finish_                                                 = false;
     bool is_finished_ = false;
+
+    // GT Data
+    auto GetPoseTwsGT(KeyframePtr kf)                                   ->TransformType;
+    std::map<int, GroundtruthData> gt_;
+    TransformType           mT_smatch_squery_gt;
 };
 
 } //end ns

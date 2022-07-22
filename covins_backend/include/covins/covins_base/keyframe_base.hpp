@@ -140,6 +140,7 @@ public:
     // Covisiblity Graph Functions
     virtual auto AddConnectedKeyframe(KeyframePtr kf, int weight)                       ->void;
     virtual auto GetConnectedKeyframesByWeight(int weight)                              ->KeyframeVector;
+    virtual auto GetConnectedNeighborKeyframes()                                        ->KeyframeVector;
     virtual auto EraseConnectedKeyframe(KeyframePtr kf)                                 ->void;
     virtual auto GetConnectionWeight(KeyframePtr kf)                                    ->int;
 
@@ -175,6 +176,7 @@ public:
 
     // Ceres Variable Access (Pose as Tws)
     precision_t                 ceres_pose_[robopt::defs::pose::kPoseBlockSize];                            //qx,qy,qz,qw,X,Y,Z
+    precision_t                 ceres_pose_local_[robopt::defs::pose::kPoseBlockSize];                            //qx,qy,qz,qw,X,Y,Z
     precision_t                 ceres_velocity_and_bias_[robopt::defs::pose::kSpeedBiasBlockSize];
     precision_t                 ceres_extrinsics_[robopt::defs::pose::kPoseBlockSize];
 
@@ -217,6 +219,7 @@ protected:
 
     // Covisiblity Graph
     KeyframeVector              connected_kfs_;
+    KeyframeVector              connected_n_kfs_;
     std::vector<int>            connections_weights_;
 
     // Infrastructure

@@ -275,6 +275,18 @@ struct LoopConstraint {
     Matrix6Type         cov_mat;
 };
 
+struct LocalLM {
+  using Vector3Type = TypeDefs::Vector3Type;
+  using KfObservations = TypeDefs::KfObservations;
+
+  LocalLM(size_t i, Vector3Type pos, KfObservations obs)
+      : id_(i), pos_l_(pos), observations_(obs) {}
+  size_t id_;
+  Vector3Type pos_l_;
+  KfObservations observations_;
+  TypeDefs::precision_t ceres_pos_[7];
+};
+
 struct VICalibration {
 
 public:

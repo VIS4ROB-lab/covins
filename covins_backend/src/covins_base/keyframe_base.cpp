@@ -229,6 +229,16 @@ auto KeyframeBase::GetConnectedKeyframesByWeight(int weight)->KeyframeVector {
     }
 }
 
+auto KeyframeBase::GetConnectedNeighborKeyframes()->KeyframeVector {
+    std::unique_lock<std::mutex> lock(mtx_connections_);
+
+    if(connected_n_kfs_.empty()) {
+        return KeyframeVector();
+    } else {
+      return connected_n_kfs_;
+    }
+}
+
 auto KeyframeBase::GetConnectionWeight(KeyframePtr kf)->int {
     std::unique_lock<std::mutex> lock(mtx_connections_);
 

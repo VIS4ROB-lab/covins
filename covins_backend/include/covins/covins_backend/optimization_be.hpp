@@ -29,7 +29,7 @@
 
 // COVINS
 #include "covins_base/optimization_base.hpp"
-
+#include <chrono>
 
 namespace covins {
 
@@ -211,6 +211,13 @@ public:
                                        bool outlier_removal = true,
                                        bool estimate_bias = false)                      ->void;
 
+    static auto LocalBundleAdjustment(std::vector<std::shared_ptr<LocalLM>> lms,
+                                      KeyframeVector QKFs, KeyframeVector CKFs,
+                                      TransformType T_QC,
+                                      TypeDefs::Matrix6Type &cov_BA,
+                                      size_t cnt = 0) -> void;
+    
+    
     static auto OptimizeRelativePose(KeyframePtr kf1, KeyframePtr kf2,
                                      LandmarkVector &matches1,
                                      TransformType& T12,

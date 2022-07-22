@@ -30,6 +30,7 @@ briskOKVIS_k10_L6_voc_v1.yml
 brief_k10L6.bin
 
 # Trajectory Write-Out
+covins_backend/output/*
 covins_backend/output/20*
 covins_backend/output/KF*
 covins_backend/output/RemovalPattern*

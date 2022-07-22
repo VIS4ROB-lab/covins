@@ -57,7 +57,9 @@ struct MergeInformation {
     KeyframePtr                 kf_query;
     KeyframePtr                 kf_match;
     TransformType               T_smatch_squery                                         = TransformType::Zero();
-};
+    double                      relative_yaw_smatch_squery = -1.0;
+    TypeDefs::Matrix6Type       cov_mat = TypeDefs::Matrix6Type::Identity();
+}; 
 
 class MapManager {
 public:

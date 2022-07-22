@@ -75,7 +75,7 @@ Keyframe::Keyframe(MsgKeyframe msg, MapPtr map, VocabularyPtr voc)
                     std::cout << COUTERROR << "p3_un: " << p3_un.transpose() << std::endl;
                     exit(-1);
                 }
-                TypeDefs::KeypointType kp_as_kptype = Utils::ToKeypointType(kp_eigen);
+                TypeDefs::KeypointType kp_as_kptype = Utils::ToKeypointType(p3_un.block<2,1>(0,0));
                 keypoints_undistorted_.push_back(kp_as_kptype);
             }
         }
@@ -134,7 +134,13 @@ Keyframe::Keyframe(MsgKeyframe msg, MapPtr map, VocabularyPtr voc)
     }
 
     descriptors_add_ = msg.descriptors_add.clone();
-
+    if (descriptors_add_.cols != covins_params::features::desc_length) {
+      std::cout << COUTERROR << "Descriptor Length Mismatch, Received: "
+                << descriptors_add_.cols
+                << "Expected: " << covins_params::features::desc_length
+                << std::endl;
+        exit(-1);
+    }
     ///////////////
     this->AssignFeaturesToGrid();
 
@@ -151,7 +157,7 @@ Keyframe::Keyframe(MsgKeyframe msg, MapPtr map, VocabularyPtr voc)
             cout << COUTERROR << " !mBowVec.empty() || !mFeatVec.empty()" << endl;
             exit(-1);
         }
-        vector<cv::Mat> current_desc = Utils::ToDescriptorVector(descriptors_add_);
+        vector<cv::Mat> current_desc = Utils::ToDescriptorVector(descriptors_);
         // Feature vector associate features with nodes in the 4th level (from leaves up)
         // We assume the vocabulary tree has 6 levels, change the 4 otherwise
         voc->transform(current_desc,bow_vec_,feat_vec_,4);
@@ -160,7 +166,7 @@ Keyframe::Keyframe(MsgKeyframe msg, MapPtr map, VocabularyPtr voc)
     // PreIntegration
     if(msg.preintegration.dt.empty()) {
         preintegrated_imu_.reset(new robopt::imu::PreintegrationBase(Eigen::Vector3d::Zero(),Eigen::Vector3d::Zero(),bias_accel_,bias_gyro_,calibration_.sigma_a_c,calibration_.sigma_g_c,calibration_.sigma_aw_c,calibration_.sigma_gw_c,calibration_.g));
-        if(id_.first > 0) std::cout << COUTERROR << "KF " << id_ << ": no preintegration data!" << std::endl;
+        // if(id_.first > 0) std::cout << COUTERROR << "KF " << id_ << ": no preintegration data!" << std::endl;
     } else {
         for(size_t idx=0;idx<msg.preintegration.dt.size();++idx) {
             const double dt = msg.preintegration.dt[idx];
@@ -348,6 +354,38 @@ auto Keyframe::EstablishConnections(MsgKeyframe msg, MapPtr map)->void {
             //if MP not in Map, we ignore it. Might be deleted, or comes in later and is then added to this KF
         }
     }
+
+     // Add Neighbors to connected KFs
+    int n_neigh = 20;
+    int min_neigh;
+
+    {
+      
+    KeyframeBase::idpair curr_id = msg.id;
+    KeyframeBase::idpair temp_id = msg.id;
+    // std::cout << "Current ID: "<< curr_id << std::endl;
+    // std::cout << "Current Diff: "<< int(curr_id.first) - n_neigh << std::endl;
+
+    if (int(curr_id.first) - n_neigh <= 1) {
+      min_neigh = 1;
+    } else {
+      min_neigh = int(curr_id.first) - n_neigh;
+    }
+
+    // std::cout << "Min Neighbor" << min_neigh << std::endl;
+    // std::unique_lock<std::mutex> lock(mtx_connections_);
+    
+    connected_n_kfs_.clear();
+    connected_n_kfs_.reserve(2 * n_neigh);
+
+    for (int i = int(curr_id.first)-1; i > min_neigh; --i) {
+      temp_id.first = i;
+    //   std::cout << temp_id << std::endl;
+      KeyframePtr neigh = map->GetKeyframe(temp_id, false);
+      connected_n_kfs_.push_back(neigh);
+    }
+
+    }
 }
 
 auto Keyframe::FusePreintegration(PreintegrationPtr preint)->void {
@@ -494,6 +532,16 @@ auto Keyframe::SetVelBiasOptimized()->void {
 auto Keyframe::sort_by_redval(const KeyframePtr a, const KeyframePtr b)->bool {
     if(a->latest_red_val_ > b->latest_red_val_) return true;
     else return false;
+}
+
+auto Keyframe::UpdateNeighborConnections() -> void {
+
+  int n_neigh = 10;
+  {
+    std::unique_lock<std::mutex> lock(mtx_connections_);
+    connected_n_kfs_.clear();
+    connected_n_kfs_.reserve(2 * n_neigh);
+  }
 }
 
 auto Keyframe::UpdateCovisibilityConnections()->void {
