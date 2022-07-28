@@ -75,6 +75,10 @@ public:
     int n_feat_;
     std::string fType_;
 
+    bool is_odom_imu_frame_ = false;
+    double t_min_;
+    double r_min_;
+
     TransformType Tsc_;
     TransformType Twc_;
     TransformType Twc_prev_;
@@ -88,6 +92,7 @@ public:
     covins::TypeDefs::ThreadPtr thread_comm_;
     std::shared_ptr<covins::Communicator> comm_;
     int client_id_;
+     
     // ------------------
 };
 

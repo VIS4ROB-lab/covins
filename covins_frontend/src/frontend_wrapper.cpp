@@ -17,8 +17,15 @@ auto FrontendWrapper::run()-> void {
 
   subscriberImg_->subscribe(node_, node_.resolveName("/camera/image_raw"), 10);
   subscriberOdom_->subscribe(node_, node_.resolveName("/cam_odom"), 10);
+  //   subscriberOdom_->subscribe(node_, node_.resolveName("/odometry"), 10);
 //   subscriberOdom_->subscribe(node_, node_.resolveName("/odometry"), 10);  
-  
+  //   subscriberOdom_->subscribe(node_, node_.resolveName("/odometry"), 10);
+//   subscriberOdom_->subscribe(node_, node_.resolveName("/odometry"), 10);  
+  //   subscriberOdom_->subscribe(node_, node_.resolveName("/odometry"), 10);
+
+  std::string config_file;
+  ros::param::get("~config_file", config_file);
+
   sync_ = new message_filters::Synchronizer<
       message_filters::sync_policies::ApproximateTime<sensor_msgs::Image,
                                                       nav_msgs::Odometry>>(
@@ -40,9 +47,8 @@ auto FrontendWrapper::run()-> void {
 
   ros::Rate r(50);
 
-  cv::FileStorage fSettings(
-      "/home/manthan/ws/covins_ws/src/covins/covins_frontend/config/EuRoC.yaml",
-      cv::FileStorage::READ);
+  cv::FileStorage fSettings(config_file, cv::FileStorage::READ);
+  
 
   bool b_parse_cam = ParseCamParamFile(fSettings);
   if(!b_parse_cam)
@@ -126,11 +132,7 @@ void FrontendWrapper::convertToMsg(covins::MsgKeyframe &msg, cv::Mat &img,
   msg.keypoints_undistorted_add.reserve(n_feat_);
   msg.descriptors_add.reserve(n_feat_);
 
-//   // Undistort Image
-//   cv::Mat img_und;
-//   cv::undistort(img, img_und, K_, DistCoef_);
-
-  // msg.img = img_und;
+  // msg.img = img;
 
   //Place Recognition Features
   std::vector<cv::KeyPoint> cv_keypoints;
@@ -191,8 +193,17 @@ void FrontendWrapper::convertToMsg(covins::MsgKeyframe &msg, cv::Mat &img,
   msg.lin_acc = covins::TypeDefs::Vector3Type::Zero();
   msg.ang_vel = covins::TypeDefs::Vector3Type::Zero();
 
-  TransformType T_w_sref = T_wc_prev * Tsc_.inverse();
-  TransformType T_w_s = T_wc * Tsc_.inverse();
+  TransformType T_w_sref = TransformType::Identity();
+  TransformType T_w_s = TransformType::Identity();
+
+  if (is_odom_imu_frame_) {
+    T_w_sref = T_wc_prev;
+    T_w_s = T_wc;
+  } else {
+    T_w_sref = T_wc_prev * Tsc_.inverse();
+    T_w_s = T_wc * Tsc_.inverse();
+  }
+  
   msg.T_sref_s = T_w_sref.inverse() * T_w_s;
 
   if (index == 0)
@@ -246,9 +257,8 @@ auto FrontendWrapper::imageCallbackTF(const sensor_msgs::ImageConstPtr &msgImg,
   }
 
 
-  if (trans_diff > 0.15 || quat_ang > 0.1) {
+  if (trans_diff > t_min_ || quat_ang > r_min_) {
     std::cout << "NEW KF: " << kf_count_<< std::endl;
-
     cv::Mat img = cv_ptr->image.clone();
 
     // Convert KF to Msg
@@ -274,12 +284,31 @@ bool FrontendWrapper::ParseCamParamFile(cv::FileStorage &fSettings)
     std::cout << std::endl << "Camera Parameters: " << std::endl;
     bool b_miss_params = false;
 
+    is_odom_imu_frame_ = int(fSettings["odom_in_imu_frame"]);
+
+    cv::FileNode node = fSettings["t_min"];
+        
+    if(!node.empty())
+    {
+        t_min_ = node.real();
+    }
+    
+    node = fSettings["r_min"];
+    if(!node.empty())
+    {
+        r_min_ = node.real();
+    }
+
+
     std::string sCameraName = fSettings["Camera.type"];
+    
     if(sCameraName == "PinHole")
     {
         float fx, fy, cx, cy;
         // Camera calibration parameters
+
         cv::FileNode node = fSettings["Camera.fx"];
+
         if(!node.empty() && node.isReal())
         {
             fx = node.real();
@@ -289,6 +318,9 @@ bool FrontendWrapper::ParseCamParamFile(cv::FileStorage &fSettings)
             std::cerr << "*Camera.fx parameter doesn't exist or is not a real number*" << std::endl;
             b_miss_params = true;
         }
+
+
+        
 
         node = fSettings["Camera.fy"];
         if(!node.empty() && node.isReal())
@@ -415,7 +447,7 @@ bool FrontendWrapper::ParseCamParamFile(cv::FileStorage &fSettings)
     // Params for Imu_Cam Transform
 
     cv::Mat Tbc;
-    cv::FileNode node = fSettings["Tbc"];
+    node = fSettings["Tbc"];
     if(!node.empty())
     {
         Tbc = node.mat();

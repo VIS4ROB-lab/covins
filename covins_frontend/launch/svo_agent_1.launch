@@ -4,9 +4,10 @@
 <arg name="ag_n" default="0" />
 <arg name="cam_topic" default="/cam0/image_raw" />
 <arg name="odom_topic" default="/svo/odometry" />
+<arg name="config_file" default="$(find covins_frontend)/config/EuRoC.yaml" />
 
 <node pkg="covins_frontend" type="covins_frontend_node" name="frontend_ag$(arg ag_n)" output="screen"> 
-
+    <param name="config_file" type="str" value="$(arg config_file)" />
     <remap from="/camera/image_raw" to="$(arg cam_topic)"/>
     <remap from="/cam_odom" to="$(arg odom_topic)"/>
 

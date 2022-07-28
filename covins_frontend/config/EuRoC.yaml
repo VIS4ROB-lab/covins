@@ -36,9 +36,25 @@ Tbc: !!opencv-matrix
         -0.0257744366974, 0.00375618835797, 0.999660727178, 0.00981073058949,
          0.0, 0.0, 0.0, 1.0]
 
+
+#--------------------------------------------------------------------------------------------
+# Frontend COVINS Parameters
+#--------------------------------------------------------------------------------------------
+
+# 1 if Odometry is published in IMU frame. Set to 0 if published in Camera Frame
+odom_in_imu_frame: 0
+
+#Minimum translational distance in metres for considering a new KF
+t_min: 0.07
+
+#Minimum rotational angle in radians for considering a KF. A new KF is generated if either of the
+# translational or rotational condition is satisfied
+r_min: 0.1
+
+
 # Feature type. Currently only ORB and SIFT supported, for place recognition always ORB features are used
 extractor.type: 'ORB' 
-extractor.nFeatures: 1000 # 1000
+extractor.nFeatures: 1000 #300
 
 #--------------------------------------------------------------------------------------------
 # SIFT Parameters
@@ -47,7 +63,7 @@ extractor.nFeatures: 1000 # 1000
 #--------------------------------------------------------------------------------------------
 # ORB Parameters
 #--------------------------------------------------------------------------------------------
-# ORB Extractor: Number of features per image
+# ORB Extractor: Number of features per image for Place Recognition
 ORBextractor.nFeaturesPR: 1000 # 1000
 
 # ORB Extractor: Scale factor between levels in the scale pyramid
