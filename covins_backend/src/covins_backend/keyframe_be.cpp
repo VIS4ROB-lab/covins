@@ -48,13 +48,13 @@ Keyframe::Keyframe(MsgKeyframe msg, MapPtr map, VocabularyPtr voc)
     if(keypoints_distorted_.empty()) {
         std::cout << COUTERROR << "keypoints_distorted_.empty()" << std::endl;
         std::cout << COUTNOTICE << "Note: if you want to work only on undistorted KP, you can fill 'keypoints_distorted_' with the undistorted KPs and set the distortion coefficients to 0.0" << std::endl;
-        exit(-1);
+        // exit(-1);
     }
     if(keypoints_aors_.size() != keypoints_distorted_.size()) {
         std::cout << COUTERROR << "keypoints given: " << std::endl;
         std::cout << "keypoints_distorted_.size(): " << keypoints_distorted_.size() << std::endl;
         std::cout << "keypoints_aors_.size(): " << keypoints_aors_.size() << std::endl;
-        exit(-1);
+        // exit(-1);
     }
     keypoints_undistorted_ = msg.keypoints_undistorted;
     if(keypoints_distorted_.size() != keypoints_undistorted_.size()) {
@@ -62,7 +62,7 @@ Keyframe::Keyframe(MsgKeyframe msg, MapPtr map, VocabularyPtr voc)
             std::cout << COUTERROR << "keypoints given: " << std::endl;
             std::cout << "keypoints_distorted_.size(): " << keypoints_distorted_.size() << std::endl;
             std::cout << "keypoints_undistorted_.size(): " << keypoints_undistorted_.size() << std::endl;
-            exit(-1);
+            // exit(-1);
         } else {
             //Undistort
             keypoints_undistorted_.reserve(keypoints_distorted_.size());
@@ -73,7 +73,7 @@ Keyframe::Keyframe(MsgKeyframe msg, MapPtr map, VocabularyPtr voc)
                 const Eigen::Vector3d p3_un = calibration_.K*p3D;
                 if(p3_un(2) != 1.0) {
                     std::cout << COUTERROR << "p3_un: " << p3_un.transpose() << std::endl;
-                    exit(-1);
+                    // exit(-1);
                 }
                 TypeDefs::KeypointType kp_as_kptype = Utils::ToKeypointType(p3_un.block<2,1>(0,0));
                 keypoints_undistorted_.push_back(kp_as_kptype);
@@ -157,7 +157,7 @@ Keyframe::Keyframe(MsgKeyframe msg, MapPtr map, VocabularyPtr voc)
             cout << COUTERROR << " !mBowVec.empty() || !mFeatVec.empty()" << endl;
             exit(-1);
         }
-        vector<cv::Mat> current_desc = Utils::ToDescriptorVector(descriptors_);
+        vector<cv::Mat> current_desc = Utils::ToDescriptorVector(descriptors_add_);
         // Feature vector associate features with nodes in the 4th level (from leaves up)
         // We assume the vocabulary tree has 6 levels, change the 4 otherwise
         voc->transform(current_desc,bow_vec_,feat_vec_,4);

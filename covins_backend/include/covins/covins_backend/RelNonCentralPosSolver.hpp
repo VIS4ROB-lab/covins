@@ -37,6 +37,7 @@ public:
   using TransformType = TypeDefs::TransformType;
   using Vector3Vector = TypeDefs::Vector3Vector;
   using KfObservations = TypeDefs::KfObservations;
+  using LoopVector    = TypeDefs::LoopVector;
   
 public:
   /// @brief The class constructor
@@ -65,7 +66,7 @@ public:
   bool computeNonCentralRelPose(const KeyframePtr KeyframePtr1,
                                 const KeyframePtr KeyframePtr2,
                                 const double threshold, Eigen::Matrix4d &Tc1c2,
-                                Eigen::Matrix<double, 6, 6> &cov_loop);
+                                Eigen::Matrix<double, 6, 6> &cov_loop, LoopVector &loop_vect);
   
   
   /// @brief Perform 5 Point Ransac using 2D-2D correspondces to get pose.

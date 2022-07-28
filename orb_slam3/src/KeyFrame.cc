@@ -26,6 +26,7 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/core/eigen.hpp>
+#include <opencv2/features2d.hpp>
 
 // COVINS
 #include <eigen3/Eigen/Core>
@@ -115,19 +116,24 @@ auto KeyFrame::ConvertToMsg(covins::MsgKeyframe &msg, KeyFrame *kf_ref, bool is_
         msg.keypoints_aors          = this->keys_eigen_aors_;
         msg.keypoints_distorted     = this->keys_eigen_;
         msg.keypoints_undistorted   = this->keys_eigen_un_;
-        
-        int num_feat = 300;
+        msg.img = img;
+        int num_feat = 1000;
         float scale_factor = 1.2;
         int num_pyramids = 8;
         int thres_init = 20;
-        int thres_min = 15;
+        int thres_min = 7;
         std::vector<cv::KeyPoint> cv_keypoints_add;
         cv_keypoints_add.reserve(num_feat);
         cv::Mat new_descriptors_add;
+        // cv::Ptr<cv::ORB> orb_detector;
+        // orb_detector = cv::ORB::create(num_feat);
+        // orb_detector->detectAndCompute(img, cv::Mat(), cv_keypoints_add,
+        //                                new_descriptors_add);
         std::shared_ptr<ORBextractor> extractor;
         extractor.reset(new ORBextractor(num_feat, scale_factor, num_pyramids, thres_init, thres_min));
         (*extractor)(img, cv::Mat(), cv_keypoints_add, new_descriptors_add);
-
+        
+    
         // std::cout << "size: " << cv_keypoints_add.size() << std::endl;
 
         for(size_t i=0;i<cv_keypoints_add.size();++i) {

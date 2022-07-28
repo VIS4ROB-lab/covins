@@ -14,7 +14,6 @@ find_package(catkin REQUIRED COMPONENTS
     covins_comm
     eigen_catkin
     eigen_conversions
-    opencv3_catkin
     roscpp
     roslib
     cv_bridge
@@ -50,7 +49,7 @@ set(FRONTEND_HEADER_FILES
 set(FRONTEND_SOURCE_FILES
     src/frontend_wrapper.cpp
     src/communicator.cpp
-    src/ORBextractor.cpp
+    src/ORBextractor.cc
 )
 
 # add_executable(covins_frontend_node ${PROJECT_SOURCE_DIR}/src/frontend_node.cpp)

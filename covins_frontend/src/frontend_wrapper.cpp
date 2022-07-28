@@ -15,9 +15,10 @@ auto FrontendWrapper::run()-> void {
   subscriberImg_ = new message_filters::Subscriber<sensor_msgs::Image>;
   subscriberOdom_ = new message_filters::Subscriber<nav_msgs::Odometry>;
 
-  subscriberImg_->subscribe(node_, node_.resolveName("/cam0/image_raw"), 10);
-  subscriberOdom_->subscribe(node_, node_.resolveName("/vins_estimator/camera_pose"), 10);
-
+  subscriberImg_->subscribe(node_, node_.resolveName("/camera/image_raw"), 10);
+  subscriberOdom_->subscribe(node_, node_.resolveName("/cam_odom"), 10);
+//   subscriberOdom_->subscribe(node_, node_.resolveName("/odometry"), 10);  
+  
   sync_ = new message_filters::Synchronizer<
       message_filters::sync_policies::ApproximateTime<sensor_msgs::Image,
                                                       nav_msgs::Odometry>>(
@@ -161,6 +162,8 @@ void FrontendWrapper::convertToMsg(covins::MsgKeyframe &msg, cv::Mat &img,
   cv::Mat new_descriptors_add;
 
   if (fType_ == "ORB") {
+    // orb_detector_->detectAndCompute(img, cv::Mat(), cv_keypoints_add,
+    //                                 new_descriptors_add);
     (*orb_extractor_)(img, cv::Mat(), cv_keypoints_add, new_descriptors_add);
   } else if (fType_ == "SIFT") {
     sift_detector_->detectAndCompute(img, cv::Mat(), cv_keypoints_add,
@@ -532,6 +535,7 @@ bool FrontendWrapper::ParseORBParamFile(cv::FileStorage &fSettings)
     orb_extractor_PR_.reset(new covins::ORBextractor(
         nFeaturesPR, fScaleFactor, nLevels, fIniThFAST, fMinThFAST));
 
+    orb_detector_ = cv::ORB::create(nFeatures);
     sift_detector_ = cv::xfeatures2d::SIFT::create(nFeatures);
 
     std::cout << std::endl << "Extractor Parameters: " << std::endl;

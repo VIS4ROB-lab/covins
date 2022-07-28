@@ -742,7 +742,7 @@ auto Optimization::GlobalBundleAdjustment(MapPtr map, int interations_limit, dou
 auto Optimization::LocalBundleAdjustment(std::vector<std::shared_ptr<LocalLM>> lms,
                                          KeyframeVector QKFs,
                                          KeyframeVector CKFs,
-                                         TransformType T_s1s2, TypeDefs::Matrix6Type &cov_BA, size_t cnt) -> void {
+                                         TransformType T_s1s2, std::vector<TypeDefs::Matrix6Type> &cov_BA_vect, size_t cnt) -> void {
 
   //Ts1s2 is T_Qs_Cs (Relative TF between IMU frames of Query and Candidate KFs)
   std::cout << "+++ LBA: Start +++" << std::endl;
@@ -1071,24 +1071,33 @@ auto Optimization::LocalBundleAdjustment(std::vector<std::shared_ptr<LocalLM>> l
     evalOpts.parameter_blocks = eval_blocks;
     ceres::CRSMatrix jacobianCRS;
     problem.Evaluate(evalOpts, NULL, NULL, NULL, &jacobianCRS);
+
     const Eigen::MatrixXd jacobianDense = transformJacobian(jacobianCRS);
     // std::cout << sss.str() << std::endl;
     writeToCSVfile(sss.str(), jacobianDense);
 
-    cov_BA = (jacobianDense.transpose() * jacobianDense)
-                              .completeOrthogonalDecomposition()
-                              .pseudoInverse()
-                              .block<6, 6>(0, 0);
+    const static Eigen::IOFormat csvf(Eigen::StreamPrecision,
+                                      Eigen::DontAlignCols, ", ", ",");
 
     std::ofstream file_covBA("/home/manthan/ws/covins_ws/src/covins/"
                              "covins_backend/output/results_cov_BA.csv",
                              std::ios::app);
+    
+    Eigen::MatrixXd full_cov = (jacobianDense.transpose() * jacobianDense)
+                                   .completeOrthogonalDecomposition()
+                                   .pseudoInverse();
 
-    const static Eigen::IOFormat csvf(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ",");
-    file_covBA << cov_BA.format(csvf);
+    for (size_t i = 0; i < CKFs.size(); ++i) {
+      TypeDefs::Matrix6Type cov_BA = full_cov.block<6, 6>(6 * i, 6 * i);
+
+      cov_BA_vect.push_back(cov_BA);
+      file_covBA << cov_BA.format(csvf);
+      file_covBA << "\n";
+    }
+    
     file_covBA << "\n";
 
-    std::cout << cov_BA << std::endl;
+    // std::cout << cov_BA << std::endl;
 
     // ceres::Covariance::Options options;
     // options.algorithm_type = ceres::DENSE_SVD;
@@ -1496,8 +1505,8 @@ auto Optimization::PoseGraphOptimization4DoF(MapPtr map, PoseMap corrected_poses
     ceres::Problem problem(problem_options);
 
     ceres::LossFunction *loss_function;
-    // loss_function = new ceres::CauchyLoss(1.0);
-    loss_function = new ceres::HuberLoss(0.1);
+    loss_function = new ceres::CauchyLoss(1.0);
+    // loss_function = new ceres::HuberLoss(0.1);
 
     ceres::LocalParameterization *angle_local_parameterization = AngleLocalParameterization::Create();
 
@@ -1576,12 +1585,6 @@ auto Optimization::PoseGraphOptimization4DoF(MapPtr map, PoseMap corrected_poses
 
         ceres::CostFunction* cost_function = FourDOFWeightError::Create(t_12.x(), t_12.y(), t_12.z(),
                                                                         relative_yaw, euler_conncected.y(), euler_conncected.z(), weight);
-
-        problem.AddResidualBlock(cost_function, loss_function,
-                                 &kf1->ceres_pose_[1],
-                                 &kf1->ceres_pose_[4],
-                                 &kf2->ceres_pose_[1],
-                                 &kf2->ceres_pose_[4]);
 
     }
 
@@ -1747,14 +1750,19 @@ auto Optimization::PoseGraphOptimization(
     problem_options.enable_fast_removal = true;
     ceres::Problem problem(problem_options);
 
-    ceres::LossFunction *loss_function;
+    // ceres::LossFunction *loss_function;
     // loss_function = new ceres::CauchyLoss(1.0);
-    loss_function = new ceres::HuberLoss(0.1);
+    ceres::LossFunctionWrapper *loss_function = new ceres::LossFunctionWrapper(
+        new ceres::CauchyLoss(10000.0), ceres::TAKE_OWNERSHIP);
+    
+    // loss_function = new ceres::HuberLoss(0.1);
 
     ceres::LocalParameterization *local_pose_param = new robopt::local_param::PoseQuaternionLocalParameterization();
 
     KeyframeVector keyframes = map->GetKeyframesVec();
     LandmarkVector landmarks = map->GetLandmarksVec();
+    std::vector<ceres::ResidualBlockId> to_eval;
+    std::vector<ceres::ResidualBlockId> to_eval_adj;
 
     // Add Keyframes
     for (size_t i = 0; i < keyframes.size(); ++i) {
@@ -1816,34 +1824,47 @@ auto Optimization::PoseGraphOptimization(
     //     7.60118872e-07, 2.26388210e-07, 8.45597210e-06, 6.21689203e-06,
     //     3.01405541e-05;
 
-    // cov_mat_kf *= covins_params::opt::wt_lp_r2;
+    std::ofstream file_sqrt_info_l("/home/manthan/ws/covins_ws/src/covins/covins_backend/"
+                       "output/file_sqrt_info_l.csv",
+                       std::ios::out);
+    std::ofstream file_sqrt_info(
+        "/home/manthan/ws/covins_ws/src/covins/covins_backend/"
+        "output/file_sqrt_info.csv",
+        std::ios::out);
 
-    // Eigen::LLT<TypeDefs::Matrix6Type> lltofcov_mat(cov_mat_kf.inverse());
-    // TypeDefs::Matrix6Type sqrt_info_f = lltofcov_mat.matrixL().transpose();
-    // std::cout << "The Cov Mat: " << std::endl;
-    // std::cout << cov_mat_kf << std::endl;
-    // TypeDefs::Matrix6Type sqrt_info = TypeDefs::Matrix6Type::Identity();
-    // sqrt_info = sqrt_info_f;
+    const static Eigen::IOFormat csv_f(Eigen::StreamPrecision,
+                                       Eigen::DontAlignCols, ", ", ",");
 
-    // sqrt_info.diagonal() = sqrt_info_f.diagonal();
-
-    // sqrt_info /= covins_params::opt::wt_lp_t2;
-
-    
     Eigen::Matrix<precision_t,6,6> sqrt_info = Eigen::Matrix<precision_t,6,6>::Identity();
-    sqrt_info.topLeftCorner<3,3>() *= covins_params::opt::wt_kf_r;
-    sqrt_info.bottomRightCorner<3, 3>() *= covins_params::opt::wt_kf_t;
-
+    
+    if (covins_params::opt::use_cov_f) {
+        // cov_mat_kf *= covins_params::opt::wt_lp_r2;
+        Eigen::LLT<TypeDefs::Matrix6Type> lltofcov_mat(cov_mat_kf.inverse());
+        TypeDefs::Matrix6Type sqrt_info_f = lltofcov_mat.matrixL().transpose();
+        std::cout << "The Cov Mat: " << std::endl;
+        std::cout << cov_mat_kf << std::endl;
+        // sqrt_info = sqrt_info_f;
+        sqrt_info.diagonal() = sqrt_info_f.diagonal();
+        sqrt_info /= covins_params::opt::wt_lp_t2;
+        sqrt_info *= covins_params::opt::wt_lp_t3;
+        std::cout << "The LT Mat Adj KFs: " << std::endl;
+        std::cout << std::setprecision(4) << sqrt_info << std::endl;
+        
+    } else {
+        sqrt_info.topLeftCorner<3,3>() *= covins_params::opt::wt_kf_r;
+        sqrt_info.bottomRightCorner<3, 3>() *= covins_params::opt::wt_kf_t;
+    }
+    
     Eigen::Matrix<precision_t, 6, 6> sqrt_info_l = Eigen::Matrix<precision_t, 6, 6>::Identity();
     // sqrt_info_l.topLeftCorner<3,3>() *=
     // covins_params::opt::wt_lp_r2; sqrt_info_l.bottomRightCorner<3, 3>() *=
     // covins_params::opt::wt_lp_t2; sqrt_info_l.topLeftCorner<3,3>() *=
     // covins_params::opt::wt_lp_r2; sqrt_info_l.bottomRightCorner<3,3>() *=
     // covins_params::opt::wt_lp_t2;
-    
-    // std::cout << "The LT Mat Adj KFs: " << std::endl;
-    // std::cout << std::setprecision(4) << sqrt_info << std::endl;
 
+    file_sqrt_info << sqrt_info.format(csv_f);
+    file_sqrt_info << "\n";
+    
     std::set<std::pair<KeyframePtr,KeyframePtr>> inserted_edges;
 
     // Set loop constraints
@@ -1856,31 +1877,39 @@ auto Optimization::PoseGraphOptimization(
         KeyframePtr kf1 = i.kf1;
         KeyframePtr kf2 = i.kf2;
         TransformType T_12 = i.T_s1_s2;
-        // For Covaraince Matrix Weighting
-        // Eigen::LLT<TypeDefs::Matrix6Type> lltofA(i.cov_mat.inverse());
-        // TypeDefs::Matrix6Type sqrt_info_l_f = lltofA.matrixL().transpose();
-
-        // TypeDefs::Matrix6Type sqrt_info_l = TypeDefs::Matrix6Type::Identity();
-        // // sqrt_info_l.diagonal() = sqrt_info_l_f.diagonal();
-        // sqrt_info_l = sqrt_info_l_f;
-
-        Vector3Type t_12 = T_12.block<3,1>(0,3);
-        QuaternionType q_12(T_12.block<3, 3>(0, 0));
 
         double cov = i.cov_mat.block<3,3>(3,3).trace();
         double weight = covins_params::opt::wt_lp_t1;
 
-         if (cov < covins_params::opt::cov_switch) {
-           weight = covins_params::opt::wt_lp_r1;
-         } else if (cov < covins_params::opt::cov_switch2) {
-           weight = covins_params::opt::wt_lp_r2;
-         } else
-           weight = covins_params::opt::wt_lp_r3;
+        // For Covaraince Matrix Weighting
+        if (covins_params::opt::use_cov_f) {
+            Eigen::LLT<TypeDefs::Matrix6Type> lltofA(i.cov_mat.inverse());
+            TypeDefs::Matrix6Type sqrt_info_l_f = lltofA.matrixL().transpose();
+            sqrt_info_l = sqrt_info_l_f;
+            // sqrt_info_l.diagonal() = sqrt_info_l_f.diagonal();
+            sqrt_info_l /= covins_params::opt::wt_lp_t2;
+            // sqrt_info_l.topLeftCorner<3,3>() /= covins_params::opt::wt_lp_t3;
+
+        } else {
+        if (cov < covins_params::opt::cov_switch) {
+          weight = covins_params::opt::wt_lp_r1;
+        } else if (cov < covins_params::opt::cov_switch2) {
+          weight = covins_params::opt::wt_lp_r2;
+        } else
+          weight = covins_params::opt::wt_lp_r3;
+        }
+
+        Vector3Type t_12 = T_12.block<3,1>(0,3);
+        QuaternionType q_12(T_12.block<3, 3>(0, 0));
 
         sqrt_info_l *= weight;
-        //  sqrt_info_l /= covins_params::opt::wt_lp_t3;
 
-        // sqrt_info_l.topLeftCorner<3,3>() *= weight;
+
+        if(covins_params::opt::use_cov_f) {
+        std::cout << "The LT Mat loop: " << std::endl;
+        std::cout << std::setprecision(4) << sqrt_info_l << std::endl;
+        }
+
         // sqrt_info_l.bottomRightCorner<3, 3>() *= weight;
 
         // sqrt_info_l(3, 3) *= weight;
@@ -1900,13 +1929,21 @@ auto Optimization::PoseGraphOptimization(
         // sqrt_info_l(4, 4) = min(0.5, sqrt_info_l(4, 4));
         // sqrt_info_l(5, 5) = min(0.5, sqrt_info_l(5, 5));
             
-        
-        // std::cout << "The LT Mat loop: " << std::endl;
-        // std::cout << std::setprecision(4) << sqrt_info_l << std::endl;
-         
-        // std::cout << sqrt_info_l << std::endl;        
         ceres::CostFunction* f = new robopt::posegraph::SixDofBetweenError(q_12, t_12, sqrt_info_l, robopt::defs::pose::PoseErrorType::kImu);
-        problem.AddResidualBlock(f,NULL, kf1->ceres_pose_, kf2->ceres_pose_, kf1->ceres_extrinsics_, kf2->ceres_extrinsics_);
+        if (covins_params::opt::use_robust_loss) {
+          ceres::ResidualBlockId r_id = problem.AddResidualBlock(
+            f, loss_function, kf1->ceres_pose_, kf2->ceres_pose_,
+            kf1->ceres_extrinsics_, kf2->ceres_extrinsics_);
+          to_eval.push_back(r_id);
+        } else {
+          ceres::ResidualBlockId r_id = problem.AddResidualBlock(
+            f, NULL, kf1->ceres_pose_, kf2->ceres_pose_,
+            kf1->ceres_extrinsics_, kf2->ceres_extrinsics_);
+          to_eval.push_back(r_id);
+        }
+
+        file_sqrt_info_l << sqrt_info_l.format(csv_f);
+        file_sqrt_info_l << "\n";
     }
 
 
@@ -1935,7 +1972,11 @@ auto Optimization::PoseGraphOptimization(
         }
 
         ceres::CostFunction* f = new robopt::posegraph::SixDofBetweenError(q_si_ssucc, t_si_ssucc, sqrt_info, robopt::defs::pose::PoseErrorType::kImu);
-        problem.AddResidualBlock(f, /*lossFunction*/NULL, kf->ceres_pose_, succ->ceres_pose_, kf->ceres_extrinsics_, succ->ceres_extrinsics_);
+        ceres::ResidualBlockId r_id = problem.AddResidualBlock(
+            f, /*lossFunction*/ NULL, kf->ceres_pose_, succ->ceres_pose_,
+            kf->ceres_extrinsics_, succ->ceres_extrinsics_);
+        to_eval_adj.push_back(r_id);
+    
     }
 
     // Add 4 Neighbors like VINS
@@ -1976,8 +2017,87 @@ auto Optimization::PoseGraphOptimization(
                 problem.AddResidualBlock(f, /*lossFunction*/NULL, kf->ceres_pose_, kfc->ceres_pose_, kf->ceres_extrinsics_, kfc->ceres_extrinsics_);
             }
     }
-    
 
+
+    // std::ofstream file_loops_residuals_rl_b("/home/manthan/ws/covins_ws/src/covins/covins_backend/"
+    //                    "output/loop_res_robloss_b.csv",
+    //                    std::ios::app);
+    // std::ofstream file_kf_residuals_rl_b(
+    //     "/home/manthan/ws/covins_ws/src/covins/covins_backend/"
+    //     "output/adjacent_res_robloss_b.csv",
+    //     std::ios::app);
+
+    // std::ofstream file_loops_residuals_b("/home/manthan/ws/covins_ws/src/covins/covins_backend/"
+    //                    "output/loop_res_b.csv",
+    //                    std::ios::app);
+    // std::ofstream file_kf_residuals_b(
+    //     "/home/manthan/ws/covins_ws/src/covins/covins_backend/"
+    //     "output/adjacent_res_b.csv",
+    //     std::ios::app);
+    
+    // ///////////////////////////////////////////////////
+    // // Loop Residuals
+    // ceres::Problem::EvaluateOptions options;
+    // options.residual_blocks = to_eval;
+    // options.apply_loss_function = true;
+    // double total_cost = 0.0;
+    // vector<double> evaluated_residuals;
+    // problem.Evaluate(options, &total_cost, &evaluated_residuals, nullptr,
+    //                  nullptr);
+
+    // for (auto i = 0; i < evaluated_residuals.size(); i++) {
+    //   if (i % 6 == 0)
+    //     file_loops_residuals_rl_b << std::endl;
+
+    //   file_loops_residuals_rl_b << evaluated_residuals[i] << ",";
+    // }
+
+    // file_loops_residuals_rl_b << std::endl;
+
+    // options.apply_loss_function = false;
+    // evaluated_residuals.clear();
+    // problem.Evaluate(options, &total_cost, &evaluated_residuals, nullptr,
+    //                  nullptr);
+
+    // for (auto i = 0; i < evaluated_residuals.size(); i++) {
+    //   if (i % 6 == 0)
+    //     file_loops_residuals_b << std::endl;
+    //   file_loops_residuals_b << evaluated_residuals[i] << ",";
+    // }
+
+    // file_loops_residuals_b << std::endl << std::endl;
+
+    // ///////////////////////////////////////////////////
+    // // Adjacent KF Residuals
+    // options.apply_loss_function = true;
+    // options.residual_blocks = to_eval_adj;
+    // evaluated_residuals.clear();
+
+    //  problem.Evaluate(options, &total_cost, &evaluated_residuals, nullptr,
+    //                  nullptr);
+
+    // for (auto i = 0; i < evaluated_residuals.size(); i++) {
+    //   if (i % 6 == 0)
+    //     file_kf_residuals_rl_b << std::endl;
+    //   file_kf_residuals_rl_b << evaluated_residuals[i] << ",";
+    // }
+
+    // file_kf_residuals_rl_b << std::endl;
+
+    // options.apply_loss_function = false;
+    // evaluated_residuals.clear();
+    // problem.Evaluate(options, &total_cost, &evaluated_residuals, nullptr,
+    //                  nullptr);
+
+    // for (auto i = 0; i < evaluated_residuals.size(); i++) {
+    //   if (i % 6 == 0)
+    //     file_kf_residuals_b << std::endl;
+    //   file_kf_residuals_b << evaluated_residuals[i] << ",";
+    // }
+
+    // file_kf_residuals_b << std::endl << std::endl;
+    // /////////////////////////////////////////////////////
+    
 
     // Solve
     ceres::Solver::Options solver_options;
@@ -1989,8 +2109,104 @@ auto Optimization::PoseGraphOptimization(
     ceres::Solver::Summary summary;
     // std::cout << "--> Solve" << std::endl;
     ceres::Solve(solver_options, &problem, &summary);
+
+    // loss_function->Reset(new ceres::CauchyLoss(1000.0), ceres::TAKE_OWNERSHIP);
+    // Solve(solver_options, &problem, &summary);
+
+
+    // loss_function->Reset(new ceres::CauchyLoss(100.0), ceres::TAKE_OWNERSHIP);
+    // Solve(solver_options, &problem, &summary);
+
+    // loss_function->Reset(new ceres::CauchyLoss(10.0), ceres::TAKE_OWNERSHIP);
+    // Solve(solver_options, &problem, &summary);
+
+    loss_function->Reset(new ceres::CauchyLoss(1.0), ceres::TAKE_OWNERSHIP);
+    Solve(solver_options, &problem, &summary);
     // std::cout << summary.FullReport() << std::endl;
 
+
+    std::ofstream file_loops_residuals_rl("/home/manthan/ws/covins_ws/src/covins/covins_backend/"
+                       "output/loop_res_robloss.csv",
+                       std::ios::app);
+    std::ofstream file_kf_residuals_rl(
+        "/home/manthan/ws/covins_ws/src/covins/covins_backend/"
+        "output/adjacent_res_robloss.csv",
+        std::ios::app);
+
+    std::ofstream file_loops_residuals("/home/manthan/ws/covins_ws/src/covins/covins_backend/"
+                       "output/loop_res.csv",
+                       std::ios::app);
+    std::ofstream file_kf_residuals(
+        "/home/manthan/ws/covins_ws/src/covins/covins_backend/"
+        "output/adjacent_res.csv",
+        std::ios::app);
+
+    ///////////////////////////////////////////////////
+    // Loop Residuals
+     ceres::Problem::EvaluateOptions options;
+    options.apply_loss_function = true;
+    double total_cost = 0.0;
+    vector<double> evaluated_residuals;
+    options.residual_blocks = to_eval;
+    problem.Evaluate(options, &total_cost, &evaluated_residuals, nullptr,
+                     nullptr);
+
+    for (auto i = 0; i < evaluated_residuals.size(); i++) {
+      if (i % 6 == 0)
+        file_loops_residuals_rl << std::endl;
+
+      file_loops_residuals_rl << evaluated_residuals[i] << ",";
+    }
+
+
+
+    file_loops_residuals_rl << std::endl;
+
+    options.apply_loss_function = false;
+    evaluated_residuals.clear();
+    problem.Evaluate(options, &total_cost, &evaluated_residuals, nullptr,
+                     nullptr);
+
+    for (auto i = 0; i < evaluated_residuals.size(); i++) {
+      if (i % 6 == 0)
+        file_loops_residuals << std::endl;
+      file_loops_residuals << evaluated_residuals[i] << ",";
+    }
+
+    file_loops_residuals << std::endl << std::endl;
+
+    ///////////////////////////////////////////////////
+    // Adjacent KF Residuals
+    options.apply_loss_function = true;
+    options.residual_blocks = to_eval_adj;
+    evaluated_residuals.clear();
+
+     problem.Evaluate(options, &total_cost, &evaluated_residuals, nullptr,
+                     nullptr);
+
+    for (auto i = 0; i < evaluated_residuals.size(); i++) {
+      if (i % 6 == 0)
+        file_kf_residuals_rl << std::endl;
+      file_kf_residuals_rl << evaluated_residuals[i] << ",";
+    }
+
+    file_kf_residuals_rl << std::endl;
+
+    options.apply_loss_function = false;
+    evaluated_residuals.clear();
+    problem.Evaluate(options, &total_cost, &evaluated_residuals, nullptr,
+                     nullptr);
+
+    for (auto i = 0; i < evaluated_residuals.size(); i++) {
+      if (i % 6 == 0)
+        file_kf_residuals << std::endl;
+      file_kf_residuals << evaluated_residuals[i] << ",";
+    }
+
+    file_kf_residuals << std::endl << std::endl;
+    ////////////////////////////////////////////////////
+
+    
     // Recover the optimized data
     PoseMap non_corrected_poses;
 

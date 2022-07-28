@@ -214,7 +214,7 @@ public:
     static auto LocalBundleAdjustment(std::vector<std::shared_ptr<LocalLM>> lms,
                                       KeyframeVector QKFs, KeyframeVector CKFs,
                                       TransformType T_QC,
-                                      TypeDefs::Matrix6Type &cov_BA,
+                                      std::vector<TypeDefs::Matrix6Type> &cov_BA,
                                       size_t cnt = 0) -> void;
     
     

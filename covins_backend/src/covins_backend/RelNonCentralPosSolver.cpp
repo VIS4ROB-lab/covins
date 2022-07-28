@@ -58,7 +58,7 @@ void RelNonCentralPosSolver::setRansacParams(const int minInliers,
 
 bool RelNonCentralPosSolver::computeNonCentralRelPose(
     const KeyframePtr QKF, const KeyframePtr CKF,
-    const double threshold, Eigen::Matrix4d &Tc1c2, Eigen::Matrix<double, 6, 6> &cov_loop) {
+    const double threshold, Eigen::Matrix4d &Tc1c2, Eigen::Matrix<double, 6, 6> &cov_loop, TypeDefs::LoopVector &loop_vect) {
 
   // Find matches between CKF and QKF
   std::cout << "Attempting NON-Relative Pose Solver" << std::endl;
@@ -234,10 +234,10 @@ bool RelNonCentralPosSolver::computeNonCentralRelPose(
         sacProb.max_iterations_ = mMaxIter_17PT;
         sacProb.computeModel(0);
 
-        // std::cout << "17 POINT Ransac needed " << sacProb.iterations_ << " iterations and ";
-        // std::cout << std::endl;
-        // std::cout << "the number of inliers is: " << sacProb.inliers_.size();
-        // std::cout << std::endl << std::endl;
+        std::cout << "17 POINT Ransac needed " << sacProb.iterations_ << " iterations and ";
+        std::cout << std::endl;
+        std::cout << "the number of inliers is: " << sacProb.inliers_.size();
+        std::cout << std::endl << std::endl;
 
         // fprintf(stderr,
         //         "INFO: 17 PT took: %lu us\n",
@@ -506,27 +506,49 @@ bool RelNonCentralPosSolver::computeNonCentralRelPose(
                              std::ios::app);
 
         ///// LOCAL BA
+        if (covins_params::placerec::use_LBA) {
+          std::vector<TypeDefs::Matrix6Type> cov_BA_vect;
+          
         // TypeDefs::Matrix6Type cov_BA = TypeDefs::Matrix6Type::Identity();
-        // Optimization::LocalBundleAdjustment(lm_vect, view_A, view_B, Ts1s2,
-        //                                     cov_BA);
+        Optimization::LocalBundleAdjustment(lm_vect, view_A, view_B, Ts1s2,
+                                            cov_BA_vect);
 
-        // // BundleAdjusted TF
+        // BundleAdjusted TF
 
-        // TransformType T_s1s2_BA =
-        //     Utils::Ceres2Transform(CKF->ceres_pose_local_);
-        // Eigen::Quaterniond Rotquat_BA(T_s1s2_BA.block<3, 3>(0, 0));
+        for (size_t i = 0; i < view_B.size(); ++i) {
+          KeyframePtr kf = view_B[i];
+          KeyframePtr qkf = view_A[0];
 
-        // TransformType T_c1c2_BA = QKF->GetStateExtrinsics().inverse() *
-        //                           T_s1s2_BA * CKF->GetStateExtrinsics();
+          TransformType T_s1s2_optim =
+              Utils::Ceres2Transform(kf->ceres_pose_local_);
+          TypeDefs::Matrix6Type cov_BA = cov_BA_vect[i];
 
-        // std::cout << "T_s2_s1_LBA: " << std::endl << T_s1s2_BA.inverse() << std::endl;
+          LoopConstraint lc(kf, qkf, T_s1s2_optim.inverse(), 0, cov_BA);
+          loop_vect.push_back(lc);
+        }
+           
+        TransformType T_s1s2_BA =
+            Utils::Ceres2Transform(CKF->ceres_pose_local_);
+        Eigen::Quaterniond Rotquat_BA(T_s1s2_BA.block<3, 3>(0, 0));
 
-        // std::cout << "T_c1_c2_LBA: " << std::endl << T_c1c2_BA << std::endl;
+        TransformType T_c1c2_BA = QKF->GetStateExtrinsics().inverse() *
+                                  T_s1s2_BA * CKF->GetStateExtrinsics();
 
-        // std::cout << "Tc1c2 17 PT: " << std::endl << Tc1c2 << std::endl;
+        std::cout << "T_s2_s1_LBA: " << std::endl << T_s1s2_BA.inverse() << std::endl;
 
-        // cov_loop = cov_BA;
-        // Tc1c2 = T_c1c2_BA;
+        std::cout << "T_c1_c2_LBA: " << std::endl << T_c1c2_BA << std::endl;
+
+        std::cout << "Tc1c2 17 PT: " << std::endl << Tc1c2 << std::endl;
+
+        cov_loop = cov_BA_vect[0];
+        Tc1c2 = T_c1c2_BA;
+
+        const static Eigen::IOFormat CSVFormat(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ",");
+        file_covr << cov_mat_full_s.format(CSVFormat);
+        file_covr << "\n";
+
+        }
+        
         
         // Write to File
         // Query KF Timestamp (x1e9), Query KF ID,  QKF Agent ID,
@@ -534,9 +556,6 @@ bool RelNonCentralPosSolver::computeNonCentralRelPose(
         // x, y, z, qx, qy, qz, qw, Number of Inliers, Num Iterations,
         // 5PT x, y, z, qx, qy, qz, qw, Cov_trace, numGoodIter, Inliers17PT
         // 0,1,2,3,4,5
-        // const static Eigen::IOFormat CSVFormat(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ",");
-        // file_covr << cov_mat_full_s.format(CSVFormat);
-        // file_covr << "\n";
 
         myfile << std::setprecision(19) << (QKF->timestamp_) * 1e9 << ","
                << QKF->id_.first << "," << QKF->id_.second << ","

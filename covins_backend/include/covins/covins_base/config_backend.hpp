@@ -179,6 +179,7 @@ namespace placerec {
     } //namespace nc_rel_pose
     
     const bool use_4dof                     = estd2::GetValFromYaml<bool>(conf,"placerec.use_4dof");
+    const bool use_LBA                       = estd2::GetValFromYaml<bool>(conf,"placerec.enable_LBA");
 }
 
 namespace opt {
@@ -188,6 +189,8 @@ namespace opt {
     const int pgo_iteration_limit                       = estd2::GetValFromYaml<int>(conf,"opt.pgo_iteration_limit");
 
     const bool perform_pgo                              = estd2::GetValFromYaml<bool>(conf,"opt.perform_pgo");
+    const bool use_cov_f                                = estd2::GetValFromYaml<bool>(conf,"opt.use_cov_f");
+    const bool use_robust_loss                          = estd2::GetValFromYaml<bool>(conf,"opt.use_robust_loss");
     const bool pgo_fix_kfs_after_gba                    = estd2::GetValFromYaml<bool>(conf,"opt.pgo_fix_kfs_after_gba");
     const bool pgo_fix_poses_loaded_maps                = estd2::GetValFromYaml<bool>(conf,"opt.pgo_fix_poses_loaded_maps");
     const bool gba_fix_poses_loaded_maps                = estd2::GetValFromYaml<bool>(conf,"opt.gba_fix_poses_loaded_maps");

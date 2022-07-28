@@ -168,7 +168,8 @@ auto PlaceRecognition::ComputeSE3() -> bool {
         }
 
         fprintf(stderr, "INFO: Image Matching took: %lu us\n", timer.measure());
-        // if (img_matches.size() > 20 ){                      
+
+        // if (img_matches.size() > 20 ){                 
         
         // cv::Mat img_out;
 
@@ -194,6 +195,7 @@ auto PlaceRecognition::ComputeSE3() -> bool {
         // << "_" << pKF->id_.first << "_" << matches.size() << ".jpg";
         // cv::imwrite(ss.str(), img_out);
         // }
+
         // Matches img_matches = matchingAlgorithmImage->getMatches();
         int nmatches = img_matches.size();
 
@@ -225,12 +227,15 @@ auto PlaceRecognition::ComputeSE3() -> bool {
         // Setup the Rel Pose Estimation Problem
         Tc1c2 = Eigen::Matrix4d::Identity();
 
+        mloops.clear();
+        LoopVector loop_vect;
+
         RelNonCentralPosSolver rel_pose_solver;
         foundRelTransform = rel_pose_solver.computeNonCentralRelPose(
             kf_query_, pKFi, covins_params::placerec::rel_pose::error_thres,
-            Tc1c2, cov_loop);
+            Tc1c2, cov_loop, loop_vect);
 
-        
+        mloops = loop_vect;
 
         // fprintf(stderr, "INFO: 17 PT Alogirthm took: %lu us\n", timer.measure());
  
@@ -322,7 +327,7 @@ auto PlaceRecognition::ComputeSE3() -> bool {
         mrelative_yaw = Utils::normalizeAngle(yaw_query - yaw_match);
 
         std::cout << "Norm: " << T_smatch_squery.block<3,1>(0,3).norm() << "Yaw" << mrelative_yaw << std::endl;
-        if (abs(mrelative_yaw) > 30.0 || T_smatch_squery.block<3,3>(0,0).norm() > 5.0)
+        if (abs(mrelative_yaw) > 30.0 || T_smatch_squery.block<3,1>(0,3).norm() > 2.0)
           bMatch = false;
 
         if (bMatch) {
@@ -430,9 +435,17 @@ auto PlaceRecognition::CorrectLoop()->bool {
     PoseMap corrected_poses;
     this->ConnectLoop(kf_query_,kf_match_,T_smatch_squery,corrected_poses,map_query);
 
-    if(map_query->GetKeyframe(kf_match_->id_)){
-        LoopConstraint lc(kf_match_,kf_query_,T_smatch_squery, mrelative_yaw, mcov_mat) ;
+    if (map_query->GetKeyframe(kf_match_->id_)) {
+      if (covins_params::placerec::use_LBA) {
+        for (auto lc : mloops)
+            map_query->AddLoopConstraint(lc);
+      } else {
+        LoopConstraint lc(kf_match_, kf_query_, T_smatch_squery, mrelative_yaw,
+                          mcov_mat);
         map_query->AddLoopConstraint(lc);
+    }
+        
+        
         if(perform_pgo_)
         {
             KeyframeVector current_connections_query = kf_query_->GetConnectedKeyframesByWeight(0);

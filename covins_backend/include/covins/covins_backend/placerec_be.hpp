@@ -79,6 +79,7 @@ public:
     using vecVecMP                      = std::vector<LandmarkVector>;
 
     using GroundtruthData               = std::vector<std::vector<double>>;
+    using LoopVector                    = TypeDefs::LoopVector;
 
 public:
     PlaceRecognition(ManagerPtr man, bool perform_pgo = true);
@@ -136,6 +137,7 @@ protected:
     TypeDefs::Matrix6Type       mcov_mat;
     double                      mrelative_yaw = -1.0;
     double                      mrelative_yaw_gt = -1.0;
+    LoopVector                  mloops;
     
     // Sync
     std::mutex                  mtx_in_;

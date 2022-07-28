@@ -13,6 +13,7 @@
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/core/eigen.hpp>
 #include <opencv2/xfeatures2d/nonfree.hpp>
+#include <opencv2/features2d.hpp>
 
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
@@ -81,6 +82,8 @@ public:
     std::shared_ptr<covins::ORBextractor> orb_extractor_;
     std::shared_ptr<covins::ORBextractor> orb_extractor_PR_;
     cv::Ptr<cv::xfeatures2d::SIFT> sift_detector_;
+    cv::Ptr<cv::ORB> orb_detector_;
+
     // COVINS integration
     covins::TypeDefs::ThreadPtr thread_comm_;
     std::shared_ptr<covins::Communicator> comm_;

@@ -68,8 +68,8 @@ placerec.active: 1
 placerec.type: 'COVINS' # this allows to integrate other PR algorithms. Cuurently, only 'COVINS' is supported
 
 placerec.start_after_kf: 7 # map matching skips the first x KFs after map initialization
-placerec.consecutive_loop_dist: 10 # after finding a loop, the next x KFs are not considered loop closure query
-placerec.min_loop_dist: 100 # minimum number of KFs between the two ends of the loop to accept loop
+placerec.consecutive_loop_dist: 50 # after finding a loop, the next x KFs are not considered loop closure query
+placerec.min_loop_dist: 200 # minimum number of KFs between the two ends of the loop to accept loop
 placerec.cov_consistency_thres: 3
 
 placerec.solver_iterations: 5
@@ -131,7 +131,7 @@ opt.wt_lp_R2: 0.1
 opt.wt_lp_T2: 1
 opt.wt_lp_R3: 0.01
 opt.wt_lp_T3: 1
-opt.cov_switch: 0.2
+opt.cov_switch: 0.15
 opt.cov_switch2: 0.5
 #--------------------------------------------------------------------------------------------
 # Visualization
