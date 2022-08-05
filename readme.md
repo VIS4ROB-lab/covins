@@ -29,6 +29,7 @@ COVINS provides a server back-end for collaborative SLAM, running on a local mac
 7. [Limitations and Known Issues](#issues)
 
 <a name="related_publications"></a>
+
 ## 1 Related Publications
 
 [***COVINS***] Patrik Schmuck, Thomas Ziegler, Marco Karrer, Jonathan Perraudin and Margarita Chli. **COVINS: Visual-Inertial SLAM for Centralized Collaboration**. *IEEE International Symposium on Mixed and Augmented Reality (ISMAR)*, 2021. **[PDF](https://www.research-collection.ethz.ch/handle/20.500.11850/507909)**
@@ -63,11 +64,13 @@ If you use COVINS in an academic work, please cite:
 
 <a name="setup"></a>
 ## 3 Basic Setup
+
 This section explains how you can build the COVINS server back-end, as well as the provided version of the ORB-SLAM3 front-end able to communicate with the back-end. COVINS was developed under Ubuntu *18.04*, and we provide installation instructions for *18.04* as well as *20.04*. Note that we also provide a [Docker implementation](#docker) for simplified deployment of COVINS.
 
 **Note**: Please pay attention to the ```CMAKE_BUILD_TYPE```. Particularly, building parts of the code with ```march=native``` can cause problems on some machines.
 
 <a name="setup_env"></a>
+
 ### Environment Setup
 
 #### Dependencies
@@ -265,6 +268,7 @@ We provide an example for two agents. For the first agent, you can execute the l
 Note: if you **run multiple agents sequentially**, you only need to use ```launch_ros_euroc.launch```. After one agent has finished, just start it again using ```roslaunch ORB_SLAM3 launch_ros_euroc.launch``` and run your bagfile.
 
 <a name="docker"></a>
+
 ## 5 Docker Implementation
 
 We provide COVINS also as a Docker implementation. A guide how to install docker can be found [here](https://docs.docker.com/engine/install/). To avoid the need of `sudo` when running the commands below you can add your user to the `docker` group.
@@ -275,11 +279,28 @@ We provide COVINS also as a Docker implementation. A guide how to install docker
 
 **NOTE:** The provided docker implementation will **not build** if you have previously built your cloned version of COVINS in a catkin workspace using the instructions provided above. If you want to use the docker implementation, please **perform the docker build with a freshly cloned version of COVINS**
 
-Build the docker file using the Make file provided in the `docker` folder. Provide the number of jobs `make` and `catkin build` should use. This can take a while. If the build fails try again with a reduced number of jobs value.
+Build the docker file using the Make file provided in the `docker` folder.
+Provide the number of jobs `make` and `catkin build` should use. This can take
+a while. If the build fails try again with a reduced number of jobs value. The
+failure is typically something deep in catkins involving a mysterious error in
+opengv complication where the gcc compiler gives up. Set NR_JOBS=1 takes 5 hours
+on an M1 MacBook Pro with 10-core M1 Max to generate a single AMD64 Intel image. Set to NR_JOBS=5 takes 3
+hours on an M1 Mac generating Intel images. Getting 10 jobs to run does fail on
+that same machine. This is sensitive to memory allocated so with 32GB
+allocated, 10/2 = 5 processes works.
 
-* ```make build NR_JOBS=14```
+```sh
+# start at 14 jobs if you have enough memory and only need Intel images
+make build NR_JOBS=14
+# decreases until you get a clean build
+# for example, build with half the processors on the machine
+make build NR_JOBS=$(($(nproc/2)))
+# if you wnat a multiarch image with arm64 and amd64 then
+make buildx
+```
     
 ### Running the Docker Image
+
 The docker image can be used to run different parts of COVINS (e.g. server, ORB-SLAM3 front-end, ...).
 
 #### ROSCORE
