@@ -14,8 +14,8 @@ TAG ?= v0.1.1
 
 # registry can be docker.io, ghcr.io, gcr.io for exmaple
 # REGISTRY ?= docker.io
-REGISTRY ?= ghcr.io
-ORG ?= netdrones
+REGISTRY ?= docker.io
+ORG ?= vis4rob
 IMAGE ?= covins
 # set to the sha of the current commit
 TAG ?= $(shell git rev-parse HEAD)
