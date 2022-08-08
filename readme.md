@@ -321,9 +321,9 @@ make build NR_JOBS=14
 make build NR_JOBS=$(($(nproc/2)))
 # to build for a different registry and a different org
 # with a different semvar tag
-REGISTRY=ghcr.io ORG=netdrones TAG=v1.0.1-net make build
+make build REGISTRY=ghcr.io ORG=netdrones TAG=v1.0.1-net
 ```
-    
+
 ### Running the Docker Image
 
 The docker image can be used to run different parts of COVINS (e.g. server, ORB-SLAM3 front-end, ...).

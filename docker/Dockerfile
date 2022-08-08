@@ -54,6 +54,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 #--------------------------
 # BUILD COVINS
 #--------------------------
+# note this cache busts because of the copy if any files have changed at all
+# including READMEs etc
 COPY ./ $CATKIN_WS/src/covins
 ARG NR_JOBS=
 WORKDIR $CATKIN_WS
