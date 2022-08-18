@@ -30,6 +30,7 @@
 #include "covins_backend/keyframe_be.hpp"
 #include "covins_backend/landmark_be.hpp"
 #include "covins_backend/kf_database.hpp"
+#include "covins_backend/optimization_be.hpp"
 
 namespace covins {
 
@@ -437,10 +438,14 @@ auto Map::ConvertToMsgFileExport(MsgMap &msg)->void {
     msg.keyframes1.reserve(loop_constraints_.size());
     msg.keyframes2.reserve(loop_constraints_.size());
     msg.transforms12.reserve(loop_constraints_.size());
+    msg.cov1.reserve(loop_constraints_.size());
+    msg.cov2.reserve(loop_constraints_.size());
     for(const auto& i : loop_constraints_) {
         msg.keyframes1.push_back(i.kf1->id_);
         msg.keyframes2.push_back(i.kf2->id_);
         msg.transforms12.push_back(i.T_s1_s2);
+        msg.cov1.push_back(i.cov_mat);
+        msg.cov2.push_back(i.cov_mat2);
     }
 }
 
@@ -665,6 +670,7 @@ auto Map::LoadFromFile(const std::string &path_name, VocabularyPtr voc)->void {
     for(const auto& kf : keyframes) {
         kf->SetPredecessor(this->GetKeyframe(kf->msg_.id_predecessor));
         kf->SetSuccessor(this->GetKeyframe(kf->msg_.id_successor));
+        kf->EstablishNeighbors(kf->msg_, shared_from_this());
         for(auto mit = kf->msg_.landmarks.begin(); mit!=kf->msg_.landmarks.end();++mit){
             size_t feat_id = mit->first;
             idpair lm_id = mit->second;
@@ -682,10 +688,14 @@ auto Map::LoadFromFile(const std::string &path_name, VocabularyPtr voc)->void {
 //        std::cout << "kf1: "  << kf1 << std::endl;
 //        std::cout << "kf2: "  << kf2 << std::endl;
 //        std::cout << "T12: \n"  << msg_map.transforms12[i] << std::endl;
-        LoopConstraint lc(kf1,kf2,msg_map.transforms12[i]);
+        LoopConstraint lc(kf1,kf2,msg_map.transforms12[i],0,msg_map.cov1[i],msg_map.cov2[i]);
         loop_constraints_.push_back(lc);
     }
+    std::cout << "+++ Perform PGO +++" << std::endl;
+    TypeDefs::PoseMap corrected_poses;
 
+    Optimization::PoseGraphOptimization(shared_from_this(), corrected_poses);
+    this->WriteKFsToFileAllAg();
     std::cout << "+++ DONE +++" << std::endl;
 }
 

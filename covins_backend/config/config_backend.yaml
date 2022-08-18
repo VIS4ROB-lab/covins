@@ -19,7 +19,7 @@ sys.trajectory_format: 'TUM' # {EUROC|TUM}
 #--------------------------------------------------------------------------------------------
 
 # maps are loaded from here (use absolute path)
-sys.map_path0: '/home/pschmuck/ws/covins_ws/src/covins/covins_backend/output/map_data'
+sys.map_path0: '/home/manthan/ws/covins_ws/src/covins/covins_backend/output/map_data'
 
 sys.data_path0: '/home/manthan/ws_vins/covins_ws/results/datasets/MH04'
 sys.data_path1: '/home/manthan/ws_vins/covins_ws/results/datasets/MH05'
@@ -108,7 +108,7 @@ placerec.inter_map_matches_only: 0
 # Optimization
 #--------------------------------------------------------------------------------------------
 
-opt.pgo_iteration_limit: 20 # PGO max iterations
+opt.pgo_iteration_limit: 100 # PGO max iterations
 
 opt.gba_iteration_limit: 10 # GBA max iterations
 opt.gba_use_map_loop_constraints: 1
@@ -117,20 +117,23 @@ opt.th_outlier_align: 1.3
 opt.th_gba_outlier_global: 0.92
 
 opt.perform_pgo: 1
-opt.use_cov_f: 0
+opt.use_nbr_kfs: 0
+opt.use_cov_f: 1
+opt.use_cov_LBA: 0
+opt.use_cov_adj: 0
 opt.use_robust_loss: 0
 opt.pgo_fix_kfs_after_gba: 1 #KFs that were part of a GBA are fixed in future PGO runs
 opt.pgo_fix_poses_loaded_maps: 0
 opt.gba_fix_poses_loaded_maps: 0
 
-opt.wt_kf_R: 1e1
+opt.wt_kf_R: 10
 opt.wt_kf_T: 1
 opt.wt_lp_R1: 0.5
 opt.wt_lp_T1: 1
 opt.wt_lp_R2: 0.1
 opt.wt_lp_T2: 1
 opt.wt_lp_R3: 0.01
-opt.wt_lp_T3: 1
+opt.wt_lp_T3: 20
 opt.cov_switch: 0.2
 opt.cov_switch2: 0.5
 #--------------------------------------------------------------------------------------------

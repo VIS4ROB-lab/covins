@@ -1,6 +1,7 @@
 
 #include "frontend_wrapper.hpp"
 #include <eigen_conversions/eigen_msg.h>
+#include "opencv2/calib3d/calib3d.hpp"
 
 namespace covins {
 
@@ -96,6 +97,7 @@ void FrontendWrapper::convertToMsg(covins::MsgKeyframe &msg, cv::Mat &img,
   msg.calibration.T_SC = Tsc_;
   msg.calibration.cam_model = covins::eCamModel::PINHOLE;
   msg.calibration.dist_model = covins::eDistortionModel::RADTAN;
+//   msg.calibration.dist_model = covins::eDistortionModel::EQUI;
 
   covins::TypeDefs::precision_t fx = K_.at<float>(0,0);
   covins::TypeDefs::precision_t fy = K_.at<float>(1,1);
@@ -108,10 +110,11 @@ void FrontendWrapper::convertToMsg(covins::MsgKeyframe &msg, cv::Mat &img,
   covins::TypeDefs::DynamicVectorType dist_coeffs;
 
   dist_coeffs.resize(4);
-  dist_coeffs << k1, k2, p1, p2;
-
+//   dist_coeffs << k1, k2, p1, p2;
+  dist_coeffs << 0.0,0.0,0.0,0.0;
+  
   covins::VICalibration calib(
-      Tsc_, covins::eCamModel::PINHOLE, covins::eDistortionModel::RADTAN,
+      Tsc_, msg.calibration.cam_model, msg.calibration.dist_model,
       dist_coeffs, img.cols, img.rows, fx, fy, cx,
       cy, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 9.81,
       Eigen::Vector3d::Zero(), 0, 0.0, 0.0);
@@ -134,6 +137,37 @@ void FrontendWrapper::convertToMsg(covins::MsgKeyframe &msg, cv::Mat &img,
 
   // msg.img = img;
 
+  // Undistorttion
+
+  //Fisheye Undistortion
+    cv::Size size = {img.cols, img.rows};
+
+    cv::Mat E = cv::Mat::eye(3, 3, cv::DataType<double>::type);
+
+    cv::Mat map1;
+    cv::Mat map2;
+
+    cv::fisheye::initUndistortRectifyMap(K_, DistCoef_, E, K_, size, CV_16SC2, map1, map2);
+
+    cv::Mat undistort;
+    cv::remap(img, undistort, map1, map2, CV_INTER_LINEAR,
+            CV_HAL_BORDER_CONSTANT);
+
+    img = undistort;
+    
+    cv::imshow("undist", undistort);
+    cv::waitKey(10);
+
+//   cv::Mat img_und_1;
+//   cv::fisheye::undistortImage(img, img_und_1, K_,
+//                     DistCoef_);
+//   img = img_und_1;
+//   std::stringstream ss;
+//   ss << "/home/manthan/ws_vins/covins_ws/results/img_fisheye/"
+//            << msg.id.first << ".jpg";
+    
+//   cv::imwrite(ss.str(), img);
+      
   //Place Recognition Features
   std::vector<cv::KeyPoint> cv_keypoints;
   cv_keypoints.reserve(n_feat_pr_);

@@ -327,7 +327,7 @@ auto PlaceRecognition::ComputeSE3() -> bool {
         mrelative_yaw = Utils::normalizeAngle(yaw_query - yaw_match);
 
         std::cout << "Norm: " << T_smatch_squery.block<3,1>(0,3).norm() << "Yaw" << mrelative_yaw << std::endl;
-        if (abs(mrelative_yaw) > 30.0 || T_smatch_squery.block<3,1>(0,3).norm() > 2.0)
+        if (abs(mrelative_yaw) > 50.0 || T_smatch_squery.block<3,1>(0,3).norm() > 2.0)
           bMatch = false;
 
         if (bMatch) {
@@ -441,7 +441,7 @@ auto PlaceRecognition::CorrectLoop()->bool {
             map_query->AddLoopConstraint(lc);
       } else {
         LoopConstraint lc(kf_match_, kf_query_, T_smatch_squery, mrelative_yaw,
-                          mcov_mat);
+                          mcov_mat, mcov_mat);
         map_query->AddLoopConstraint(lc);
     }
         

@@ -1,5 +1,5 @@
 #!/bin/bash
-pathDatasetEuroc='/home/manthan/Downloads/covins_vins/Euroc' #Example, it is necesary to change it by the dataset path
+pathDatasetEuroc='/home/manthan/Downloads/covins_vins/Euroc/MH' #Example, it is necesary to change it by the dataset path
 #------------------------------------
 # Monocular-Inertial Examples
 echo "Launching MH01 with Monocular-Inertial sensor"
@@ -17,9 +17,9 @@ sleep 10
 echo "Launching MH03 with Monocular-Inertial sensor"
 ./../Examples/Monocular-Inertial/mono_inertial_euroc ./../Vocabulary/ORBvoc.txt ./../Examples/Monocular-Inertial/EuRoC.yaml "$pathDatasetEuroc"/MH_03_medium ./../Examples/Monocular-Inertial/EuRoC_TimeStamps/MH03.txt dataset-MH03_monoi
 
-sleep 30
+sleep 10
 
-#rosservice call /covins_savemap 0
+rosservice call /covins_savemap 0
 
 echo "Waiting for Global BA to finish"
 # rosservice call /covins_gba 0 1

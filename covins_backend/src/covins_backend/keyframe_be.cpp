@@ -146,6 +146,7 @@ Keyframe::Keyframe(MsgKeyframe msg, MapPtr map, VocabularyPtr voc)
 
     if(msg.save_to_file) {
         this->SetPoseTws(msg.T_w_s);
+        this->SetPoseTws_vio(msg.T_w_s_vio);
         msg_ = msg;
     } else {
         this->UpdatePoseFromMsg(msg,map);
@@ -297,8 +298,15 @@ auto Keyframe::ConvertToMsgFileExport(MsgKeyframe &msg)->void {
     msg.keypoints_undistorted = keypoints_undistorted_;
     msg.descriptors = descriptors_.clone();
 
+    msg.keypoints_aors_add = keypoints_aors_add_;
+    msg.keypoints_distorted_add = keypoints_distorted_add_;
+    msg.keypoints_undistorted_add = keypoints_undistorted_add_;
+    msg.descriptors_add = descriptors_add_.clone();
+
+
     msg.T_s_c = T_s_c_;
     msg.T_w_s = T_w_s_;
+    msg.T_w_s_vio = T_w_s_vio_;
     msg.velocity = velocity_;
     msg.bias_accel = bias_accel_;
     msg.bias_gyro = bias_gyro_;
@@ -354,8 +362,12 @@ auto Keyframe::EstablishConnections(MsgKeyframe msg, MapPtr map)->void {
             //if MP not in Map, we ignore it. Might be deleted, or comes in later and is then added to this KF
         }
     }
+     
+}
 
-     // Add Neighbors to connected KFs
+auto Keyframe::EstablishNeighbors(MsgKeyframe msg, MapPtr map) -> void {
+
+    // Add Neighbors to connected KFs
     int n_neigh = 20;
     int min_neigh;
 
@@ -387,6 +399,7 @@ auto Keyframe::EstablishConnections(MsgKeyframe msg, MapPtr map)->void {
 
     }
 }
+
 
 auto Keyframe::FusePreintegration(PreintegrationPtr preint)->void {
     Vector3Type acc_init;
@@ -601,6 +614,7 @@ auto Keyframe::UpdatePoseFromMsg(MsgKeyframe &msg, MapPtr map)->void {
         if(id_.first == 0){
             //first KF - global pose
             this->SetPoseTws(msg.T_sref_s);
+            this->SetPoseTws_vio(msg.T_sref_s);
         } else {
             KeyframePtr kf_ref = map->GetKeyframe(msg.id_reference);
             if(!kf_ref){
@@ -610,6 +624,10 @@ auto Keyframe::UpdatePoseFromMsg(MsgKeyframe &msg, MapPtr map)->void {
             TransformType T_w_sref = kf_ref->GetPoseTws();
             TransformType Tws = T_w_sref * msg.T_sref_s;
             this->SetPoseTws(Tws);
+        
+            TransformType T_w_sref_vio = kf_ref->GetPoseTws_vio();
+            TransformType Tws_vio = T_w_sref_vio * msg.T_sref_s;
+            this->SetPoseTws_vio(Tws_vio);
         }
     }
 

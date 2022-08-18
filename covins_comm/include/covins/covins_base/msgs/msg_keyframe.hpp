@@ -98,6 +98,7 @@ public:
 
     TransformType           T_sref_s                                                            = TransformType::Identity();
     TransformType           T_w_s                                                               = TransformType::Identity();
+    TransformType           T_w_s_vio                                                           = TransformType::Identity();
 
     Vector3Type             velocity                                                            = Vector3Type::Zero();
     Vector3Type             bias_gyro                                                           = Vector3Type::Zero();
@@ -132,7 +133,7 @@ protected:
                     img_dim_x_min,img_dim_y_min,img_dim_x_max,img_dim_y_max,
                     keypoints_distorted,keypoints_undistorted,keypoints_aors,descriptors,
                     keypoints_distorted_add,keypoints_undistorted_add,keypoints_aors_add,descriptors_add,
-                    T_s_c,T_w_s,
+                    T_s_c,T_w_s,T_w_s_vio,
                     velocity,bias_gyro,bias_accel,
                     lin_acc,ang_vel,
                     lin_acc_init,ang_vel_init,
@@ -170,7 +171,7 @@ protected:
                     img_dim_x_min,img_dim_y_min,img_dim_x_max,img_dim_y_max,
                     keypoints_distorted,keypoints_undistorted,keypoints_aors,descriptors,
                     keypoints_distorted_add,keypoints_undistorted_add,keypoints_aors_add,descriptors_add,
-                    T_s_c,T_w_s,
+                    T_s_c,T_w_s,T_w_s_vio,
                     velocity,bias_gyro,bias_accel,
                     lin_acc,ang_vel,
                     lin_acc_init,ang_vel_init,

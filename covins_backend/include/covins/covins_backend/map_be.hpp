@@ -129,9 +129,11 @@ struct MsgMap {
     std::vector<TypeDefs::idpair> keyframes1;
     std::vector<TypeDefs::idpair> keyframes2;
     std::vector<TypeDefs::TransformType> transforms12;
+    std::vector<TypeDefs::Matrix6Type> cov1;
+    std::vector<TypeDefs::Matrix6Type> cov2;
 
     template<class Archive> auto serialize( Archive & archive )                         ->void {
-        archive(id_map,keyframes1,keyframes2,transforms12);
+        archive(id_map,keyframes1,keyframes2,transforms12,cov1, cov2);
     }
 };
 

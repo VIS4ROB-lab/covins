@@ -502,9 +502,19 @@ bool RelNonCentralPosSolver::computeNonCentralRelPose(
                              "covins_backend/output/results_tf.csv",
                              std::ios::app);
         std::ofstream file_covr("/home/manthan/ws/covins_ws/src/covins/"
-                             "covins_backend/output/results_cov_ransac.csv",
-                             std::ios::app);
+                                "covins_backend/output/results_cov_ransac.csv",
+                                std::ios::app);
 
+        std::ofstream file_pose_comp_LBA(
+            "/home/manthan/ws/covins_ws/src/covins/"
+            "covins_backend/output/pose_LBA.csv",
+            std::ios::app);
+        std::ofstream file_pose_comp_17PT(
+            "/home/manthan/ws/covins_ws/src/covins/"
+            "covins_backend/output/pose_17.csv",
+            std::ios::app);
+        
+        
         ///// LOCAL BA
         if (covins_params::placerec::use_LBA) {
           std::vector<TypeDefs::Matrix6Type> cov_BA_vect;
@@ -523,7 +533,7 @@ bool RelNonCentralPosSolver::computeNonCentralRelPose(
               Utils::Ceres2Transform(kf->ceres_pose_local_);
           TypeDefs::Matrix6Type cov_BA = cov_BA_vect[i];
 
-          LoopConstraint lc(kf, qkf, T_s1s2_optim.inverse(), 0, cov_BA);
+          LoopConstraint lc(kf, qkf, T_s1s2_optim.inverse(), 0, cov_BA, cov_mat_full_s);
           loop_vect.push_back(lc);
         }
            
@@ -540,10 +550,25 @@ bool RelNonCentralPosSolver::computeNonCentralRelPose(
 
         std::cout << "Tc1c2 17 PT: " << std::endl << Tc1c2 << std::endl;
 
+        // Eigen::Quaterniond Rotquat_LBA(T_c1c2_BA.block<3, 3>(0, 0));
+
+
+        // file_pose_comp_17PT << Tc1c2(0, 3) << "," << Tc1c2(1, 3) << ","
+        //                     << Tc1c2(2, 3) << "," << Rotquat.x() << ","
+        //                     << Rotquat.y() << "," << Rotquat.z() << ","
+        //                     << Rotquat.w() << std::endl;
+        
+        // file_pose_comp_LBA << T_c1c2_BA(0, 3) << "," << T_c1c2_BA(1, 3) << ","
+        //                   << T_c1c2_BA(2, 3) << "," << Rotquat_LBA.x() << ","
+        //                   << Rotquat_LBA.y() << "," << Rotquat_LBA.z() << ","
+        //                   << Rotquat_LBA.w() << std::endl;
+
+
+        const static Eigen::IOFormat CSVFormat(Eigen::StreamPrecision,
+                                               Eigen::DontAlignCols, ", ", ",");
+
         cov_loop = cov_BA_vect[0];
         Tc1c2 = T_c1c2_BA;
-
-        const static Eigen::IOFormat CSVFormat(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ",");
         file_covr << cov_mat_full_s.format(CSVFormat);
         file_covr << "\n";
 

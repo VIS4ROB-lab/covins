@@ -34,6 +34,7 @@
 #include "covins_backend/keyframe_be.hpp"
 #include "covins_backend/landmark_be.hpp"
 #include "covins_backend/map_be.hpp"
+#include <covins/covins_base/timer_utils.hpp>
 
 // Thirdparty
 #include <ceres/ceres.h>
@@ -762,6 +763,15 @@ auto Optimization::LocalBundleAdjustment(std::vector<std::shared_ptr<LocalLM>> l
     KeyframePtr QKF = QKFs[0];
     KeyframePtr CKF = CKFs[0];
 
+    // Files for debugging relative poses before and after LBA
+    std::ofstream file_bef_LBA("/home/manthan/ws/covins_ws/src/covins/"
+                            "covins_backend/output/pose_bef_LBA.csv",
+                            std::ios::app);
+    std::ofstream file_aft_LBA("/home/manthan/ws/covins_ws/src/covins/"
+                            "covins_backend/output/pose_aft_LBA.csv",
+                            std::ios::app);
+    
+    
     // Add Query KFs
     for (size_t i = 0; i < QKFs.size(); ++i) {
       KeyframePtr kf = QKFs[i];
@@ -779,7 +789,11 @@ auto Optimization::LocalBundleAdjustment(std::vector<std::shared_ptr<LocalLM>> l
         kf->ceres_pose_local_[3]= qws.w();
         kf->ceres_pose_local_[4]= 0;
         kf->ceres_pose_local_[5]= 0;
-        kf->ceres_pose_local_[6]= 0;
+        kf->ceres_pose_local_[6] = 0;
+
+        file_bef_LBA << 0 << "," << 0 << "," << 0 << "," << qws.x() << ","
+                     << qws.y() << "," << qws.z() << "," << qws.w()
+                     << std::endl;
 
         problem.AddParameterBlock(kf->ceres_pose_local_, robopt::defs::pose::kPoseBlockSize, local_pose_param);
         problem.SetParameterBlockConstant(kf->ceres_pose_local_);
@@ -821,6 +835,11 @@ auto Optimization::LocalBundleAdjustment(std::vector<std::shared_ptr<LocalLM>> l
         kf->ceres_pose_local_[4]= T_wsi(0,3);
         kf->ceres_pose_local_[5]= T_wsi(1,3);
         kf->ceres_pose_local_[6] = T_wsi(2, 3);
+
+        file_bef_LBA << T_wsi(0, 3) << "," << T_wsi(1, 3) << "," << T_wsi(2, 3)
+                     << "," << qwsi.x() << "," << qwsi.y() << "," << qwsi.z()
+                     << "," << qwsi.w() << std::endl;
+        
         problem.AddParameterBlock(kf->ceres_pose_local_, robopt::defs::pose::kPoseBlockSize, local_pose_param);
         problem.AddParameterBlock(kf->ceres_extrinsics_, robopt::defs::pose::kPoseBlockSize, local_pose_param);
         problem.SetParameterBlockConstant(kf->ceres_extrinsics_);
@@ -868,6 +887,11 @@ auto Optimization::LocalBundleAdjustment(std::vector<std::shared_ptr<LocalLM>> l
         kf->ceres_pose_local_[4]= T_wsi(0,3);
         kf->ceres_pose_local_[5]= T_wsi(1,3);
         kf->ceres_pose_local_[6] = T_wsi(2, 3);
+
+        file_bef_LBA << T_wsi(0, 3) << "," << T_wsi(1, 3) << "," << T_wsi(2, 3)
+                     << "," << qwsi.x() << "," << qwsi.y() << "," << qwsi.z()
+                     << "," << qwsi.w() << std::endl;
+        
         problem.AddParameterBlock(kf->ceres_pose_local_, robopt::defs::pose::kPoseBlockSize, local_pose_param);
         problem.AddParameterBlock(kf->ceres_extrinsics_, robopt::defs::pose::kPoseBlockSize, local_pose_param);
         problem.SetParameterBlockConstant(kf->ceres_extrinsics_);
@@ -1016,7 +1040,7 @@ auto Optimization::LocalBundleAdjustment(std::vector<std::shared_ptr<LocalLM>> l
     solver_options.num_threads = covins_params::sys::threads_server;
     solver_options.num_linear_solver_threads = covins_params::sys::threads_server;
     solver_options.trust_region_strategy_type = ceres::DOGLEG;
-    solver_options.max_num_iterations = 10000;
+    solver_options.max_num_iterations = 100;
     ceres::Solver::Summary summary;
     ceres::Solve(solver_options, &problem, &summary);
     std::cout << summary.FullReport() << "\n";
@@ -1027,6 +1051,32 @@ auto Optimization::LocalBundleAdjustment(std::vector<std::shared_ptr<LocalLM>> l
     TransformType T_s1s2_optim = Utils::Ceres2Transform(CKF->ceres_pose_local_);
     std::cout << "T_smatch_squery_LBA: " << std::endl
               << T_s1s2_optim.inverse() << std::endl;
+
+    // Save the optimzed relative poses to file for debugging
+
+    for (size_t i = 0; i < QKFs.size(); ++i) {
+      auto kf = QKFs[i];
+
+         file_aft_LBA << kf->ceres_pose_local_[4] << ","
+                      << kf->ceres_pose_local_[5] << ","
+                      << kf->ceres_pose_local_[6] << ","
+                      << kf->ceres_pose_local_[0] << ","
+                      << kf->ceres_pose_local_[1] << ","
+                      << kf->ceres_pose_local_[2] << ","
+                      << kf->ceres_pose_local_[3] << std::endl;
+    }
+
+    for (size_t i = 0; i < CKFs.size(); ++i) {
+      auto kf = CKFs[i];
+
+         file_aft_LBA << kf->ceres_pose_local_[4] << ","
+                      << kf->ceres_pose_local_[5] << ","
+                      << kf->ceres_pose_local_[6] << ","
+                      << kf->ceres_pose_local_[0] << ","
+                      << kf->ceres_pose_local_[1] << ","
+                      << kf->ceres_pose_local_[2] << ","
+                      << kf->ceres_pose_local_[3] << std::endl;
+    }
 
     std::cout << "+++ LBA: End +++" << std::endl;
 
@@ -1042,8 +1092,8 @@ auto Optimization::LocalBundleAdjustment(std::vector<std::shared_ptr<LocalLM>> l
     for (size_t i = 0; i < CKFs.size(); ++i) {
       eval_blocks.push_back(CKFs[i]->ceres_pose_local_);
     }
-    // Add Poses for Query without itself
-    for (size_t i = 1; i < QKFs.size(); ++i) {
+    // Add Poses for Query 
+    for (size_t i = 0; i < QKFs.size(); ++i) {
       eval_blocks.push_back(QKFs[i]->ceres_pose_local_);
     }
 
@@ -1070,9 +1120,16 @@ auto Optimization::LocalBundleAdjustment(std::vector<std::shared_ptr<LocalLM>> l
 
     evalOpts.parameter_blocks = eval_blocks;
     ceres::CRSMatrix jacobianCRS;
-    problem.Evaluate(evalOpts, NULL, NULL, NULL, &jacobianCRS);
+    time_utils::Timer timer;
+    std::cout << "Evaluating Problem: " << std::endl;
 
+    problem.Evaluate(evalOpts, NULL, NULL, NULL, &jacobianCRS);
+    
+    fprintf(stderr, "INFO: Evaluation Time: %lu us\n",
+              timer.measure());
     const Eigen::MatrixXd jacobianDense = transformJacobian(jacobianCRS);
+    fprintf(stderr, "INFO: Transform Time: %lu us\n",
+              timer.measure());
     // std::cout << sss.str() << std::endl;
     writeToCSVfile(sss.str(), jacobianDense);
 
@@ -1082,10 +1139,42 @@ auto Optimization::LocalBundleAdjustment(std::vector<std::shared_ptr<LocalLM>> l
     std::ofstream file_covBA("/home/manthan/ws/covins_ws/src/covins/"
                              "covins_backend/output/results_cov_BA.csv",
                              std::ios::app);
+
+    // std::cout << "Generating Hessian: " << std::endl;
+
+    // Eigen::MatrixXd Hessian = jacobianDense.transpose() * jacobianDense;
+
+    // fprintf(stderr, "INFO: Hessian Gen Time: %lu us\n", timer.measure());
+    
+    // size_t num_landmarks = lms.size();
+    // size_t num_KFs = QKFs.size() + CKFs.size();
+
+    // std::cout << "Num Landmarks: " << num_landmarks << std::endl;
+    // std::cout << "Hessian DIM: " << Hessian.rows() << " , " << Hessian.cols() << std::endl;
+    // std::cout << "Jacobian DIM: " << jacobianDense.rows() << " , "
+    //           << jacobianDense.cols() << std::endl;
+
+
+    // Eigen::MatrixXd P = Hessian.block(6 * num_KFs, 6 * num_KFs,
+    //                                   3 * num_landmarks, 3 * num_landmarks);
+    // Eigen::MatrixXd C = Hessian.block(0, 0, 6 * num_KFs, 6 * num_KFs);
+    // Eigen::MatrixXd B = Hessian.block(0, 6 * num_KFs, 6 * num_KFs, 3 * num_landmarks);
+    // Eigen::MatrixXd Bt = B.transpose();
+
+    // Eigen::MatrixXd SC =
+    //     C - B * P.completeOrthogonalDecomposition().pseudoInverse() * Bt;
+    // Eigen::MatrixXd cam_cov =
+    //     SC.completeOrthogonalDecomposition().pseudoInverse();
+
+    // fprintf(stderr, "INFO: Schur Complement Time: %lu us\n", timer.measure());
+    
+    // std::cout << cam_cov.block<6, 6>(0, 0).format(csvf) << std::endl;
     
     Eigen::MatrixXd full_cov = (jacobianDense.transpose() * jacobianDense)
                                    .completeOrthogonalDecomposition()
                                    .pseudoInverse();
+
+    fprintf(stderr, "INFO: Full covariance Time: %lu us\n", timer.measure());
 
     for (size_t i = 0; i < CKFs.size(); ++i) {
       TypeDefs::Matrix6Type cov_BA = full_cov.block<6, 6>(6 * i, 6 * i);
@@ -1753,7 +1842,7 @@ auto Optimization::PoseGraphOptimization(
     // ceres::LossFunction *loss_function;
     // loss_function = new ceres::CauchyLoss(1.0);
     ceres::LossFunctionWrapper *loss_function = new ceres::LossFunctionWrapper(
-        new ceres::CauchyLoss(10000.0), ceres::TAKE_OWNERSHIP);
+        new ceres::CauchyLoss(5.0), ceres::TAKE_OWNERSHIP);
     
     // loss_function = new ceres::HuberLoss(0.1);
 
@@ -1837,7 +1926,7 @@ auto Optimization::PoseGraphOptimization(
 
     Eigen::Matrix<precision_t,6,6> sqrt_info = Eigen::Matrix<precision_t,6,6>::Identity();
     
-    if (covins_params::opt::use_cov_f) {
+    if (covins_params::opt::use_cov_adj) {
         // cov_mat_kf *= covins_params::opt::wt_lp_r2;
         Eigen::LLT<TypeDefs::Matrix6Type> lltofcov_mat(cov_mat_kf.inverse());
         TypeDefs::Matrix6Type sqrt_info_f = lltofcov_mat.matrixL().transpose();
@@ -1853,6 +1942,7 @@ auto Optimization::PoseGraphOptimization(
     } else {
         sqrt_info.topLeftCorner<3,3>() *= covins_params::opt::wt_kf_r;
         sqrt_info.bottomRightCorner<3, 3>() *= covins_params::opt::wt_kf_t;
+        sqrt_info *= covins_params::opt::wt_lp_t3;
     }
     
     Eigen::Matrix<precision_t, 6, 6> sqrt_info_l = Eigen::Matrix<precision_t, 6, 6>::Identity();
@@ -1874,20 +1964,30 @@ auto Optimization::PoseGraphOptimization(
     for (auto i : loops) {
       
         sqrt_info_l = Eigen::Matrix<precision_t, 6, 6>::Identity();
+        TypeDefs::Matrix6Type cov_mat = TypeDefs::Matrix6Type::Identity();
         KeyframePtr kf1 = i.kf1;
         KeyframePtr kf2 = i.kf2;
         TransformType T_12 = i.T_s1_s2;
 
-        double cov = i.cov_mat.block<3,3>(3,3).trace();
+        double cov = 1;
+        std::cout << cov << std::endl;
         double weight = covins_params::opt::wt_lp_t1;
 
+        if (covins_params::opt::use_cov_LBA) {
+          cov_mat = i.cov_mat;
+        } else {
+          cov_mat = i.cov_mat2;
+        }
+
+        cov = cov_mat.block<3, 3>(3, 3).trace();
+        
         // For Covaraince Matrix Weighting
         if (covins_params::opt::use_cov_f) {
-            Eigen::LLT<TypeDefs::Matrix6Type> lltofA(i.cov_mat.inverse());
+            Eigen::LLT<TypeDefs::Matrix6Type> lltofA(cov_mat.inverse());
             TypeDefs::Matrix6Type sqrt_info_l_f = lltofA.matrixL().transpose();
             sqrt_info_l = sqrt_info_l_f;
             // sqrt_info_l.diagonal() = sqrt_info_l_f.diagonal();
-            sqrt_info_l /= covins_params::opt::wt_lp_t2;
+            // sqrt_info_l /= covins_params::opt::wt_lp_t2;
             // sqrt_info_l.topLeftCorner<3,3>() /= covins_params::opt::wt_lp_t3;
 
         } else {
@@ -1905,10 +2005,13 @@ auto Optimization::PoseGraphOptimization(
         sqrt_info_l *= weight;
 
 
-        if(covins_params::opt::use_cov_f) {
+        // if(covins_params::opt::use_cov_f) {
+        // std::cout << "The LT Mat loop: " << std::endl;
+        // std::cout << std::setprecision(4) << sqrt_info_l << std::endl;
+        // }
+
         std::cout << "The LT Mat loop: " << std::endl;
         std::cout << std::setprecision(4) << sqrt_info_l << std::endl;
-        }
 
         // sqrt_info_l.bottomRightCorner<3, 3>() *= weight;
 
@@ -1952,12 +2055,12 @@ auto Optimization::PoseGraphOptimization(
         KeyframePtr kf = keyframes[i];
         if(kf->IsInvalid()) continue;
 
-        TransformType T_w_si = kf->GetPoseTws();
+        TransformType T_w_si = kf->GetPoseTws_vio();
         // TransformType T_w_si = GetPoseTwsGT(kf, gt);
         // Edge to successor
         KeyframePtr succ = kf->GetSuccessor();
         if(!succ) continue;
-        TransformType T_w_ssucc = succ->GetPoseTws();
+        TransformType T_w_ssucc = succ->GetPoseTws_vio();
         // TransformType T_w_ssucc = GetPoseTwsGT(succ, gt);
         TransformType T_si_ssucc = T_w_si.inverse() * T_w_ssucc;
         Vector3Type t_si_ssucc = T_si_ssucc.block<3,1>(0,3);
@@ -1980,11 +2083,12 @@ auto Optimization::PoseGraphOptimization(
     }
 
     // Add 4 Neighbors like VINS
+    if(covins_params::opt::use_nbr_kfs){
     for (size_t i = 0; i < keyframes.size(); ++i) {
             KeyframePtr kf = keyframes[i];
             if(kf->IsInvalid()) continue;
 
-            TransformType T_w_si = kf->GetPoseTws();
+            TransformType T_w_si = kf->GetPoseTws_vio();
 
             KeyframeVector connections;
             KeyframePtr temp_kf = keyframes[i];
@@ -2001,7 +2105,7 @@ auto Optimization::PoseGraphOptimization(
             // std::cout << "Connections Size" << connections.size() << std::endl;
             for(auto kfc : connections) {
 
-                TransformType T_w_sc = kfc->GetPoseTws();
+                TransformType T_w_sc = kfc->GetPoseTws_vio();
                 TransformType T_si_sc = T_w_si.inverse() * T_w_sc;
                 Vector3Type t_si_sc = T_si_sc.block<3,1>(0,3);
                 QuaternionType q_si_sc(T_si_sc.block<3,3>(0,0));
@@ -2016,6 +2120,7 @@ auto Optimization::PoseGraphOptimization(
                 ceres::CostFunction* f = new robopt::posegraph::SixDofBetweenError(q_si_sc, t_si_sc, sqrt_info, robopt::defs::pose::PoseErrorType::kImu);
                 problem.AddResidualBlock(f, /*lossFunction*/NULL, kf->ceres_pose_, kfc->ceres_pose_, kf->ceres_extrinsics_, kfc->ceres_extrinsics_);
             }
+    }
     }
 
 
@@ -2109,7 +2214,7 @@ auto Optimization::PoseGraphOptimization(
     ceres::Solver::Summary summary;
     // std::cout << "--> Solve" << std::endl;
     ceres::Solve(solver_options, &problem, &summary);
-
+    std::cout << summary.FullReport() << std::endl;
     // loss_function->Reset(new ceres::CauchyLoss(1000.0), ceres::TAKE_OWNERSHIP);
     // Solve(solver_options, &problem, &summary);
 
@@ -2122,16 +2227,16 @@ auto Optimization::PoseGraphOptimization(
 
     loss_function->Reset(new ceres::CauchyLoss(1.0), ceres::TAKE_OWNERSHIP);
     Solve(solver_options, &problem, &summary);
-    // std::cout << summary.FullReport() << std::endl;
+    std::cout << summary.FullReport() << std::endl;
 
 
     std::ofstream file_loops_residuals_rl("/home/manthan/ws/covins_ws/src/covins/covins_backend/"
-                       "output/loop_res_robloss.csv",
-                       std::ios::app);
+                       "output/res_loop.csv",
+                       std::ios::out);
     std::ofstream file_kf_residuals_rl(
         "/home/manthan/ws/covins_ws/src/covins/covins_backend/"
-        "output/adjacent_res_robloss.csv",
-        std::ios::app);
+        "output/res_KFs.csv",
+        std::ios::out);
 
     std::ofstream file_loops_residuals("/home/manthan/ws/covins_ws/src/covins/covins_backend/"
                        "output/loop_res.csv",

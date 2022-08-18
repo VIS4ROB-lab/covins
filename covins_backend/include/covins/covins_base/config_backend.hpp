@@ -190,6 +190,9 @@ namespace opt {
 
     const bool perform_pgo                              = estd2::GetValFromYaml<bool>(conf,"opt.perform_pgo");
     const bool use_cov_f                                = estd2::GetValFromYaml<bool>(conf,"opt.use_cov_f");
+    const bool use_nbr_kfs                              = estd2::GetValFromYaml<bool>(conf,"opt.use_nbr_kfs");
+    const bool use_cov_adj                              = estd2::GetValFromYaml<bool>(conf,"opt.use_cov_adj");
+    const bool use_cov_LBA                              = estd2::GetValFromYaml<bool>(conf,"opt.use_cov_LBA");
     const bool use_robust_loss                          = estd2::GetValFromYaml<bool>(conf,"opt.use_robust_loss");
     const bool pgo_fix_kfs_after_gba                    = estd2::GetValFromYaml<bool>(conf,"opt.pgo_fix_kfs_after_gba");
     const bool pgo_fix_poses_loaded_maps                = estd2::GetValFromYaml<bool>(conf,"opt.pgo_fix_poses_loaded_maps");

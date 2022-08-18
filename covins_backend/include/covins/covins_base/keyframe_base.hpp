@@ -101,6 +101,8 @@ public:
     virtual auto GetPoseTwc()                                                           ->TransformType;
     virtual auto GetPoseTws()                                                           ->TransformType;
     virtual auto GetPoseTsw()                                                           ->TransformType;
+    virtual auto GetPoseTws_vio()                                                       ->TransformType;
+    virtual auto GetPoseTsw_vio()                                                       ->TransformType;
     virtual auto GetStateBias(Vector3Type& ba,Vector3Type& bg)                          ->void;
     virtual auto GetStateVelocity()                                                     ->Vector3Type;
     virtual auto GetStateExtrinsics()                                                   ->TransformType;
@@ -113,6 +115,7 @@ public:
     virtual auto SetPredecessor(KeyframePtr kf)                                         ->void;
     virtual auto SetSuccessor(KeyframePtr kf)                                           ->void;
     virtual auto SetPoseTws(TransformType Tws, bool lock_mtx = true)                    ->void;
+    virtual auto SetPoseTws_vio(TransformType Tws, bool lock_mtx = true)                ->void;
     virtual auto SetStateBias(Vector3Type ba, Vector3Type bg)                           ->void;
     virtual auto SetStateVelocity(Vector3Type vel)                                      ->void;
     virtual auto SetLinAccAngVel(Vector3Type lin_acc,
@@ -202,6 +205,8 @@ protected:
     TransformType               T_s_c_                                                  = TransformType::Identity();    // Tranformation IMU-Cam
 
     TransformType               T_w_s_                                                  = TransformType::Identity();
+    TransformType               T_w_s_vio_                                              = TransformType::Identity();
+    TransformType               T_s_w_vio_                                              = TransformType::Identity();
     TransformType               T_s_w_                                                  = TransformType::Identity();
     TransformType               T_c_w_                                                  = TransformType::Identity();
     TransformType               T_w_c_                                                  = TransformType::Identity();

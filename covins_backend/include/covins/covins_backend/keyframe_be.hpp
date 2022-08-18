@@ -57,6 +57,7 @@ public:
 
     auto EstablishConnections(MsgKeyframe msg, MapPtr map)                              ->void;     //Establishes connections to KFs/Landmarks - cannot call shared_from_this() from constructor!
 
+    auto EstablishNeighbors(MsgKeyframe msg, MapPtr map)                                ->void;    //Establishes extra neighbor connections for placerecognition
     // Interfaces
     virtual auto RemapLandmark(LandmarkPtr lm,
                                const size_t feat_id_now,
