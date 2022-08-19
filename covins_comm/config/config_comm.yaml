@@ -9,8 +9,8 @@ sys.port: '9033' # should not be necessary to be changed
 
 # sys.server_ip: '192.168.0.150' #Manthan Woko
 # sys.server_ip: '10.5.152.131' #Manthan V4RL
-sys.server_ip: '10.5.144.247' #Manthan V4RL
-# sys.server_ip: '77.109.188.120' #Manthan CRS
+# sys.server_ip: '10.5.144.247' #Manthan V4RL
+sys.server_ip: '77.109.188.120' #Manthan CRS
 #--------------------------------------------------------------------------------------------
 # Communicator
 #--------------------------------------------------------------------------------------------
