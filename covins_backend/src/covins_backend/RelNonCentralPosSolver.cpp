@@ -416,7 +416,7 @@ bool RelNonCentralPosSolver::computeNonCentralRelPose(
             robopt::common::quaternion::Minus(q_iter, q_ref, &rotation_sample);
             robopt::common::quaternion::Minus(q_iter_s, q_ref_s, &rotation_sample_s);
 
-            rotation_sample *= 10;
+            // rotation_sample *= 10;
 
             m_full.block<1, 3>(i, 0) = rotation_sample.transpose();
             m_full_s.block<1, 3>(i, 0) = rotation_sample_s.transpose();

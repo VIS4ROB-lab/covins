@@ -68,8 +68,8 @@ placerec.active: 1
 placerec.type: 'COVINS' # this allows to integrate other PR algorithms. Cuurently, only 'COVINS' is supported
 
 placerec.start_after_kf: 7 # map matching skips the first x KFs after map initialization
-placerec.consecutive_loop_dist: 10 # after finding a loop, the next x KFs are not considered loop closure query
-placerec.min_loop_dist: 100 # minimum number of KFs between the two ends of the loop to accept loop
+placerec.consecutive_loop_dist: 60 # after finding a loop, the next x KFs are not considered loop closure query
+placerec.min_loop_dist: 200 # minimum number of KFs between the two ends of the loop to accept loop
 placerec.cov_consistency_thres: 3
 
 placerec.solver_iterations: 5
@@ -108,7 +108,7 @@ placerec.inter_map_matches_only: 0
 # Optimization
 #--------------------------------------------------------------------------------------------
 
-opt.pgo_iteration_limit: 100 # PGO max iterations
+opt.pgo_iteration_limit: 10 # PGO max iterations
 
 opt.gba_iteration_limit: 10 # GBA max iterations
 opt.gba_use_map_loop_constraints: 1
@@ -117,11 +117,11 @@ opt.th_outlier_align: 1.3
 opt.th_gba_outlier_global: 0.92
 
 opt.perform_pgo: 1
-opt.use_nbr_kfs: 0
+opt.use_nbr_kfs: 1
 opt.use_cov_f: 1
 opt.use_cov_LBA: 0
 opt.use_cov_adj: 0
-opt.use_robust_loss: 0
+opt.use_robust_loss: 1
 opt.pgo_fix_kfs_after_gba: 1 #KFs that were part of a GBA are fixed in future PGO runs
 opt.pgo_fix_poses_loaded_maps: 0
 opt.gba_fix_poses_loaded_maps: 0
@@ -129,11 +129,11 @@ opt.gba_fix_poses_loaded_maps: 0
 opt.wt_kf_R: 10
 opt.wt_kf_T: 1
 opt.wt_lp_R1: 0.5
-opt.wt_lp_T1: 1
+opt.wt_lp_T1: 2
 opt.wt_lp_R2: 0.1
-opt.wt_lp_T2: 1
+opt.wt_lp_T2: 3
 opt.wt_lp_R3: 0.01
-opt.wt_lp_T3: 20
+opt.wt_lp_T3: 10
 opt.cov_switch: 0.2
 opt.cov_switch2: 0.5
 #--------------------------------------------------------------------------------------------

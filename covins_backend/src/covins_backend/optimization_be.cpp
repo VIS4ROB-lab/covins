@@ -1842,7 +1842,7 @@ auto Optimization::PoseGraphOptimization(
     // ceres::LossFunction *loss_function;
     // loss_function = new ceres::CauchyLoss(1.0);
     ceres::LossFunctionWrapper *loss_function = new ceres::LossFunctionWrapper(
-        new ceres::CauchyLoss(5.0), ceres::TAKE_OWNERSHIP);
+        new ceres::CauchyLoss(0.5), ceres::TAKE_OWNERSHIP);
     
     // loss_function = new ceres::HuberLoss(0.1);
 
@@ -1924,7 +1924,12 @@ auto Optimization::PoseGraphOptimization(
     const static Eigen::IOFormat csv_f(Eigen::StreamPrecision,
                                        Eigen::DontAlignCols, ", ", ",");
 
-    Eigen::Matrix<precision_t,6,6> sqrt_info = Eigen::Matrix<precision_t,6,6>::Identity();
+    Eigen::Matrix<precision_t, 6, 6> sqrt_info =
+        Eigen::Matrix<precision_t, 6, 6>::Identity();
+    Eigen::Matrix<precision_t, 6, 6> sqrt_info_n23 =
+        Eigen::Matrix<precision_t, 6, 6>::Identity();
+    Eigen::Matrix<precision_t, 6, 6> sqrt_info_n45 =
+        Eigen::Matrix<precision_t, 6, 6>::Identity();
     
     if (covins_params::opt::use_cov_adj) {
         // cov_mat_kf *= covins_params::opt::wt_lp_r2;
@@ -1934,8 +1939,8 @@ auto Optimization::PoseGraphOptimization(
         std::cout << cov_mat_kf << std::endl;
         // sqrt_info = sqrt_info_f;
         sqrt_info.diagonal() = sqrt_info_f.diagonal();
-        sqrt_info /= covins_params::opt::wt_lp_t2;
-        sqrt_info *= covins_params::opt::wt_lp_t3;
+        // sqrt_info /= covins_params::opt::wt_lp_t2;
+        // sqrt_info *= covins_params::opt::wt_lp_t3;
         std::cout << "The LT Mat Adj KFs: " << std::endl;
         std::cout << std::setprecision(4) << sqrt_info << std::endl;
         
@@ -1943,6 +1948,11 @@ auto Optimization::PoseGraphOptimization(
         sqrt_info.topLeftCorner<3,3>() *= covins_params::opt::wt_kf_r;
         sqrt_info.bottomRightCorner<3, 3>() *= covins_params::opt::wt_kf_t;
         sqrt_info *= covins_params::opt::wt_lp_t3;
+        sqrt_info_n23 = sqrt_info;
+        sqrt_info_n45 = sqrt_info;
+        sqrt_info_n23 /= covins_params::opt::wt_lp_t1;
+        sqrt_info_n45 /= covins_params::opt::wt_lp_t2;
+
     }
     
     Eigen::Matrix<precision_t, 6, 6> sqrt_info_l = Eigen::Matrix<precision_t, 6, 6>::Identity();
@@ -1971,7 +1981,7 @@ auto Optimization::PoseGraphOptimization(
 
         double cov = 1;
         std::cout << cov << std::endl;
-        double weight = covins_params::opt::wt_lp_t1;
+        double weight = 1;
 
         if (covins_params::opt::use_cov_LBA) {
           cov_mat = i.cov_mat;
@@ -2101,10 +2111,18 @@ auto Optimization::PoseGraphOptimization(
 
                 }
             }
-            
+            size_t k = 0;
+            Eigen::Matrix<precision_t,6,6> sqrt_info_nbr = Eigen::Matrix<precision_t,6,6>::Identity();
             // std::cout << "Connections Size" << connections.size() << std::endl;
             for(auto kfc : connections) {
-
+                k++;
+                if (k <= 1)
+                  sqrt_info_nbr = sqrt_info;
+                else if (k <=3)
+                  sqrt_info_nbr = sqrt_info_n23;
+                else
+                  sqrt_info_nbr = sqrt_info_n45;
+                
                 TransformType T_w_sc = kfc->GetPoseTws_vio();
                 TransformType T_si_sc = T_w_si.inverse() * T_w_sc;
                 Vector3Type t_si_sc = T_si_sc.block<3,1>(0,3);
@@ -2117,7 +2135,7 @@ auto Optimization::PoseGraphOptimization(
                     inserted_edges.insert(kf_pair);
                 }
 
-                ceres::CostFunction* f = new robopt::posegraph::SixDofBetweenError(q_si_sc, t_si_sc, sqrt_info, robopt::defs::pose::PoseErrorType::kImu);
+                ceres::CostFunction* f = new robopt::posegraph::SixDofBetweenError(q_si_sc, t_si_sc, sqrt_info_nbr, robopt::defs::pose::PoseErrorType::kImu);
                 problem.AddResidualBlock(f, /*lossFunction*/NULL, kf->ceres_pose_, kfc->ceres_pose_, kf->ceres_extrinsics_, kfc->ceres_extrinsics_);
             }
     }
@@ -2225,9 +2243,9 @@ auto Optimization::PoseGraphOptimization(
     // loss_function->Reset(new ceres::CauchyLoss(10.0), ceres::TAKE_OWNERSHIP);
     // Solve(solver_options, &problem, &summary);
 
-    loss_function->Reset(new ceres::CauchyLoss(1.0), ceres::TAKE_OWNERSHIP);
-    Solve(solver_options, &problem, &summary);
-    std::cout << summary.FullReport() << std::endl;
+    // loss_function->Reset(new ceres::CauchyLoss(0.3), ceres::TAKE_OWNERSHIP);
+    // Solve(solver_options, &problem, &summary);
+    // std::cout << summary.FullReport() << std::endl;
 
 
     std::ofstream file_loops_residuals_rl("/home/manthan/ws/covins_ws/src/covins/covins_backend/"
