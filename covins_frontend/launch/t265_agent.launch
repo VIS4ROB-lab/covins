@@ -2,8 +2,8 @@
 <launch>
 
 <arg name="ag_n" default="0" />
-<arg name="cam_topic" default="/camera/fisheye1/image_raw" />
-<arg name="odom_topic" default="/camera/odom/sample" />
+<arg name="cam_topic" default="/t265/fisheye1/image_raw" />
+<arg name="odom_topic" default="/t265/odom/sample" />
 <arg name="config_file" default="$(find covins_frontend)/config/t265.yaml" />
 
 <node pkg="covins_frontend" type="covins_frontend_node" name="frontend_ag$(arg ag_n)" output="screen"> 

@@ -42,14 +42,14 @@ Tbc: !!opencv-matrix
 #--------------------------------------------------------------------------------------------
 
 # 1 if Odometry is published in IMU frame. Set to 0 if published in Camera Frame
-odom_in_imu_frame: 0
+odom_in_imu_frame: 1
 
 #Minimum translational distance in metres for considering a new KF
-t_min: 0.15
+t_min: 0.07
 
 #Minimum rotational angle in radians for considering a KF. A new KF is generated if either of the
 # translational or rotational condition is satisfied
-r_min: 0.15
+r_min: 0.1
 
 
 # Feature type. Currently only ORB and SIFT supported, for place recognition always ORB features are used

@@ -54,11 +54,11 @@ extractor.nFeatures: 1000 # 1000
 odom_in_imu_frame: 1
 
 #Minimum translational distance in metres for considering a new KF
-t_min: 0.4
+t_min: 0.2
 
 #Minimum rotational angle in radians for considering a KF. A new KF is generated if either of the
 # translational or rotational condition is satisfied
-r_min: 0.5
+r_min: 0.1
 
 
 #--------------------------------------------------------------------------------------------

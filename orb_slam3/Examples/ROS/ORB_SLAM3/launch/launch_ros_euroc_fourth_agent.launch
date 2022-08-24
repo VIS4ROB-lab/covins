@@ -5,10 +5,11 @@
 <arg name="voc" default="/home/v4rl/ws/manthan_ws/src/covins/orb_slam3/Vocabulary/ORBvoc.txt" />
 <arg name="cam" default="/home/v4rl/ws/manthan_ws/src/covins/orb_slam3/Examples/Monocular-Inertial/EuRoC.yaml" />
 
-<node pkg="ORB_SLAM3" type="Mono_Inertial" name="ORB_SLAM3_monoi0" args="$(arg voc) $(arg cam)" output="screen"> 
 
-    <remap from="/camera/image_raw" to="/realsense/infra1/image_rect_raw"/>
-    <remap from="/imu" to="/realsense/imu"/>
+<node pkg="ORB_SLAM3" type="Mono_Inertial" name="ORB_SLAM3_monoi3" args="$(arg voc) $(arg cam)" output="screen"> 
+
+    <remap from="/camera/image_raw" to="/cam0/image_raw3"/>
+    <remap from="/imu" to="/imu3"/>
 
 </node>
 

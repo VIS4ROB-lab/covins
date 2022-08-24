@@ -110,8 +110,8 @@ void FrontendWrapper::convertToMsg(covins::MsgKeyframe &msg, cv::Mat &img,
   covins::TypeDefs::DynamicVectorType dist_coeffs;
 
   dist_coeffs.resize(4);
-//   dist_coeffs << k1, k2, p1, p2;
-  dist_coeffs << 0.0,0.0,0.0,0.0;
+  dist_coeffs << k1, k2, p1, p2;
+  //dist_coeffs << 0.0,0.0,0.0,0.0;
   
   covins::VICalibration calib(
       Tsc_, msg.calibration.cam_model, msg.calibration.dist_model,
@@ -140,7 +140,7 @@ void FrontendWrapper::convertToMsg(covins::MsgKeyframe &msg, cv::Mat &img,
   // Undistorttion
 
   //Fisheye Undistortion
-    cv::Size size = {img.cols, img.rows};
+    /*cv::Size size = {img.cols, img.rows};
 
     cv::Mat E = cv::Mat::eye(3, 3, cv::DataType<double>::type);
 
@@ -157,6 +157,8 @@ void FrontendWrapper::convertToMsg(covins::MsgKeyframe &msg, cv::Mat &img,
     
     cv::imshow("undist", undistort);
     cv::waitKey(10);
+    
+    */
 
 //   cv::Mat img_und_1;
 //   cv::fisheye::undistortImage(img, img_und_1, K_,
