@@ -225,9 +225,6 @@ public:
 
     static auto PoseGraphOptimization(MapPtr map,
                                       PoseMap corrected_poses)                          ->void;
-
-    static auto PoseGraphOptimization4DoF(
-        MapPtr map, PoseMap corrected_poses)                  -> void;
         
 };
 

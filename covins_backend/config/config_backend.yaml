@@ -37,6 +37,7 @@ feat.desc_length: 32 # [Byte] COVINS-ORB: 32, SIFT: 128
 feat.num_octaves: 1 # Number of levels in the scale pyramid
 feat.scale_factor: 2.0 # Scale factor between levels in the scale pyramid
 extractor.img_match_thres: 40.0 # Use 30-40 for ORB Features (Hamming Distance) and use 500 for SIFT Features
+extractor.ratio_thres: 0.8 # Ratio test threshold for feature Matching (Use 1 if you want to disable this)
 
 #--------------------------------------------------------------------------------------------
 # Feature Matching
@@ -65,7 +66,7 @@ mapping.kf_culling_max_time_dist: 1.0 #s - max. allowed time distance between 2 
 # activate / deactivate place recognition
 placerec.active: 1
 
-placerec.type: 'COVINS' # this allows to integrate other PR algorithms. Cuurently, only 'COVINS' is supported
+placerec.type: 'COVINS' # this allows to integrate other PR algorithms. Cuurently, only 'COVINS' and 'COVINS_G' is supported
 
 placerec.start_after_kf: 7 # map matching skips the first x KFs after map initialization
 placerec.consecutive_loop_dist: 10 # after finding a loop, the next x KFs are not considered loop closure query
@@ -100,6 +101,9 @@ placerec.rel_pose.min_inliers: 20 # Min inliers for succesful Ransac solution
 placerec.rel_pose.max_iters: 200 # Ransac Max Iteration
 placerec.rel_pose.min_img_matches: 20 # Min image matches required to proceed for 5 PT Ransac
 
+# Yaw and Translation Thresholds to accept Loop
+placerec.max_yaw: 50.0 # Maximum TF yaw to accept Loop
+placerec.max_trans: 2.0 # Maximum Translation to accept Loop
 
 placerec.exclude_kfs_with_id_less_than: 7
 placerec.inter_map_matches_only: 0
@@ -108,7 +112,7 @@ placerec.inter_map_matches_only: 0
 # Optimization
 #--------------------------------------------------------------------------------------------
 
-opt.pgo_iteration_limit: 100 # PGO max iterations
+opt.pgo_iteration_limit: 10 # PGO max iterations
 
 opt.gba_iteration_limit: 10 # GBA max iterations
 opt.gba_use_map_loop_constraints: 1
@@ -121,7 +125,7 @@ opt.use_nbr_kfs: 0
 opt.use_cov_f: 1
 opt.use_cov_LBA: 0
 opt.use_cov_adj: 0
-opt.use_robust_loss: 0
+opt.use_robust_loss: 1
 opt.pgo_fix_kfs_after_gba: 1 #KFs that were part of a GBA are fixed in future PGO runs
 opt.pgo_fix_poses_loaded_maps: 0
 opt.gba_fix_poses_loaded_maps: 0
@@ -129,11 +133,11 @@ opt.gba_fix_poses_loaded_maps: 0
 opt.wt_kf_R: 10
 opt.wt_kf_T: 1
 opt.wt_lp_R1: 0.5
-opt.wt_lp_T1: 1
+opt.wt_lp_T1: 2
 opt.wt_lp_R2: 0.1
-opt.wt_lp_T2: 1
+opt.wt_lp_T2: 3
 opt.wt_lp_R3: 0.01
-opt.wt_lp_T3: 20
+opt.wt_lp_T3: 1
 opt.cov_switch: 0.2
 opt.cov_switch2: 0.5
 #--------------------------------------------------------------------------------------------

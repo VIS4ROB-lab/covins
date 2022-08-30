@@ -123,6 +123,7 @@ namespace features {
     const int num_octaves                               = estd2::GetValFromYaml<int>(conf,"feat.num_octaves");
     const precision_t scale_factor                      = estd2::GetValFromYaml<precision_t>(conf,"feat.scale_factor");
     const float img_match_thres                         = estd2::GetValFromYaml<float>(conf,"extractor.img_match_thres");
+    const float ratio_thres                             = estd2::GetValFromYaml<float>(conf,"extractor.ratio_thres");
 }
 
 namespace matcher {
@@ -177,9 +178,11 @@ namespace placerec {
         const float error_thres             = estd2::GetValFromYaml<float>(conf,"placerec.rel_pose.error_thres");
         const int min_img_matches           = estd2::GetValFromYaml<int>(conf,"placerec.rel_pose.min_img_matches");
     } //namespace nc_rel_pose
-    
+
+    const float max_yaw                     = estd2::GetValFromYaml<float>(conf,"placerec.max_yaw");
+    const float max_trans                   = estd2::GetValFromYaml<float>(conf,"placerec.max_trans");
     const bool use_4dof                     = estd2::GetValFromYaml<bool>(conf,"placerec.use_4dof");
-    const bool use_LBA                       = estd2::GetValFromYaml<bool>(conf,"placerec.enable_LBA");
+    const bool use_LBA                      = estd2::GetValFromYaml<bool>(conf,"placerec.enable_LBA");
 }
 
 namespace opt {

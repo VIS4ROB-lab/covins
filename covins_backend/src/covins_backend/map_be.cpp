@@ -52,7 +52,7 @@ MapManager::MapManager(VocabularyPtr voc)
     : voc_(voc)
 {
     // Other types of place recognition system could be integrated and activated using the placerec::type parameter
-    if(covins_params::placerec::type == "COVINS") {
+    if(covins_params::placerec::type == "COVINS" || covins_params::placerec::type == "COVINS_G") {
         database_.reset(new KeyframeDatabase(voc_));
     } else {
         std::cout << COUTFATAL << "Place Recognition System Type \"" << covins_params::placerec::type << "\" not valid" << std::endl;

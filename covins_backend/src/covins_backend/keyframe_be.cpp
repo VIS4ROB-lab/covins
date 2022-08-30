@@ -92,24 +92,26 @@ Keyframe::Keyframe(MsgKeyframe msg, MapPtr map, VocabularyPtr voc)
 
     img_ = msg.img;
 
-    // Add additional Keypoints and Features
-    keypoints_aors_add_ = msg.keypoints_aors_add;
     keypoints_distorted_add_ = msg.keypoints_distorted_add;
 
+    // Add additional Keypoints and Features
     if(keypoints_distorted_add_.empty()) {
-        std::cout << COUTERROR << "keypoints_distorted_.empty()" << std::endl;
-        std::cout << COUTNOTICE << "Note: if you want to work only on undistorted KP, you can fill 'keypoints_distorted_' with the undistorted KPs and set the distortion coefficients to 0.0" << std::endl;
-        exit(-1);
-    }
-    if(keypoints_aors_add_.size() != keypoints_distorted_add_.size()) {
+      // Use the original features as additional Features
+      keypoints_aors_add_ = keypoints_aors_;
+      keypoints_distorted_add_ = keypoints_distorted_;
+      keypoints_undistorted_add_ = keypoints_undistorted_;
+      descriptors_add_ = descriptors_.clone();
+    } else {
+      // Use the additional features
+      keypoints_aors_add_ = msg.keypoints_aors_add;
+      if(keypoints_aors_add_.size() != keypoints_distorted_add_.size()) {
         std::cout << COUTERROR << "keypoints given: " << std::endl;
         std::cout << "keypoints_distorted_.size(): " << keypoints_distorted_add_.size() << std::endl;
         std::cout << "keypoints_aors_.size(): " << keypoints_aors_add_.size() << std::endl;
         exit(-1);
-    }
-
-    keypoints_undistorted_add_ = msg.keypoints_undistorted_add;
-    if(keypoints_distorted_add_.size() != keypoints_undistorted_add_.size()) {
+      }
+      keypoints_undistorted_add_ = msg.keypoints_undistorted_add;
+      if(keypoints_distorted_add_.size() != keypoints_undistorted_add_.size()) {
         if(!keypoints_undistorted_add_.empty()) {
             std::cout << COUTERROR << "keypoints given: " << std::endl;
             std::cout << "keypoints_distorted_.size(): " << keypoints_distorted_add_.size() << std::endl;
@@ -131,9 +133,11 @@ Keyframe::Keyframe(MsgKeyframe msg, MapPtr map, VocabularyPtr voc)
                 keypoints_undistorted_add_.push_back(kp_as_kptype);
             }
         }
+      }
+      descriptors_add_ = msg.descriptors_add.clone();
     }
 
-    descriptors_add_ = msg.descriptors_add.clone();
+
     if (descriptors_add_.cols != covins_params::features::desc_length) {
       std::cout << COUTERROR << "Descriptor Length Mismatch, Received: "
                 << descriptors_add_.cols
@@ -141,7 +145,7 @@ Keyframe::Keyframe(MsgKeyframe msg, MapPtr map, VocabularyPtr voc)
                 << std::endl;
         exit(-1);
     }
-    ///////////////
+
     this->AssignFeaturesToGrid();
 
     if(msg.save_to_file) {
@@ -303,7 +307,6 @@ auto Keyframe::ConvertToMsgFileExport(MsgKeyframe &msg)->void {
     msg.keypoints_undistorted_add = keypoints_undistorted_add_;
     msg.descriptors_add = descriptors_add_.clone();
 
-
     msg.T_s_c = T_s_c_;
     msg.T_w_s = T_w_s_;
     msg.T_w_s_vio = T_w_s_vio_;
@@ -367,36 +370,28 @@ auto Keyframe::EstablishConnections(MsgKeyframe msg, MapPtr map)->void {
 
 auto Keyframe::EstablishNeighbors(MsgKeyframe msg, MapPtr map) -> void {
 
-    // Add Neighbors to connected KFs
+    // Add Temporal Neighbors (These are only used of COVINS_G during Plcae Recognition) 
     int n_neigh = 20;
     int min_neigh;
 
     {
-      
-    KeyframeBase::idpair curr_id = msg.id;
-    KeyframeBase::idpair temp_id = msg.id;
-    // std::cout << "Current ID: "<< curr_id << std::endl;
-    // std::cout << "Current Diff: "<< int(curr_id.first) - n_neigh << std::endl;
+        KeyframeBase::idpair curr_id = msg.id;
+        KeyframeBase::idpair temp_id = msg.id;
 
-    if (int(curr_id.first) - n_neigh <= 1) {
-      min_neigh = 1;
-    } else {
-      min_neigh = int(curr_id.first) - n_neigh;
-    }
+        if (int(curr_id.first) - n_neigh <= 1) {
+        min_neigh = 1;
+        } else {
+        min_neigh = int(curr_id.first) - n_neigh;
+        }
 
-    // std::cout << "Min Neighbor" << min_neigh << std::endl;
-    // std::unique_lock<std::mutex> lock(mtx_connections_);
-    
-    connected_n_kfs_.clear();
-    connected_n_kfs_.reserve(2 * n_neigh);
+        connected_n_kfs_.clear();
+        connected_n_kfs_.reserve(2 * n_neigh);
 
-    for (int i = int(curr_id.first)-1; i > min_neigh; --i) {
-      temp_id.first = i;
-    //   std::cout << temp_id << std::endl;
-      KeyframePtr neigh = map->GetKeyframe(temp_id, false);
-      connected_n_kfs_.push_back(neigh);
-    }
-
+        for (int i = int(curr_id.first)-1; i > min_neigh; --i) {
+        temp_id.first = i;
+        KeyframePtr neigh = map->GetKeyframe(temp_id, false);
+        connected_n_kfs_.push_back(neigh);
+        }
     }
 }
 
@@ -545,16 +540,6 @@ auto Keyframe::SetVelBiasOptimized()->void {
 auto Keyframe::sort_by_redval(const KeyframePtr a, const KeyframePtr b)->bool {
     if(a->latest_red_val_ > b->latest_red_val_) return true;
     else return false;
-}
-
-auto Keyframe::UpdateNeighborConnections() -> void {
-
-  int n_neigh = 10;
-  {
-    std::unique_lock<std::mutex> lock(mtx_connections_);
-    connected_n_kfs_.clear();
-    connected_n_kfs_.reserve(2 * n_neigh);
-  }
 }
 
 auto Keyframe::UpdateCovisibilityConnections()->void {

@@ -122,7 +122,7 @@ auto Communicator::ProcessKeyframeMessages()->void {
             KeyframePtr kf;
             kf = map_->GetKeyframe(msg.id,true);
             if(!kf) {
-                if(msg.keypoints_distorted_add.empty()) {
+                if(msg.keypoints_distorted.empty()) {
                     std::cout << COUTERROR << "keypoints_distorted_.empty()" << std::endl;
                     std::cout << COUTNOTICE << "Note: if you want to work only on undistorted KP, you can fill 'keypoints_distorted_' with the undistorted KPs and set the distortion coefficients to 0.0" << std::endl;
                     buffer_recv_data_.clear();
