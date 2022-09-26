@@ -124,11 +124,11 @@ auto PlaceRecognitionG::ComputeSE3() -> bool {
             }
         }
 
-        fprintf(stderr, "INFO: Image Matching took: %lu us\n", timer.measure());
+        // fprintf(stderr, "INFO: Image Matching took: %lu us\n", timer.measure());
 
         int nmatches = img_matches.size();
 
-        std::cout << "------> num_img matches: " << nmatches << std::endl;
+        // std::cout << "------> num_img matches: " << nmatches << std::endl;
 
         if(kf_query_->id_.second == pKF->id_.second && nmatches < covins_params::placerec::matches_thres) {
           vbDiscarded[i] = true;

@@ -121,7 +121,7 @@ opt.th_outlier_align: 1.3
 opt.th_gba_outlier_global: 0.92
 
 opt.perform_pgo: 1
-opt.use_nbr_kfs: 0
+opt.use_nbr_kfs: 1
 opt.use_cov_f: 1
 opt.use_cov_LBA: 0
 opt.use_cov_adj: 0
@@ -137,7 +137,7 @@ opt.wt_lp_T1: 2
 opt.wt_lp_R2: 0.1
 opt.wt_lp_T2: 3
 opt.wt_lp_R3: 0.01
-opt.wt_lp_T3: 1
+opt.wt_lp_T3: 10
 opt.cov_switch: 0.2
 opt.cov_switch2: 0.5
 #--------------------------------------------------------------------------------------------

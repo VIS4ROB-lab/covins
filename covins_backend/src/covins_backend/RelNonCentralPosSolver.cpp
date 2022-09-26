@@ -65,16 +65,16 @@ bool RelNonCentralPosSolver::computeNonCentralRelPose(
   time_utils::Timer timer;
   time_utils::Timer timer_local;
   time_utils::Timer timer_global;
-  std::ofstream file_img_matches("/home/manthan/ws/covins_ws/src/covins/covins_backend/"
-                       "output/results_img_match.csv",
-                       std::ios::app);
+
   std::ofstream file_17PT("/home/manthan/ws/covins_ws/src/covins/covins_backend/"
                        "output/results_17PT.csv",
                        std::ios::app);
+  std::ofstream file_total_time(
+      "/home/manthan/ws/covins_ws/src/covins/covins_backend/"
+      "output/results_tot_seventeen.csv",
+      std::ios::app);
 
-  std::ofstream file_lms("/home/manthan/ws/covins_ws/src/covins/covins_backend/"
-                       "output/lms_local.csv",
-                       std::ios::app);
+  timer_global.measure();
 
   size_t n_ckfs = 3;
   size_t n_qkfs = 2;
@@ -148,7 +148,6 @@ bool RelNonCentralPosSolver::computeNonCentralRelPose(
 
       // fprintf(stderr, "INFO: Image Matching took: %lu us\n",
       //         timer_local.measure());
-      file_img_matches << timer_local.measure() << std::endl;
       
       // std::cout << "Matches in QKF-CKF[" << i << "," << j
       //           << "]: " << matches_QC.size() << std::endl;
@@ -203,7 +202,6 @@ bool RelNonCentralPosSolver::computeNonCentralRelPose(
     match_vect[i] = curr_match_vect;
     inliers_vect[i] = curr_inliers_vect;
   }
-  file_lms << std::endl;
 
   file_17PT << std::endl;
   float bef_seventeen = timer.measure();
@@ -646,6 +644,7 @@ bool RelNonCentralPosSolver::computeNonCentralRelPose(
         file_17PT << "," << seventeen_cov;
 
         float tot_seventeen = timer_global.measure();
+        file_total_time << tot_seventeen << std::endl;
         file_17PT << "," << tot_seventeen;
 
         // std::cout << mMax_cov << std::endl;
