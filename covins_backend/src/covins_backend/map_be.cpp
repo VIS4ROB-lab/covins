@@ -196,7 +196,6 @@ auto MapManager::PerformMerge()->void {
     KeyframePtr kf_query;
     KeyframePtr kf_match;
     TransformType T_smatch_squery;
-    double relative_yaw_smatch_squery;
     TypeDefs::Matrix6Type cov_mat;
 
     std::cout << "--> Fetch merge data" << std::endl;
@@ -207,7 +206,6 @@ auto MapManager::PerformMerge()->void {
         kf_query = merge.kf_query;
         kf_match = merge.kf_match;
         T_smatch_squery = merge.T_smatch_squery;
-        relative_yaw_smatch_squery = merge.relative_yaw_smatch_squery;
         cov_mat = merge.cov_mat;
     }
     std::cout << "--> Process merge data" << std::endl;
@@ -229,7 +227,7 @@ auto MapManager::PerformMerge()->void {
 
     MapInstancePtr map_merged(new MapInstance(map_match,map_query,T_wmatch_wquery));
 
-    LoopConstraint lc(kf_match,kf_query,T_smatch_squery,relative_yaw_smatch_squery, cov_mat);
+    LoopConstraint lc(kf_match,kf_query,T_smatch_squery, cov_mat);
     map_merged->map->AddLoopConstraint(lc);
 
 //    std::cout << "Map Match: Agents|KFs|LMs :" << map_match->map->associated_clients_.size() << "|" << map_match->map->GetKeyframes().size() << "|" << map_match->map->GetLandmarks().size() << std::endl;
@@ -438,14 +436,12 @@ auto Map::ConvertToMsgFileExport(MsgMap &msg)->void {
     msg.keyframes1.reserve(loop_constraints_.size());
     msg.keyframes2.reserve(loop_constraints_.size());
     msg.transforms12.reserve(loop_constraints_.size());
-    msg.cov1.reserve(loop_constraints_.size());
-    msg.cov2.reserve(loop_constraints_.size());
+    msg.cov.reserve(loop_constraints_.size());
     for(const auto& i : loop_constraints_) {
         msg.keyframes1.push_back(i.kf1->id_);
         msg.keyframes2.push_back(i.kf2->id_);
         msg.transforms12.push_back(i.T_s1_s2);
-        msg.cov1.push_back(i.cov_mat);
-        msg.cov2.push_back(i.cov_mat2);
+        msg.cov.push_back(i.cov_mat);
     }
 }
 
@@ -688,7 +684,7 @@ auto Map::LoadFromFile(const std::string &path_name, VocabularyPtr voc)->void {
 //        std::cout << "kf1: "  << kf1 << std::endl;
 //        std::cout << "kf2: "  << kf2 << std::endl;
 //        std::cout << "T12: \n"  << msg_map.transforms12[i] << std::endl;
-        LoopConstraint lc(kf1,kf2,msg_map.transforms12[i],0,msg_map.cov1[i],msg_map.cov2[i]);
+        LoopConstraint lc(kf1,kf2,msg_map.transforms12[i],msg_map.cov[i]);
         loop_constraints_.push_back(lc);
     }
     std::cout << "+++ Perform PGO +++" << std::endl;
@@ -991,7 +987,7 @@ auto Map::WriteStateToCsv(const std::string& filename, const size_t client_id)->
     }
 
     if(found_kfs.empty()) //do not overwrite files from other maps with empty files
-    return;
+        return;
 
     // Sort the keyframes by timestamp
     std::sort(found_kfs.begin(), found_kfs.end(), Keyframe::CompStamp);

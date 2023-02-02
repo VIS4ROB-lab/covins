@@ -135,10 +135,6 @@ protected:
     LandmarkVector              mvpLoopMapPoints;
     TransformType               mTcw;
     TransformType               mTsw;
-    TypeDefs::Matrix6Type       mcov_mat;
-    double                      mrelative_yaw = -1.0;
-    double                      mrelative_yaw_gt = -1.0;
-    LoopVector                  mloops;
     
     // Sync
     std::mutex                  mtx_in_;
@@ -147,10 +143,6 @@ protected:
     bool                        finish_                                                 = false;
     bool is_finished_ = false;
 
-    // GT Data
-    auto GetPoseTwsGT(KeyframePtr kf)                                   ->TransformType;
-    std::map<int, GroundtruthData> gt_;
-    TransformType           mT_smatch_squery_gt;
 };
 
 } //end ns

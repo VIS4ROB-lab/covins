@@ -19,6 +19,8 @@
 *
 * You should have received a copy of the GNU General Public License
 * along with COVINS. If not, see <http://www.gnu.org/licenses/>.
+*
+* Modified by Manthan Patel, 2022 for COVINS-G Release
 */
 
 #pragma once

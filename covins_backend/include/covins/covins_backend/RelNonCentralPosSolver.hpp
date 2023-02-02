@@ -37,7 +37,8 @@ public:
   using TransformType = TypeDefs::TransformType;
   using Vector3Vector = TypeDefs::Vector3Vector;
   using KfObservations = TypeDefs::KfObservations;
-  using LoopVector    = TypeDefs::LoopVector;
+  using LoopVector = TypeDefs::LoopVector;
+  using Matrix6Type = TypeDefs::Matrix6Type;
   
 public:
   /// @brief The class constructor
@@ -65,20 +66,21 @@ public:
   /// @return Whether a Transformation with sufficients inliers was found
   bool computeNonCentralRelPose(const KeyframePtr KeyframePtr1,
                                 const KeyframePtr KeyframePtr2,
-                                const double threshold, Eigen::Matrix4d &Tc1c2,
-                                Eigen::Matrix<double, 6, 6> &cov_loop, LoopVector &loop_vect);
-  
-  
+                                const double threshold, TransformType &Tc1c2,
+                                Matrix6Type &cov_loop);
+
+
   /// @brief Perform 5 Point Ransac using 2D-2D correspondces to get pose.
   /// @param KeyframePtr1 The first keyframe (query KF)
   /// @param KeyframePtr2 The second keyframe (candidate KF)
   /// @param ImgMatches Contains the correspondences
   /// @param threshold Ransac threshold for inliers
   /// @param Tc1c2 Relative Transfomation from Frame 2 to Frame 1
+  /// @param inlierInd Vector containing the inlier indices
   /// @return Whether a Transformation with sufficients inliers was found
   bool computePose(const KeyframePtr KeyframePtr1,
                    const KeyframePtr KeyframePtr2, Matches &ImgMatches,
-                   const double threshold, Eigen::Matrix4d &Tc1c2, std::vector<int> &inlierInd, Vector3Vector &lms);
+                   const double threshold, TransformType &Tc1c2, std::vector<int> &inlierInd);
 
   auto findMatches(const KeyframePtr KeyframePtr1,
                    const KeyframePtr KeyframePtr2) -> Matches;
@@ -98,6 +100,7 @@ private:
   size_t mMinInliers_17PT;
   double mMax_cov;
   size_t mCov_iter;
+  int mCov_max_iter;
   double mRP_err;
   double mMatchThreshold;
   double mThres_17PT;

@@ -42,19 +42,13 @@ public:
    */
   typedef std::vector<int> camCorrespondences_t;
 
-  /// \brief Constructor.
+  /// \brief Constructor. (Arbitrary KFs in View)
   /// @param view_A The Query View 
   /// @param view_B The Candidate View 
   /// @param match_vect The vector consisting matches between View A and frames
   /// of View B
   /// @param TF_vect Consists relative TFs between cameras of View B
   /// @param T_init Initial estimate of Transformation
-
-  // FrameNoncentralRelativeAdapter(covins::TypeDefs::KeyframeVector view_A,
-  //                                covins::TypeDefs::KeyframeVector view_B,
-  //                                std::vector<covins::Matches> match_vect,
-  //                                std::vector<Eigen::Matrix4d> TF_vect,
-  //                                std::vector<std::vector<int>> inliers_vect);
 
   FrameNoncentralRelativeAdapter(
       covins::TypeDefs::KeyframeVector view_A,
@@ -63,6 +57,14 @@ public:
       std::vector<std::vector<Eigen::Matrix4d>> TF_vect,
       std::vector<std::vector<std::vector<int>>> inliers_vect,
       Eigen::Matrix4d T_init);
+
+  /// \brief Constructor. (3v1 Query-Candidate)
+  /// @param view_A The Query View 
+  /// @param view_B The Candidate View 
+  /// @param match_vect The vector consisting matches between View A and frames
+  /// of View B
+  /// @param TF_vect Consists relative TFs between cameras of View B
+  /// @param T_init Initial estimate of Transformation
 
   FrameNoncentralRelativeAdapter(
       covins::TypeDefs::KeyframeVector view_A,

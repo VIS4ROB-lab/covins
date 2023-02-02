@@ -19,6 +19,8 @@
 *
 * You should have received a copy of the GNU General Public License
 * along with COVINS. If not, see <http://www.gnu.org/licenses/>.
+*
+* Modified by Manthan Patel, 2022 for COVINS-G Release
 */
 
 #pragma once
@@ -57,8 +59,7 @@ struct MergeInformation {
     KeyframePtr                 kf_query;
     KeyframePtr                 kf_match;
     TransformType               T_smatch_squery                                         = TransformType::Zero();
-    double                      relative_yaw_smatch_squery = -1.0;
-    TypeDefs::Matrix6Type       cov_mat = TypeDefs::Matrix6Type::Identity();
+    TypeDefs::Matrix6Type       cov_mat                                                 = TypeDefs::Matrix6Type::Identity();
 }; 
 
 class MapManager {
@@ -129,11 +130,10 @@ struct MsgMap {
     std::vector<TypeDefs::idpair> keyframes1;
     std::vector<TypeDefs::idpair> keyframes2;
     std::vector<TypeDefs::TransformType> transforms12;
-    std::vector<TypeDefs::Matrix6Type> cov1;
-    std::vector<TypeDefs::Matrix6Type> cov2;
+    std::vector<TypeDefs::Matrix6Type> cov;
 
     template<class Archive> auto serialize( Archive & archive )                         ->void {
-        archive(id_map,keyframes1,keyframes2,transforms12,cov1, cov2);
+        archive(id_map,keyframes1,keyframes2,transforms12,cov);
     }
 };
 

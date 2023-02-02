@@ -267,17 +267,13 @@ struct LoopConstraint {
     using Matrix6Type               = TypeDefs::Matrix6Type;
 
     LoopConstraint(KeyframePtr k1, KeyframePtr k2, TransformType T_12,
-                   double relative_yaw_smatch_squery = 0,
-                   Matrix6Type covm = Matrix6Type::Identity(),
-                   Matrix6Type covm2 = Matrix6Type::Identity())
-        
-        : kf1(k1),kf2(k2),T_s1_s2(T_12), relative_yaw_smatch_squery(relative_yaw_smatch_squery), cov_mat(covm), cov_mat2(covm2) {}
+                   Matrix6Type covm = Matrix6Type::Identity())
+        : kf1(k1), kf2(k2), T_s1_s2(T_12), cov_mat(covm) {}
+    
     KeyframePtr         kf1;
     KeyframePtr         kf2;
     TransformType       T_s1_s2;
-    double              relative_yaw_smatch_squery;
     Matrix6Type         cov_mat;
-    Matrix6Type         cov_mat2;
 };
 
 struct LocalLM {

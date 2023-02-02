@@ -68,8 +68,7 @@ FrameNoncentralRelativeAdapter::FrameNoncentralRelativeAdapter(
     std::vector<std::vector<std::vector<int>>> inliers_vect, Eigen::Matrix4d T_init) {
 
   // For Arbitrary Number of CKFs and QKFs
-  
-  //  Fill up the bearing Vectors, Camera Correspondences and Cam TFs
+  // Fill up the bearing Vectors, Camera Correspondences and Cam TFs
 
   size_t n_ckfs = match_vect[0].size();
   size_t n_qkfs = match_vect.size();

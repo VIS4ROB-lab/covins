@@ -1,7 +1,7 @@
 /**
 * This file is part of COVINS.
 *
-* Copyright (C) 2018-2021 Patrik Schmuck / Vision for Robotics Lab
+* Copyright (C) 2022 Manthan Patel / Vision for Robotics Lab
 * (ETH Zurich) <collaborative (dot) slam (at) gmail (dot) com>
 * For more information see <https://github.com/VIS4ROB-lab/covins>
 *
@@ -22,6 +22,7 @@
 */
 /**
 * The methods of the PlaceRecognition class partially re-use code of ORB-SLAM2
+* This file is a part of COVINS-G release
 */
 
 #include "covins_backend/placerec_gen_be.hpp"
@@ -124,11 +125,7 @@ auto PlaceRecognitionG::ComputeSE3() -> bool {
             }
         }
 
-        // fprintf(stderr, "INFO: Image Matching took: %lu us\n", timer.measure());
-
         int nmatches = img_matches.size();
-
-        // std::cout << "------> num_img matches: " << nmatches << std::endl;
 
         if(kf_query_->id_.second == pKF->id_.second && nmatches < covins_params::placerec::matches_thres) {
           vbDiscarded[i] = true;
@@ -139,8 +136,6 @@ auto PlaceRecognitionG::ComputeSE3() -> bool {
         }
         nCandidates++;
     }
-
-    // fprintf(stderr, "INFO: Resetting timer: %lu us\n", timer.measure());
     
     bool bMatch = false;
     for (size_t i = 0; i < nInitialCandidates; ++i) {
@@ -149,22 +144,14 @@ auto PlaceRecognitionG::ComputeSE3() -> bool {
         }
 
         KeyframePtr pKFi = mvpEnoughConsistentCandidates[i];
-
-        // Setup the Rel Pose Estimation Problem
         Tc1c2 = Eigen::Matrix4d::Identity();
 
-        mloops.clear();
-        LoopVector loop_vect;
-
+        // Setup the Non-central Relative Pose Estimation Problem
         RelNonCentralPosSolver rel_pose_solver;
         foundRelTransform = rel_pose_solver.computeNonCentralRelPose(
             kf_query_, pKFi, covins_params::placerec::rel_pose::error_thres,
-            Tc1c2, cov_loop, loop_vect);
+            Tc1c2, cov_loop);
 
-        mloops = loop_vect;
-
-        // fprintf(stderr, "INFO: 17 PT Alogirthm took: %lu us\n", timer.measure());
- 
         if (!foundRelTransform) {
           vbDiscarded[i] = true;
           continue;
@@ -185,13 +172,12 @@ auto PlaceRecognitionG::ComputeSE3() -> bool {
         auto yaw_query = Utils::R2ypr(corrected_Tws_query.block<3, 3>(0, 0)).x();
         mrelative_yaw = Utils::normalizeAngle(yaw_query - yaw_match);
 
-        std::cout << "Norm: " << T_smatch_squery.block<3,1>(0,3).norm() << "Yaw" << mrelative_yaw << std::endl;
         if (abs(mrelative_yaw) > covins_params::placerec::max_yaw ||
             T_smatch_squery.block<3, 1>(0, 3).norm() >
                 covins_params::placerec::max_trans) {
                     bMatch = false;
         }
-
+ 
         if (bMatch) {
             break;
         } else {
@@ -261,8 +247,8 @@ auto PlaceRecognitionG::CorrectLoop()->bool {
 
     if (map_query->GetKeyframe(kf_match_->id_)) {
 
-        LoopConstraint lc(kf_match_, kf_query_, T_smatch_squery, mrelative_yaw,
-                          mcov_mat, mcov_mat);
+        LoopConstraint lc(kf_match_, kf_query_, T_smatch_squery,
+                          mcov_mat);
         map_query->AddLoopConstraint(lc);
       
         if(perform_pgo_)
@@ -285,7 +271,6 @@ auto PlaceRecognitionG::CorrectLoop()->bool {
         merge.kf_query = kf_query_;
         merge.kf_match = kf_match_;
         merge.T_smatch_squery = T_smatch_squery;
-        merge.relative_yaw_smatch_squery = mrelative_yaw;
         merge.cov_mat = mcov_mat;
         mapmanager_->RegisterMerge(merge);
     }

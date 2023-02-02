@@ -113,10 +113,6 @@ auto PlaceRecognition::ComputeSE3()->bool {
             }
         }
         nCandidates++;
-        std::ofstream myfile("/home/manthan/ws/covins_ws/src/covins/covins_backend/output/pnp_time_feature_matching.csv",
-                            std::ios::app);
-        // double time_taken = double(end - start) / double(CLOCKS_PER_SEC);
-        myfile << timer.measure() << endl;
     }
 
     bool bMatch = false;
@@ -139,13 +135,11 @@ auto PlaceRecognition::ComputeSE3()->bool {
             }
         }
         bool foundTransform = se3solver.projectiveAlignment(kf_query_, vvpMapPointMatches[i], covins_params::placerec::ransac::class_threshold, Twc1); //def: 25
-        auto time_se3 = timer.measure();
 
         if (!foundTransform) {
           vbDiscarded[i] = true;
           continue;
         }
-        time_utils::Timer timer2;
         // We have a potential Match --> search additional correspondences
         const Eigen::Matrix4d Twc2 = pKFi->GetPoseTwc();
         Eigen::Matrix4d T12 = Twc1.inverse()*Twc2;
@@ -160,12 +154,6 @@ auto PlaceRecognition::ComputeSE3()->bool {
         }
 
         const int numInliersOpt = Optimization::OptimizeRelativePose(kf_query_, pKFi, vvpMapPointMatches[i], T12, 4.0f);
-        
-        std::ofstream myfile("/home/manthan/ws/covins_ws/src/covins/covins_backend/output/pnp_time.csv",
-                            std::ios::app);
-        // double time_taken = double(end - start) / double(CLOCKS_PER_SEC);
-        auto time_opt = timer2.measure();
-        myfile << time_opt << "," << time_se3 << endl;
         
         if (numInliersOpt < covins_params::placerec::inliers_thres) {
               vbDiscarded[i] = true;

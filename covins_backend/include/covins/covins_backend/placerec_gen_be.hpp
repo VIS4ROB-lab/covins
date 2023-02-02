@@ -132,7 +132,6 @@ protected:
     TransformType               mTsw;
     TypeDefs::Matrix6Type       mcov_mat;
     double                      mrelative_yaw = -1.0;
-    LoopVector                  mloops;
     
     // Sync
     std::mutex                  mtx_in_;

@@ -66,7 +66,7 @@ mapping.kf_culling_max_time_dist: 1.0 #s - max. allowed time distance between 2 
 # activate / deactivate place recognition
 placerec.active: 1
 
-placerec.type: 'COVINS' # this allows to integrate other PR algorithms. Cuurently, only 'COVINS' and 'COVINS_G' is supported
+placerec.type: 'COVINS_G' # this allows to integrate other PR algorithms. Cuurently, only 'COVINS' and 'COVINS_G' is supported
 
 placerec.start_after_kf: 7 # map matching skips the first x KFs after map initialization
 placerec.consecutive_loop_dist: 10 # after finding a loop, the next x KFs are not considered loop closure query
@@ -80,20 +80,20 @@ placerec.inliers_thres: 20
 
 placerec.total_matches_thres: 40
 
-placerec.use_4dof: 0
-placerec.use_gt: 0
-placerec.enable_LBA: 0
+# RANSAC Parameters used for Original COVINS
 placerec.ransac.min_inliers: 6 #def 6
 placerec.ransac.probability: 0.99
 placerec.ransac.max_iterations: 300
 placerec.ransac.class_threshold: 25 #def:25 - threshold for inlier classification
 
 # New parameters for 17 PT (non_central_rel_pose)
-placerec.nc_rel_pose.rp_error: 10 # In Pixels
+placerec.nc_rel_pose.rp_error: 1.5 # Reprojection Error in Pixels for solving 17PT
+placerec.nc_rel_pose.rp_error_cov: 10 # Reprojection Error in Pixels for Cov Matrix Score
 placerec.nc_rel_pose.min_inliers: 100 # Min inliers for succesful Ransac solution
 placerec.nc_rel_pose.max_iters: 4000 # Ransac Max Iteration
 placerec.nc_rel_pose.cov_thres: 10 #Max Covariance Matrix trace for accepting loop
-placerec.nc_rel_pose.cov_iters: 30 #No. of iterations for building the covariance Matrix
+placerec.nc_rel_pose.cov_iters: 30 #No. of entries in the covariance Matrix
+placerec.nc_rel_pose.cov_max_iters: 300 #Max permissible iterations for building the covariance Matrix
 
 # New parameters for 5 PT  (rel_pose)
 placerec.rel_pose.error_thres: 16 # threshold for inlier classification
@@ -122,24 +122,17 @@ opt.th_gba_outlier_global: 0.92
 
 opt.perform_pgo: 1
 opt.use_nbr_kfs: 1
-opt.use_cov_f: 1
-opt.use_cov_LBA: 0
-opt.use_cov_adj: 0
 opt.use_robust_loss: 1
 opt.pgo_fix_kfs_after_gba: 1 #KFs that were part of a GBA are fixed in future PGO runs
 opt.pgo_fix_poses_loaded_maps: 0
 opt.gba_fix_poses_loaded_maps: 0
 
-opt.wt_kf_R: 10
+# Weights for KF edge constraints (Computed using Expected Accuracy)
+opt.wt_kf_R: 10 
 opt.wt_kf_T: 1
-opt.wt_lp_R1: 0.5
-opt.wt_lp_T1: 2
-opt.wt_lp_R2: 0.1
-opt.wt_lp_T2: 3
-opt.wt_lp_R3: 0.01
-opt.wt_lp_T3: 10
-opt.cov_switch: 0.2
-opt.cov_switch2: 0.5
+opt.wt_kf_n1: 10 #Multiplier for direct neighbor
+opt.wt_kf_n23: 2 #Divisor for neighbor 2,3 (reference is weight of n1)
+opt.wt_kf_n45: 3 #Divisor for neighbor 4,5 (reference is weight of n1)
 #--------------------------------------------------------------------------------------------
 # Visualization
 #--------------------------------------------------------------------------------------------

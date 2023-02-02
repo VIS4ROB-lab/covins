@@ -3,6 +3,7 @@
  * @brief Adapter for relative pose RANSAC (2D-2D)
  * @author: Marco Karrer
  * Created on: Apr 09, 2019
+ * Modified by Manthan Patel, 2022
  */
 
 #include "covins/matcher/opengv/rel_pose/frame-relative-adapter.hpp"
@@ -18,7 +19,6 @@ FrameRelativeAdapter::FrameRelativeAdapter(
 { 
   matches_A_B_ = matches_A_B;
   const size_t num_matches = matches_A_B_.size();
-  // std::cout << "Number of matches before ransac" << num_matches << std::endl;
   bearing_vectors1_.reserve(num_matches);
   bearing_vectors2_.reserve(num_matches);
   sigma_angles1_.reserve(num_matches);
@@ -31,26 +31,11 @@ FrameRelativeAdapter::FrameRelativeAdapter(
       Eigen::Vector3d tmp_bearing_B = frame_B->bearings_add_[idxB];
       bearing_vectors1_.push_back(tmp_bearing_A.normalized());
       bearing_vectors2_.push_back(tmp_bearing_B.normalized());
-  //   // For now, just say all the bearing vectors have the same uncertainty
+     // For now, just say all the bearing vectors have the same uncertainty
       sigma_angles1_.push_back(4.5E-06);
       sigma_angles2_.push_back(4.5E-06);
 
   }
-  
-  // for (size_t i = 0; i < num_matches; ++i) {
-  //   Eigen::Vector3d tmp_bearing_A = frame_A->bearings_add_[
-  //         matches_A_B_[i].getKeypointIndexAppleFrame()];
-  //   Eigen::Vector3d tmp_bearing_B = frame_B->bearings_add_[
-  //         matches_A_B_[i].getKeypointIndexBananaFrame()];
-  //   bearing_vectors1_.push_back(tmp_bearing_A.normalized());
-  //   bearing_vectors2_.push_back(tmp_bearing_B.normalized());
-
-  //   // For now, just say all the bearing vectors have the same uncertainty
-  //   // (sqrt(2) * sigmaKP(=0.8)^2 / (focal_length(=450)^2)
-  //   sigma_angles1_.push_back(4.5E-06);
-  //   sigma_angles2_.push_back(4.5E-06);
-  // }
-
 
 }
 

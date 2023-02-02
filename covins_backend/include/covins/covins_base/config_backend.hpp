@@ -166,10 +166,12 @@ namespace placerec {
 
     namespace nc_rel_pose {
         const int cov_iters                 = estd2::GetValFromYaml<int>(conf,"placerec.nc_rel_pose.cov_iters");
+        const int cov_max_iters             = estd2::GetValFromYaml<int>(conf,"placerec.nc_rel_pose.cov_max_iters");
         const int max_iters                 = estd2::GetValFromYaml<int>(conf,"placerec.nc_rel_pose.max_iters");
         const int min_inliers               = estd2::GetValFromYaml<int>(conf,"placerec.nc_rel_pose.min_inliers");
         const float cov_thres               = estd2::GetValFromYaml<float>(conf,"placerec.nc_rel_pose.cov_thres");
         const float rp_error                = estd2::GetValFromYaml<float>(conf,"placerec.nc_rel_pose.rp_error");
+        const float rp_error_cov            = estd2::GetValFromYaml<float>(conf,"placerec.nc_rel_pose.rp_error_cov");
     } //namespace nc_rel_pose
 
     namespace rel_pose {
@@ -181,8 +183,6 @@ namespace placerec {
 
     const float max_yaw                     = estd2::GetValFromYaml<float>(conf,"placerec.max_yaw");
     const float max_trans                   = estd2::GetValFromYaml<float>(conf,"placerec.max_trans");
-    const bool use_4dof                     = estd2::GetValFromYaml<bool>(conf,"placerec.use_4dof");
-    const bool use_LBA                      = estd2::GetValFromYaml<bool>(conf,"placerec.enable_LBA");
 }
 
 namespace opt {
@@ -192,10 +192,7 @@ namespace opt {
     const int pgo_iteration_limit                       = estd2::GetValFromYaml<int>(conf,"opt.pgo_iteration_limit");
 
     const bool perform_pgo                              = estd2::GetValFromYaml<bool>(conf,"opt.perform_pgo");
-    const bool use_cov_f                                = estd2::GetValFromYaml<bool>(conf,"opt.use_cov_f");
     const bool use_nbr_kfs                              = estd2::GetValFromYaml<bool>(conf,"opt.use_nbr_kfs");
-    const bool use_cov_adj                              = estd2::GetValFromYaml<bool>(conf,"opt.use_cov_adj");
-    const bool use_cov_LBA                              = estd2::GetValFromYaml<bool>(conf,"opt.use_cov_LBA");
     const bool use_robust_loss                          = estd2::GetValFromYaml<bool>(conf,"opt.use_robust_loss");
     const bool pgo_fix_kfs_after_gba                    = estd2::GetValFromYaml<bool>(conf,"opt.pgo_fix_kfs_after_gba");
     const bool pgo_fix_poses_loaded_maps                = estd2::GetValFromYaml<bool>(conf,"opt.pgo_fix_poses_loaded_maps");
@@ -211,14 +208,9 @@ namespace opt {
     // For Weighting Loops and KFs in PGO
     const float wt_kf_r             = estd2::GetValFromYaml<float>(conf,"opt.wt_kf_R");
     const float wt_kf_t             = estd2::GetValFromYaml<float>(conf,"opt.wt_kf_T");
-    const float wt_lp_r1            = estd2::GetValFromYaml<float>(conf,"opt.wt_lp_R1");
-    const float wt_lp_t1            = estd2::GetValFromYaml<float>(conf,"opt.wt_lp_T1");
-    const float wt_lp_r2            = estd2::GetValFromYaml<float>(conf,"opt.wt_lp_R2");
-    const float wt_lp_t2            = estd2::GetValFromYaml<float>(conf,"opt.wt_lp_T2");
-    const float wt_lp_r3            = estd2::GetValFromYaml<float>(conf,"opt.wt_lp_R3");
-    const float wt_lp_t3            = estd2::GetValFromYaml<float>(conf,"opt.wt_lp_T3");
-    const float cov_switch          = estd2::GetValFromYaml<float>(conf,"opt.cov_switch");
-    const float cov_switch2         = estd2::GetValFromYaml<float>(conf,"opt.cov_switch2");
+    const float wt_kf_n1           = estd2::GetValFromYaml<float>(conf,"opt.wt_kf_n1");
+    const float wt_kf_n23            = estd2::GetValFromYaml<float>(conf,"opt.wt_kf_n23");
+    const float wt_kf_n45            = estd2::GetValFromYaml<float>(conf,"opt.wt_kf_n45");
 }
 
 namespace vis {
