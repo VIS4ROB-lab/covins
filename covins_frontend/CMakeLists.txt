@@ -37,7 +37,7 @@ include_directories(
     ${PROJECT_SOURCE_DIR}
     ${EIGEN3_INCLUDE_DIR}
     ${covins_comm_INCLUDE_DIRS}
-    ${PROJECT_SOURCE_DIR}/Thirdparty/
+    ${PROJECT_SOURCE_DIR}/../covins_comm/thirdparty/
 )
 
 set(FRONTEND_HEADER_FILES

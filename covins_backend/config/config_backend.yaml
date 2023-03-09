@@ -10,7 +10,7 @@ sys.threads_server: 8
 sys.covis_thres: 10 # Threshold for min. number of shared edges to include a covisibility edge
 
 # Format for the trajectory output file
-sys.trajectory_format: 'EUROC' # {EUROC|TUM}
+sys.trajectory_format: 'TUM' # {EUROC|TUM}
 # EUROC: EuRoC format - stamp[ns], tx, ty, tz, qw, qx, qy, qz
 # TUM: TUM format - stamp[s] tx ty tz qx qy qz qw
 
@@ -110,22 +110,24 @@ placerec.max_trans: 2.0 # Maximum Translation to accept Loop
 # Optimization
 #--------------------------------------------------------------------------------------------
 
-opt.pgo_iteration_limit: 10 # PGO max iterations
 
+# (COVINS) GBA
 opt.gba_iteration_limit: 10 # GBA max iterations
 opt.gba_use_map_loop_constraints: 1
-
 opt.th_outlier_align: 1.3
 opt.th_gba_outlier_global: 0.92
 
-opt.perform_pgo: 1
-opt.use_nbr_kfs: 1
-opt.use_robust_loss: 1
-opt.pgo_fix_kfs_after_gba: 1 #KFs that were part of a GBA are fixed in future PGO runs
+# PGO
+opt.pgo_iteration_limit: 10 # PGO max iterations
+opt.perform_pgo: 1 # Enable Pose graph Optimization
+opt.use_nbr_kfs: 1 # Use extra Neighboring KFs in the pose graph
+opt.use_robust_loss: 1 # Use robust loss function for the loop edges
+
+opt.pgo_fix_kfs_after_gba: 1 # KFs that were part of a GBA are fixed in future PGO runs
 opt.pgo_fix_poses_loaded_maps: 0
 opt.gba_fix_poses_loaded_maps: 0
 
-# Weights for KF edge constraints (Computed using Expected Accuracy)
+# PGO Weights for KF edge constraints (Computed using Expected Accuracy)
 opt.wt_kf_R: 10 
 opt.wt_kf_T: 1
 opt.wt_kf_n1: 10 # Multiplier for direct neighbor
