@@ -33,17 +33,9 @@
 
 #include"../../../include/System.h"
 #include "../include/ImuTypes.h"
-#include"Converter.h"
 
 // COVINS
 #include <covins/covins_base/config_comm.hpp> //for covins_params
-
-//For Publishing
-#include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/Point.h>
-#include <geometry_msgs/Quaternion.h>
-#include <nav_msgs/Odometry.h>
-#include <tf/transform_broadcaster.h>
 
 using namespace std;
 
@@ -66,20 +58,12 @@ public:
     cv::Mat GetImage(const sensor_msgs::ImageConstPtr &img_msg);
     void SyncWithImu();
 
-    //method for setting ROS publisher
-    // void SetPub(ros::Publisher *pub);
-    
     queue<sensor_msgs::ImageConstPtr> img0Buf;
     std::mutex mBufMutex;
    
     ORB_SLAM3::System* mpSLAM;
     ImuGrabber *mpImuGb;
 
-    //additional variables for publishing pose & broadcasting transform
-    // cv::Mat m1, m2;
-    // bool do_rectify, pub_tf, pub_pose;
-    // ros::Publisher *orb_pub;
-    
     const bool mbClahe;
     cv::Ptr<cv::CLAHE> mClahe = cv::createCLAHE(3.0, cv::Size(8, 8));
 };
@@ -113,24 +97,16 @@ int main(int argc, char **argv)
   ImuGrabber imugb;
   ImageGrabber igb(&SLAM,&imugb,bEqual); // TODO
 
-  // ros::Publisher odometry_pub = n.advertise<nav_msgs::Odometry>("/orb_estimator/camera_pose", 100);
-  
   // Maximum delay, 5 seconds
   ros::Subscriber sub_imu = n.subscribe("/imu", 1000, &ImuGrabber::GrabImu, &imugb); 
   ros::Subscriber sub_img0 = n.subscribe("/camera/image_raw", 100, &ImageGrabber::GrabImage,&igb);
-
-  // //create publisher
-  // igb.SetPub(&odometry_pub);
-  
+ 
   std::thread sync_thread(&ImageGrabber::SyncWithImu,&igb);
 
   ros::spin();
 
   return 0;
 }
-
-// //method for assigning publisher
-// void ImageGrabber::SetPub(ros::Publisher *pub) { orb_pub = pub; }
 
 void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr &img_msg)
 {
@@ -202,43 +178,7 @@ void ImageGrabber::SyncWithImu()
       if(mbClahe)
         mClahe->apply(im,im);
 
-      // cv::Mat T_, R_, t_;
-      // cout << "BEfore tracking" << std::endl;
       mpSLAM->TrackMonocular(im, tIm, vImuMeas);
-
-      // if (pub_tf || pub_pose) {
-      //   cout << "Entered Publisher" << std::endl;
-      //   if (!(T_.empty())) {
-      //     cout << "T is not empty" << std::endl;
-      //     cv::Size s = T_.size();
-      //     if ((s.height >= 3) && (s.width >= 3)) {
-      //       R_ = T_.rowRange(0,3).colRange(0,3).t();
-      //       t_ = -R_*T_.rowRange(0,3).col(3);
-      //       vector<float> q = ORB_SLAM3::Converter::toQuaternion(R_);
-      //       float scale_factor=1.0;
-      //       tf::Transform transform;
-      //       transform.setOrigin(tf::Vector3(t_.at<float>(0, 0)*scale_factor, t_.at<float>(0, 1)*scale_factor, t_.at<float>(0, 2)*scale_factor));
-      //       tf::Quaternion tf_quaternion(q[0], q[1], q[2], q[3]);
-      //       transform.setRotation(tf_quaternion);
-      //     /*
-      //     if (pub_tf)
-      //       {
-      //         static tf::TransformBroadcaster br_;
-      //         br_.sendTransform(tf::StampedTransform(transform, ros::Time(tIm), "world", "ORB_SLAM3_MONO_INERTIAL"));
-      //       }
-      //     */
-      //     cout << "Publishing Odometry" << std::endl;
-      //     if (pub_pose)
-      //       { nav_msgs::Odometry odom;
-      //         odom.header.stamp = img0Buf.front()->header.stamp;
-      //         odom.header.frame_id = "cam";
-      //         tf::poseTFToMsg(transform, odom.pose.pose);
-      //         orb_pub->publish(odom);
-      //       }
-      //     }
-      //   }
-      // }
-
     }
 
     std::chrono::milliseconds tSleep(1);

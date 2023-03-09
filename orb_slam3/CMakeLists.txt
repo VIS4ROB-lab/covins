@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
 project(ORB_SLAM3)
-# add_compile_options(-std=c++14)
 
 find_package(catkin REQUIRED COMPONENTS
              covins_comm
