@@ -39,7 +39,6 @@
 #include <covins/covins_base/config_backend.hpp>
 #include "covins_base/vocabulary.h"
 #include "covins_base/placerec_base.hpp"
-#include <covins/covins_base/timer_utils.hpp>
 
 namespace covins {
 
@@ -78,9 +77,6 @@ public:
     using ConsistentGroup               = std::pair<KeyframeSet,int>;
     using vecConsistentGroup            = std::vector<ConsistentGroup, Eigen::aligned_allocator<ConsistentGroup>>;
     using vecVecMP                      = std::vector<LandmarkVector>;
-
-    using GroundtruthData               = std::vector<std::vector<double>>;
-    using LoopVector                    = TypeDefs::LoopVector;
 
 public:
     PlaceRecognition(ManagerPtr man, bool perform_pgo = true);

@@ -388,7 +388,7 @@ auto Map::AddKeyframe(covins::MapBase::KeyframePtr kf, bool suppress_output)->vo
     std::unique_lock<std::mutex> lock(mtx_map_);
     keyframes_[kf->id_] = kf;
     max_id_kf_ = std::max(max_id_kf_,kf->id_.first);
-    if(!suppress_output && !(keyframes_.size() % 20)) {
+    if(!suppress_output && !(keyframes_.size() % 50)) {
         std::cout << "Map " << this->id_map_  << " : " << keyframes_.size() << " KFs | " << landmarks_.size() << " LMs" << std::endl;
         this->WriteKFsToFile();
         this->WriteKFsToFileAllAg();
@@ -965,16 +965,26 @@ auto Map::WriteKFsToFileAllAg(std::string prefix) -> void {
         std::stringstream ss;
         ss << covins_params::sys::output_dir /*<< covins_params::sys::time*/
            << "stamped_traj_estimate" << prefix << ".txt";
-        if(sit == associated_clients_.begin())
-          this->WriteStateToCsvTUM(ss.str(), client_id);
-        else {
-         this->WriteStateToCsvTUM(ss.str(), client_id, false);
+
+        if(covins_params::sys::trajectory_format == "EUROC") {
+            if(sit == associated_clients_.begin())
+              this->WriteStateToCsv(ss.str(), client_id);
+            else
+              this->WriteStateToCsv(ss.str(), client_id, false);
+        } else if(covins_params::sys::trajectory_format == "TUM") {
+            if(sit == associated_clients_.begin())
+              this->WriteStateToCsvTUM(ss.str(), client_id);
+            else
+              this->WriteStateToCsvTUM(ss.str(), client_id, false);
+        } else {
+            std::cout << COUTFATAL << "trajectory_format '" << covins_params::sys::trajectory_format << "' not in { EUROC | TUM }" << std::endl;
+            exit(-1);
         }
           
     }
 }
 
-auto Map::WriteStateToCsv(const std::string& filename, const size_t client_id)->void {
+auto Map::WriteStateToCsv(const std::string& filename, const size_t client_id, const bool trnc)->void {
     KeyframeVector found_kfs;
     found_kfs.reserve(keyframes_.size());
     // Get all frames from the required client
@@ -994,7 +1004,11 @@ auto Map::WriteStateToCsv(const std::string& filename, const size_t client_id)->
 
     // Write out the keyframe data
     std::ofstream keyframes_file;
-    keyframes_file.open(filename, std::ios::out | std::ios::trunc);
+    if(trnc)
+      keyframes_file.open(filename, std::ios::out | std::ios::trunc);
+    else
+      keyframes_file.open(filename, std::ios::out | std::ios::app);
+    
     if (keyframes_file.is_open()) {
         for (KeyframeVector::const_iterator vit = found_kfs.begin(); vit != found_kfs.end(); ++vit) {
             KeyframePtr kf = (*vit);
@@ -1030,8 +1044,8 @@ auto Map::WriteStateToCsvTUM(const std::string& filename, const size_t client_id
         }
     }
 
-    if(found_kfs.empty()) //would overwrite files from other maps with empty files
-    return;
+    if(found_kfs.empty()) //do not overwrite files from other maps with empty files
+        return;
 
     // Sort the keyframes by timestamp
     std::sort(found_kfs.begin(), found_kfs.end(), Keyframe::CompStamp);
@@ -1047,9 +1061,6 @@ auto Map::WriteStateToCsvTUM(const std::string& filename, const size_t client_id
         for (KeyframeVector::const_iterator vit = found_kfs.begin(); vit != found_kfs.end(); ++vit) {
             KeyframePtr kf = (*vit);
             const double stamp = kf->timestamp_;
-            Eigen::Vector3d bias_accel, bias_gyro;
-            kf->GetStateBias(bias_accel, bias_gyro);
-            Eigen::Vector3d vel = kf->GetStateVelocity();
             const Eigen::Matrix4d Tws = kf->GetPoseTws();
             const Eigen::Quaterniond q(Tws.block<3,3>(0,0));
 
@@ -1063,8 +1074,4 @@ auto Map::WriteStateToCsvTUM(const std::string& filename, const size_t client_id
     else
         std::cout << COUTERROR << ": Unable to open file: " << filename << std::endl;
 }
-
-
-
-
 } //end ns

@@ -107,12 +107,6 @@ namespace sys {
     //--------------------------
     const std::string voc_orb_dir                       = s1 + "config/ORBvoc.txt";
     //--------------------------
-     const std::string data_path0                       = estd2::GetStringFromYaml(conf,"sys.data_path0");
-    const std::string data_path1                        = estd2::GetStringFromYaml(conf,"sys.data_path1");
-    const std::string data_path2                        = estd2::GetStringFromYaml(conf,"sys.data_path2");
-    const std::string data_path3                        = estd2::GetStringFromYaml(conf,"sys.data_path3");
-    const std::string data_path4                        = estd2::GetStringFromYaml(conf,"sys.data_path4");
-    //--------------------------
     const std::string output_dir                        = outpath;
     const std::string trajectory_format                 = estd2::GetStringFromYaml(conf,"sys.trajectory_format");
 }
@@ -142,13 +136,11 @@ namespace mapping {
 
 namespace placerec {
     const bool active                                   = estd2::GetValFromYaml<bool>(conf,"placerec.active");
-    const bool use_gt                                   = estd2::GetValFromYaml<bool>(conf,"placerec.use_gt");
     const std::string type                              = estd2::GetStringFromYaml(conf,"placerec.type");
     const size_t start_after_kf                         = estd2::GetValFromYaml<int>(conf,"placerec.start_after_kf");
     const size_t consecutive_loop_dist                  = estd2::GetValFromYaml<int>(conf,"placerec.consecutive_loop_dist");
     const int min_loop_dist                             = estd2::GetValFromYaml<int>(conf,"placerec.min_loop_dist");
     const int cov_consistency_thres                     = estd2::GetValFromYaml<int>(conf,"placerec.cov_consistency_thres");
-    const int solver_iterations                         = estd2::GetValFromYaml<int>(conf,"placerec.solver_iterations");
     const int matches_thres                             = estd2::GetValFromYaml<int>(conf,"placerec.matches_thres");
     const int matches_thres_merge                       = estd2::GetValFromYaml<int>(conf,"placerec.matches_thres_merge");
     const int inliers_thres                             = estd2::GetValFromYaml<int>(conf,"placerec.inliers_thres");

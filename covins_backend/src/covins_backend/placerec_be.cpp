@@ -62,7 +62,6 @@ auto PlaceRecognition::CheckBuffer()->bool {
 
 auto PlaceRecognition::ComputeSE3()->bool {
     const size_t nInitialCandidates = mvpEnoughConsistentCandidates.size();
-    std::cout << "----> Query " << kf_query_ << " : nInitialCandidates: " << nInitialCandidates << std::endl;
     // We compute first ORB matches for each candidate
     // If enough matches are found, we setup a Sim3Solver
     FeatureMatcher matcher(0.75,true);
@@ -74,9 +73,7 @@ auto PlaceRecognition::ComputeSE3()->bool {
     int nCandidates=0; //candidates with enough matches
 
     for (size_t i = 0; i < nInitialCandidates; i++) {
-        time_utils::Timer timer;
         KeyframePtr pKF = mvpEnoughConsistentCandidates[i];
-        timer.measure();
         pKF->SetNotErase();
 
         if (pKF->IsInvalid()) {
@@ -120,9 +117,7 @@ auto PlaceRecognition::ComputeSE3()->bool {
         if (vbDiscarded[i]) {
             continue;
         }
-        time_utils::Timer timer;
         KeyframePtr pKFi = mvpEnoughConsistentCandidates[i];
-        
         // Setup the RANSAC problem
         Eigen::Matrix4d Twc1;
         Se3Solver se3solver(covins_params::placerec::ransac::min_inliers,
@@ -330,7 +325,6 @@ auto PlaceRecognition::CorrectLoop()->bool {
                 map_query->UpdateCovisibilityConnections(kfi->id_);
             }
             Optimization::PoseGraphOptimization(map_query, corrected_poses);
-            map_query->WriteKFsToFile("_aft_PGO");
             map_query->WriteKFsToFileAllAg();
         } else {
             std::cout << COUTNOTICE << "!!! PGO deativated !!!" << std::endl;

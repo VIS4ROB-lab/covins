@@ -260,7 +260,6 @@ auto PlaceRecognitionG::CorrectLoop()->bool {
             }
 
             Optimization::PoseGraphOptimization(map_query, corrected_poses);
-            map_query->WriteKFsToFile("_aft_PGO");
             map_query->WriteKFsToFileAllAg();
         } else {
             std::cout << COUTNOTICE << "!!! PGO deativated !!!" << std::endl;

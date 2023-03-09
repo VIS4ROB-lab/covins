@@ -71,7 +71,6 @@ auto ShowParamsBackend()->void
         std::cout << "consecutive_loop_dist: " << covins_params::placerec::consecutive_loop_dist << std::endl;
         std::cout << "min_loop_dist: " << covins_params::placerec::min_loop_dist << std::endl;
         std::cout << "cov_consistency_thres: " << covins_params::placerec::cov_consistency_thres << std::endl;
-        std::cout << "solver_iterations: " << covins_params::placerec::solver_iterations << std::endl;
         std::cout << "matches_thres: " << covins_params::placerec::matches_thres << std::endl;
         std::cout << "inliers_thres: " << covins_params::placerec::inliers_thres << std::endl;
         std::cout << "total_matches_thres: " << covins_params::placerec::total_matches_thres << std::endl;

@@ -199,7 +199,7 @@ protected:
 
     // Write-Out
     auto WriteStateToCsv(const std::string& filename,
-                         const size_t client_id)                                        ->void;
+                         const size_t client_id, const bool truncate = true)            ->void;
     auto WriteStateToCsvTUM(const std::string& filename,
                          const size_t client_id, const bool truncate = true)            ->void;
 
