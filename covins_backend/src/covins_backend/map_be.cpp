@@ -687,11 +687,11 @@ auto Map::LoadFromFile(const std::string &path_name, VocabularyPtr voc)->void {
         LoopConstraint lc(kf1,kf2,msg_map.transforms12[i],msg_map.cov[i]);
         loop_constraints_.push_back(lc);
     }
-    std::cout << "+++ Perform PGO +++" << std::endl;
-    TypeDefs::PoseMap corrected_poses;
+    // std::cout << "+++ Perform PGO +++" << std::endl;
+    // TypeDefs::PoseMap corrected_poses;
 
-    Optimization::PoseGraphOptimization(shared_from_this(), corrected_poses);
-    this->WriteKFsToFileAllAg();
+    // Optimization::PoseGraphOptimization(shared_from_this(), corrected_poses);
+    // this->WriteKFsToFileAllAg();
     std::cout << "+++ DONE +++" << std::endl;
 }
 

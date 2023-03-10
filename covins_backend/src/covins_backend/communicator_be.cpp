@@ -240,7 +240,7 @@ auto Communicator::Run()->void {
             this->ProcessLandmarkMessages();
             this->ProcessNewKeyframes();
             this->ProcessNewLandmarks();
-            // this->ProcessAdditional();
+            this->ProcessAdditional();
             this->UnLock();
         }
         vis_->DrawMap(map_);

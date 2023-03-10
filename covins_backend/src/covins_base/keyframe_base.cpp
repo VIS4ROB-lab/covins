@@ -433,7 +433,7 @@ auto KeyframeBase::SetPoseTws(TransformType Tws, bool lock_mtx)->void {
 auto KeyframeBase::SetPoseTws_vio(TransformType Tws, bool lock_mtx)->void {
     if(lock_mtx) mtx_pose_.lock();
     T_w_s_vio_ = Tws;
-    T_s_w_vio_ = T_w_s_.inverse();
+    T_s_w_vio_ = T_w_s_vio_.inverse();
     if(lock_mtx) mtx_pose_.unlock();
 }
 

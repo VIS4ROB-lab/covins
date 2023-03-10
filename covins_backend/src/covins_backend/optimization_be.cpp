@@ -19,8 +19,6 @@
 *
 * You should have received a copy of the GNU General Public License
 * along with COVINS. If not, see <http://www.gnu.org/licenses/>.
-*
-* Modified by Manthan Patel, 2022 for COVINS-G Release
 */
 
 #include "covins_backend/optimization_be.hpp"
@@ -835,7 +833,7 @@ auto Optimization::OptimizeRelativePose(KeyframePtr kf1, KeyframePtr kf2, Landma
 auto Optimization::PoseGraphOptimization(
     MapPtr map, PoseMap corrected_poses) -> void {
   
-    std::cout << "+++ PGO: Start +++" << std::endl;
+    // std::cout << "+++ PGO: Start +++" << std::endl;
 
     ceres::Problem::Options problem_options;
     problem_options.enable_fast_removal = true;
@@ -875,6 +873,14 @@ auto Optimization::PoseGraphOptimization(
             problem.SetParameterBlockConstant(kf->ceres_pose_);
         problem.AddParameterBlock(kf->ceres_extrinsics_, robopt::defs::pose::kPoseBlockSize, local_pose_param);
         problem.SetParameterBlockConstant(kf->ceres_extrinsics_);
+
+        if(kf->is_gba_optimized_ && covins_params::opt::pgo_fix_kfs_after_gba) {	
+            if(kf->id_.first % 50 == 0) std::cout << COUTNOTICE << "Set GBA KFs constant" << std::endl;	
+            problem.SetParameterBlockConstant(kf->ceres_pose_);	
+        } else if(kf->is_loaded_ && covins_params::opt::pgo_fix_poses_loaded_maps) {	
+            if(kf->id_.first % 50 == 0) std::cout << COUTNOTICE << "Set loaded KFs constant" << std::endl;	
+            problem.SetParameterBlockConstant(kf->ceres_pose_);	
+        }
     }
 
 
@@ -917,6 +923,12 @@ auto Optimization::PoseGraphOptimization(
         //Cholesky Decomposition of Cov Mat Inverse
         Eigen::LLT<TypeDefs::Matrix6Type> lltofA(cov_mat.inverse());
         sqrt_info_l = lltofA.matrixL().transpose();
+
+        // For COVINS, Covariance Matrix will be Identity so instead we use the
+        // weights for the loop equal to the KF edges weights
+        if (covins_params::placerec::type == "COVINS") {
+          sqrt_info_l = sqrt_info;
+        }
 
         Vector3Type t_12 = T_12.block<3,1>(0,3);
         QuaternionType q_12(T_12.block<3, 3>(0, 0));
@@ -1027,7 +1039,6 @@ auto Optimization::PoseGraphOptimization(
     for (size_t i = 0; i < keyframes.size(); ++i) {
         KeyframePtr kf = keyframes[i];
         if(kf->IsInvalid()) {
-            std::cout << COUTWARN << kf << ": invalid" << std::endl;
             continue;
         }
         TransformType T_ws_uncorrected = kf->GetPoseTws();
@@ -1036,25 +1047,31 @@ auto Optimization::PoseGraphOptimization(
         kf->UpdateFromCeres(kf->ceres_pose_,kf->ceres_velocity_and_bias_,kf->ceres_extrinsics_);
         Vector3Type velocity_corrected = T_ws_corrected.block<3,3>(0,0) * T_ws_uncorrected.inverse().block<3,3>(0,0) * kf->GetStateVelocity();
         kf->SetStateVelocity(velocity_corrected);
+
+        kf->SetPoseOptimized();
     }
 
     // Landmarks
+    int removed_lms = 0;
     for(auto lm : landmarks) {
         if(lm->IsInvalid()) {
-            std::cout << COUTWARN << lm << ": invalid" << std::endl;
             continue;
         }
         KeyframePtr kf_ref = lm->GetReferenceKeyframe();
         if(!kf_ref){
-            // std::cout << COUTWARN << lm << " has no ref-KF" << std::endl;
+          if (!lm->GetObservations().empty()) {
+            map->EraseLandmark(lm);
+            removed_lms++;
+            }
             continue;
         }
         TransformType T_ws_uncorrected;
         PoseMap::iterator mit = non_corrected_poses.find(kf_ref->id_);
         if(mit != non_corrected_poses.end()) T_ws_uncorrected = mit->second;
         else{
-            std::cout << COUTERROR << "mit == non_corrected_poses.end()" << std::endl;
-            exit(-1);
+            map->EraseLandmark(lm);
+            removed_lms++;
+            continue;
         }
         TransformType T_sw_uncorrected = T_ws_uncorrected.inverse();
 
@@ -1064,9 +1081,11 @@ auto Optimization::PoseGraphOptimization(
         TransformType T_ws_corrected = kf_ref->GetPoseTws();
         Vector3Type pos_w_corrected = T_ws_corrected.block<3,3>(0,0) * pos_s + T_ws_corrected.block<3,1>(0,3);
         lm->SetWorldPos(pos_w_corrected);
+        lm->SetOptimized();
     }
 
-    std::cout << "+++ PGO: End +++" << std::endl;
+    std::cout << "--> PGO END " << std::endl;
+    // std::cout << "--> PGO removed " << removed_lms << " LMs" << std::endl;
 }
 
 

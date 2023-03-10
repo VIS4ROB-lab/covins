@@ -6,11 +6,6 @@
 
 sys.port: '9033' # should not be necessary to be changed
 # sys.server_ip: '192.168.1.19' # The (public) IP of the machine where the COVINS back-end is running
-
-# sys.server_ip: '192.168.0.150' #Manthan Woko
-# sys.server_ip: '10.5.152.131' #Manthan V4RL
-# sys.server_ip: '10.5.144.247' #Manthan V4RL
-# sys.server_ip: '192.168.1.233' #Manthan Flynet V4RL
 sys.server_ip: '192.168.0.100' #Manthan CRS
 #--------------------------------------------------------------------------------------------
 # Communicator
