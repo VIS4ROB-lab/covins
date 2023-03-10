@@ -38,7 +38,6 @@
 #include "covins_backend/map_be.hpp"
 #include "covins_backend/optimization_be.hpp"
 #include "covins_backend/Se3Solver.h"
-#include "covins_backend/RelPosSolver.hpp"
 #include "covins_backend/RelNonCentralPosSolver.hpp"
 
 // Thirdparty
@@ -47,7 +46,6 @@
 #include "matcher/LandmarkMatchingAlgorithm.h"
 
 #include <covins/covins_base/utils_base.hpp>
-#include <covins/covins_base/timer_utils.hpp>
 
 #include <random>
 namespace covins {
@@ -77,7 +75,6 @@ auto PlaceRecognitionG::ComputeSE3() -> bool {
     Eigen::Matrix4d Tc1c2; // Relative TF between the frames
     Eigen::Matrix<double, 6, 6> cov_loop; // Covariance Matrix for the Loop
     bool foundRelTransform;
-    time_utils::Timer timer;
 
     for (size_t i = 0; i < nInitialCandidates; i++) {
         KeyframePtr pKF = mvpEnoughConsistentCandidates[i];
@@ -88,8 +85,6 @@ auto PlaceRecognitionG::ComputeSE3() -> bool {
           vbDiscarded[i] = true;
           continue;
         }
-
-        timer.measure();
 
         std::shared_ptr<cv::BFMatcher> matcher(nullptr);
 

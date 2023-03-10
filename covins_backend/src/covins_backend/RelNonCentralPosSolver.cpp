@@ -350,42 +350,6 @@ auto RelNonCentralPosSolver::findMatches(const KeyframePtr KFPtr1,
   return (img_bf_matches);
 }
 
-void RelNonCentralPosSolver::plotMatches(const KeyframePtr KfPtr1,
-                                         const KeyframePtr KfPtr2,
-                                         Matches &ImgMatches,
-                                         std::vector<int> &inlierInd, std::string s) {
-  kp_vect1_in_.clear();
-  kp_vect2_in_.clear();
-  matches_in_.clear();
-
-  size_t j = 0;
-  
-    for (size_t i : inlierInd) {
-      cv::KeyPoint temp_kp1(float(KfPtr1->keypoints_undistorted_add_[ImgMatches[i].idxA].x()),
-                            float(KfPtr1->keypoints_undistorted_add_[ImgMatches[i].idxA].y()), 1);
-      cv::KeyPoint temp_kp2(float(KfPtr2->keypoints_undistorted_add_[ImgMatches[i].idxB].x()),
-                            float(KfPtr2->keypoints_undistorted_add_[ImgMatches[i].idxB].y()), 1);
-      cv::DMatch temp_match(j, j, 0);
-
-      kp_vect1_in_.push_back(temp_kp1);
-      kp_vect2_in_.push_back(temp_kp2);
-      matches_in_.push_back(temp_match);
-      ++j;
-    }
-    
-    cv::Mat img_out;
-    
-    cv::drawMatches(KfPtr1->img_, kp_vect1_in_, KfPtr2->img_,
-                    kp_vect2_in_, matches_in_, img_out);
-    
-    std::stringstream ss;
-    ss << "/home/manthan/ws/covins_ws/results/imgs/"
-       << KfPtr1->id_.second << KfPtr2->id_.second << "_" << KfPtr1->id_.first
-       << "_" << KfPtr2->id_.first << "_" << matches_in_.size() << "_" << s
-       << ".jpg";
-    cv::imwrite(ss.str(), img_out);
-}
-
 // Solve the 2d-2d problem
 bool RelNonCentralPosSolver::computePose(const KeyframePtr KfPtr1,
                                const KeyframePtr KfPtr2,

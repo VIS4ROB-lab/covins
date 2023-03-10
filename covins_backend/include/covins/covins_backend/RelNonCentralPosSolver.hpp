@@ -84,11 +84,6 @@ public:
 
   auto findMatches(const KeyframePtr KeyframePtr1,
                    const KeyframePtr KeyframePtr2) -> Matches;
-
-  void plotMatches(const KeyframePtr KfPtr1,
-                                           const KeyframePtr KfPtr2,
-                                           Matches &ImgMatches,
-                                           std::vector<int> &inlierInd, std::string s = "");
       
 private:
 // The RANSAC parameters

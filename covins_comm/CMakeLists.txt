@@ -35,7 +35,6 @@ set(COMM_HEADER_FILES
     include/covins/covins_base/config_comm.hpp
     include/covins/covins_base/typedefs_base.hpp
     include/covins/covins_base/utils_base.hpp
-    include/covins/covins_base/timer_utils.hpp
 
     include/covins/covins_base/msgs/msg_keyframe.hpp
     include/covins/covins_base/msgs/msg_landmark.hpp

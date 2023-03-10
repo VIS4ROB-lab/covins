@@ -61,7 +61,6 @@ set(BACKEND_SOURCE_FILES
     src/covins_backend/optimization_be.cpp
     src/covins_backend/placerec_be.cpp
     src/covins_backend/placerec_gen_be.cpp
-    src/covins_backend/RelPosSolver.cpp
     src/covins_backend/RelNonCentralPosSolver.cpp
     src/covins_backend/Se3Solver.cpp
     src/covins_backend/visualization_be.cpp
@@ -91,7 +90,6 @@ set(BACKEND_HEADER_FILES
     include/covins/covins_backend/placerec_be.hpp
     include/covins/covins_backend/placerec_gen_be.hpp
     include/covins/covins_backend/Se3Solver.h
-    include/covins/covins_backend/RelPosSolver.hpp
     include/covins/covins_backend/RelNonCentralPosSolver.hpp
     include/covins/covins_backend/visualization_be.hpp
 
