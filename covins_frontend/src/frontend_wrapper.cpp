@@ -16,13 +16,8 @@ auto FrontendWrapper::run()-> void {
   subscriberImg_ = new message_filters::Subscriber<sensor_msgs::Image>;
   subscriberOdom_ = new message_filters::Subscriber<nav_msgs::Odometry>;
 
-  subscriberImg_->subscribe(node_, node_.resolveName("/camera/image_raw"), 10);
-  subscriberOdom_->subscribe(node_, node_.resolveName("/cam_odom"), 10);
-  //   subscriberOdom_->subscribe(node_, node_.resolveName("/odometry"), 10);
-//   subscriberOdom_->subscribe(node_, node_.resolveName("/odometry"), 10);  
-  //   subscriberOdom_->subscribe(node_, node_.resolveName("/odometry"), 10);
-//   subscriberOdom_->subscribe(node_, node_.resolveName("/odometry"), 10);  
-  //   subscriberOdom_->subscribe(node_, node_.resolveName("/odometry"), 10);
+  subscriberImg_->subscribe(node_, node_.resolveName("/camera/image_raw"), 5);
+  subscriberOdom_->subscribe(node_, node_.resolveName("/cam_odom"), 5);
 
   std::string config_file;
   ros::param::get("~config_file", config_file);
@@ -31,7 +26,7 @@ auto FrontendWrapper::run()-> void {
       message_filters::sync_policies::ApproximateTime<sensor_msgs::Image,
                                                       nav_msgs::Odometry>>(
       message_filters::sync_policies::ApproximateTime<sensor_msgs::Image,
-                                                      nav_msgs::Odometry>(10),
+                                                      nav_msgs::Odometry>(100),
       *subscriberImg_, *subscriberOdom_);
   sync_->registerCallback(
       boost::bind(&FrontendWrapper::imageCallbackTF, this, _1, _2));
@@ -45,8 +40,6 @@ auto FrontendWrapper::run()-> void {
   prev_ts_ = 0;
   curr_ts_ = 0;
   kf_count_ = 0;
-
-  ros::Rate r(50);
 
   cv::FileStorage fSettings(config_file, cv::FileStorage::READ);
   
@@ -76,13 +69,21 @@ auto FrontendWrapper::run()-> void {
   std::cout << "received client ID: " << client_id_ << std::endl;
   // ------------------
 
-  while (ros::ok()) {
-    ros::spinOnce();
-    r.sleep();
-}
+  ros::spin();
 
 ros::shutdown();
 }
+
+/**
+ * @brief Converts image, camera parameters and features to message format.
+ * @param msg The message containing the converted data.
+ * @param img The image to be converted.
+ * @param T_wc The transform from world to camera coordinates.
+ * @param T_wc_prev The transform from the previous world to camera coordinates.
+ * @param client_id The ID of the client.
+ * @param index The index of the image.
+ * @param ts The timestamp of the image.
+ */
 
 void FrontendWrapper::convertToMsg(covins::MsgKeyframe &msg, cv::Mat &img,
                                    TransformType T_wc, TransformType T_wc_prev,int client_id,
@@ -97,7 +98,6 @@ void FrontendWrapper::convertToMsg(covins::MsgKeyframe &msg, cv::Mat &img,
   msg.calibration.T_SC = Tsc_;
   msg.calibration.cam_model = covins::eCamModel::PINHOLE;
   msg.calibration.dist_model = covins::eDistortionModel::RADTAN;
-//   msg.calibration.dist_model = covins::eDistortionModel::EQUI;
 
   covins::TypeDefs::precision_t fx = K_.at<float>(0,0);
   covins::TypeDefs::precision_t fy = K_.at<float>(1,1);
@@ -111,7 +111,30 @@ void FrontendWrapper::convertToMsg(covins::MsgKeyframe &msg, cv::Mat &img,
 
   dist_coeffs.resize(4);
   dist_coeffs << k1, k2, p1, p2;
-  //dist_coeffs << 0.0,0.0,0.0,0.0;
+
+
+  if (is_fisheye_) {
+    // Undistorttion
+    // Fisheye Undistortion
+    dist_coeffs << 0.0,0.0,0.0,0.0;
+    cv::Size size = {img.cols, img.rows};
+    cv::Mat E = cv::Mat::eye(3, 3, cv::DataType<double>::type);
+
+    cv::Mat map1;
+    cv::Mat map2;
+    cv::fisheye::initUndistortRectifyMap(K_, DistCoef_, E, K_, size, CV_16SC2, map1, map2);
+
+    cv::Mat undistort;
+    cv::remap(img, undistort, map1, map2, CV_INTER_LINEAR,
+            CV_HAL_BORDER_CONSTANT);
+
+    img = undistort;
+
+    cv::imshow("undist", undistort);
+    cv::waitKey(5);
+ }
+
+
   
   covins::VICalibration calib(
       Tsc_, msg.calibration.cam_model, msg.calibration.dist_model,
@@ -135,41 +158,6 @@ void FrontendWrapper::convertToMsg(covins::MsgKeyframe &msg, cv::Mat &img,
   msg.keypoints_undistorted_add.reserve(n_feat_);
   msg.descriptors_add.reserve(n_feat_);
 
-  // msg.img = img;
-
-  // Undistorttion
-
-  //Fisheye Undistortion
-    /*cv::Size size = {img.cols, img.rows};
-
-    cv::Mat E = cv::Mat::eye(3, 3, cv::DataType<double>::type);
-
-    cv::Mat map1;
-    cv::Mat map2;
-
-    cv::fisheye::initUndistortRectifyMap(K_, DistCoef_, E, K_, size, CV_16SC2, map1, map2);
-
-    cv::Mat undistort;
-    cv::remap(img, undistort, map1, map2, CV_INTER_LINEAR,
-            CV_HAL_BORDER_CONSTANT);
-
-    img = undistort;
-    
-    cv::imshow("undist", undistort);
-    cv::waitKey(10);
-    
-    */
-
-//   cv::Mat img_und_1;
-//   cv::fisheye::undistortImage(img, img_und_1, K_,
-//                     DistCoef_);
-//   img = img_und_1;
-//   std::stringstream ss;
-//   ss << "/home/manthan/ws_vins/covins_ws/results/img_fisheye/"
-//            << msg.id.first << ".jpg";
-    
-//   cv::imwrite(ss.str(), img);
-      
   //Place Recognition Features
   std::vector<cv::KeyPoint> cv_keypoints;
   cv_keypoints.reserve(n_feat_pr_);
@@ -187,7 +175,7 @@ void FrontendWrapper::convertToMsg(covins::MsgKeyframe &msg, cv::Mat &img,
       kp_eigen[1] = static_cast<float>(cv_keypoints[i].pt.y);
       msg.keypoints_aors.push_back(aors);
       msg.keypoints_distorted.push_back(kp_eigen);
-    //   msg.keypoints_undistorted.push_back(kp_eigen);
+      
   }
   msg.descriptors = new_descriptors.clone();
 
@@ -200,8 +188,6 @@ void FrontendWrapper::convertToMsg(covins::MsgKeyframe &msg, cv::Mat &img,
   cv::Mat new_descriptors_add;
 
   if (fType_ == "ORB") {
-    // orb_detector_->detectAndCompute(img, cv::Mat(), cv_keypoints_add,
-    //                                 new_descriptors_add);
     (*orb_extractor_)(img, cv::Mat(), cv_keypoints_add, new_descriptors_add);
   } else if (fType_ == "SIFT") {
     sift_detector_->detectAndCompute(img, cv::Mat(), cv_keypoints_add,
@@ -220,7 +206,6 @@ void FrontendWrapper::convertToMsg(covins::MsgKeyframe &msg, cv::Mat &img,
       kp_eigen[1] = static_cast<float>(cv_keypoints_add[i].pt.y);
       msg.keypoints_aors_add.push_back(aors);
       msg.keypoints_distorted_add.push_back(kp_eigen);
-    //   msg.keypoints_undistorted_add.push_back(kp_eigen);
   }
 
 	msg.descriptors_add = new_descriptors_add.clone();
@@ -236,6 +221,7 @@ void FrontendWrapper::convertToMsg(covins::MsgKeyframe &msg, cv::Mat &img,
     T_w_sref = T_wc_prev;
     T_w_s = T_wc;
   } else {
+    // If in Camera frame, convert it to IMU frame before sending to backend
     T_w_sref = T_wc_prev * Tsc_.inverse();
     T_w_s = T_wc * Tsc_.inverse();
   }
@@ -254,11 +240,26 @@ void FrontendWrapper::convertToMsg(covins::MsgKeyframe &msg, cv::Mat &img,
 }
 
 
+/**
+ * @brief Callback function for the image and odometry messages received from
+ * ROS topics.
+ *
+ * This function is called when an image and odometry message is received from
+ * ROS topics. It converts the odometry message to Eigen format and computes the
+ * transformation between the current and previous poses. If the difference
+ * between the current and previous poses is above a certain threshold, a new
+ * keyframe is created and sent to the server using the comm_ object.
+ *
+ * @param msgImg    A constant reference to a sensor_msgs::Image message
+ * pointer.
+ * @param msgOdom   A constant reference to a nav_msgs::Odometry message
+ * pointer.
+ *
+ * @return void
+ */
+
 auto FrontendWrapper::imageCallbackTF(const sensor_msgs::ImageConstPtr &msgImg,
                      const nav_msgs::OdometryConstPtr &msgOdom) -> void {
-
-  // std::cout << "Odom TS " << msgOdom->header.stamp << std::endl;
-  // std::cout << "Image TS " << msgImg->header.stamp << std::endl;
 
   tf::pointMsgToEigen(msgOdom->pose.pose.position, curr_pos_);
   tf::quaternionMsgToEigen(msgOdom->pose.pose.orientation, curr_quat_);
@@ -275,10 +276,6 @@ auto FrontendWrapper::imageCallbackTF(const sensor_msgs::ImageConstPtr &msgImg,
 
   T_wc_prev.block<3, 1>(0, 3) = prev_pos_;
   T_wc_prev.block<3, 3>(0, 0) = prev_quat_.toRotationMatrix();
-  
-  // std::cout << "Angle Diff " << quat_ang << std::endl;
-  // std::cout << "Trans Diff " << trans_diff << std::endl;
-  // std::cout << T_wc << std::endl;
 
   // Copy the ros image message to cv::Mat.
   cv_bridge::CvImageConstPtr cv_ptr;
@@ -294,7 +291,7 @@ auto FrontendWrapper::imageCallbackTF(const sensor_msgs::ImageConstPtr &msgImg,
 
 
   if (trans_diff > t_min_ || quat_ang > r_min_) {
-    std::cout << "NEW KF: " << kf_count_<< std::endl;
+    std::cout << "Generated New KF with id: " << kf_count_<< std::endl;
     cv::Mat img = cv_ptr->image.clone();
 
     // Convert KF to Msg
@@ -321,6 +318,8 @@ bool FrontendWrapper::ParseCamParamFile(cv::FileStorage &fSettings)
     bool b_miss_params = false;
 
     is_odom_imu_frame_ = int(fSettings["odom_in_imu_frame"]);
+
+    is_fisheye_ = int(fSettings["is_fisheye"]);
 
     cv::FileNode node = fSettings["t_min"];
         
@@ -354,9 +353,6 @@ bool FrontendWrapper::ParseCamParamFile(cv::FileStorage &fSettings)
             std::cerr << "*Camera.fx parameter doesn't exist or is not a real number*" << std::endl;
             b_miss_params = true;
         }
-
-
-        
 
         node = fSettings["Camera.fy"];
         if(!node.empty() && node.isReal())

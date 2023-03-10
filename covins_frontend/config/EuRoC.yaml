@@ -26,6 +26,10 @@ Camera.fps: 20.0
 # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
 Camera.RGB: 1
 
+# Set this to 1 while using Fisheye Cameras like the T265. For now this distortion is not 
+# supported so we undistort the raw image and use it for all computations
+is_fisheye: 0
+
 # Transformation from camera to body-frame (imu)
 Tbc: !!opencv-matrix
    rows: 4
@@ -44,25 +48,27 @@ Tbc: !!opencv-matrix
 # 1 if Odometry is published in IMU frame. Set to 0 if published in Camera Frame
 odom_in_imu_frame: 0
 
+# Feature type. Currently only ORB and SIFT supported
+extractor.type: 'ORB' 
+extractor.nFeatures: 1000 # 1000 for ORB and 300 for SIFT
+
+#--------------------------------------------------------------------------------------------
+# KF genration Parameters
+#--------------------------------------------------------------------------------------------
+
 #Minimum translational distance in metres for considering a new KF
 t_min: 0.15
-
 #Minimum rotational angle in radians for considering a KF. A new KF is generated if either of the
 # translational or rotational condition is satisfied
 r_min: 0.15
 
+#--------------------------------------------------------------------------------------------
+# ORB Parameters 
+#--------------------------------------------------------------------------------------------
+# For Place Recogntion, ORB Features are used
+# The following parameters are used for ORB features for Place recognition 
+# and also for ORB features for Matching (if extractor.type is ORB)
 
-# Feature type. Currently only ORB and SIFT supported, for place recognition always ORB features are used
-extractor.type: 'ORB' 
-extractor.nFeatures: 1000 #300
-
-#--------------------------------------------------------------------------------------------
-# SIFT Parameters
-#--------------------------------------------------------------------------------------------
-
-#--------------------------------------------------------------------------------------------
-# ORB Parameters
-#--------------------------------------------------------------------------------------------
 # ORB Extractor: Number of features per image for Place Recognition
 ORBextractor.nFeaturesPR: 1000 # 1000
 

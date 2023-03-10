@@ -112,7 +112,7 @@ protected:
     std::vector<float> mvInvLevelSigma2;
 };
 
-} //namespace ORB_SLAM
+} //namespace covins
 
 #endif
 

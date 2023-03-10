@@ -52,42 +52,8 @@ set(FRONTEND_SOURCE_FILES
     src/ORBextractor.cc
 )
 
-# add_executable(covins_frontend_node ${PROJECT_SOURCE_DIR}/src/frontend_node.cpp)
-# target_link_libraries(covins_frontend_node ${PROJECT_NAME})
-
 cs_add_library(covins_frontend ${FRONTEND_SOURCE_FILES} ${FRONTEND_HEADER_FILES})
 target_link_libraries(covins_frontend ${catkin_LIBRARIES})
 
 cs_add_executable(covins_frontend_node src/frontend_node.cpp)
 target_link_libraries(covins_frontend_node covins_frontend)
-
-# set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-
-# catkin_package()
-
-# set(FRONTEND_HEADER_FILES
-#     include/frontend_wrapper.hpp
-#     include/communicator.hpp
-# )
-
-# set(FRONTEND_SOURCE_FILES
-#     src/frontend_wrapper.cpp
-#     src/communicator.cpp
-# )
-
-# cs_add_library(covins_frontend ${FRONTEND_SOURCE_FILES} ${FRONTEND_HEADER_FILES})
-# target_link_libraries(covins_frontend ${catkin_LIBRARIES} ${covins_comm_LIBRARIES} ${OpenCV_LIBS})
-
-# cs_install()
-# cs_export()
-
-# add_executable(covins_frontend_node 
-#     src/frontend_node.cpp
-#     src/frontend_wrapper.cpp
-#     src/communicator.cpp
-#     )
-
-# target_link_libraries(covins_frontend_node
-#     ${catkin_LIBRARIES}
-#     ${covins_comm_LIBRARIES}
-#     ${OpenCV_LIBS})

@@ -103,7 +103,7 @@ placerec.rel_pose.max_iters: 200 # Ransac Max Iteration
 placerec.rel_pose.min_img_matches: 20 # Min image matches required to proceed for 5 PT Ransac
 
 # (COVINS_G) Yaw and Translation Thresholds to accept Loop
-placerec.max_yaw: 50.0 # Maximum TF yaw to accept Loop
+placerec.max_yaw: 50.0 # Maximum TF yaw (degrees) to accept Loop
 placerec.max_trans: 2.0 # Maximum Translation to accept Loop
 
 #--------------------------------------------------------------------------------------------

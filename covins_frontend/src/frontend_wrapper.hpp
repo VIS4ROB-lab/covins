@@ -70,6 +70,7 @@ public:
     double curr_ts_;
     cv::Mat K_;
     cv::Mat DistCoef_;
+    bool is_fisheye_ = false;
 
     int n_feat_pr_;
     int n_feat_;

@@ -27,6 +27,10 @@ Camera.fps: 30.0
 # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
 Camera.RGB: 1
 
+# Set this to 1 while using Fisheye Cameras like the T265. For now this distortion is not 
+# supported so we undistort the raw image and use it for all computations
+is_fisheye: 1
+
 # Transformation from camera to body-frame (imu)
 Tbc: !!opencv-matrix
    rows: 4
@@ -37,37 +41,34 @@ Tbc: !!opencv-matrix
           0.0000000, -1.0000000,  0.0000000, 0.0,
          0.0, 0.0, 0.0, 1.0]
 
-   # data: [-0.9999680,  0.0000000,  0.0079999, 0.0,
-   #       0.0000000, -1.0000000,  0.0000000, 0.032,
-   #       0.0079999,  0.0000000,  0.9999680, 0.0,
-   #       0.0, 0.0, 0.0, 1.0]
-
-# Feature type. Currently only ORB and SIFT supported, for place recognition always ORB features are used
-extractor.type: 'ORB' 
-extractor.nFeatures: 1000 # 1000
-
 #--------------------------------------------------------------------------------------------
 # Frontend COVINS Parameters
 #--------------------------------------------------------------------------------------------
 
 # 1 if Odometry is published in IMU frame. Set to 0 if published in Camera Frame
-odom_in_imu_frame: 1
+odom_in_imu_frame: 0
+
+# Feature type. Currently only ORB and SIFT supported
+extractor.type: 'ORB' 
+extractor.nFeatures: 1000 # 1000 for ORB and 300 for SIFT
+
+#--------------------------------------------------------------------------------------------
+# KF genration Parameters
+#--------------------------------------------------------------------------------------------
 
 #Minimum translational distance in metres for considering a new KF
-t_min: 0.2
-
+t_min: 0.15
 #Minimum rotational angle in radians for considering a KF. A new KF is generated if either of the
 # translational or rotational condition is satisfied
-r_min: 0.1
-
-
-#--------------------------------------------------------------------------------------------
-# SIFT Parameters
-#--------------------------------------------------------------------------------------------
+r_min: 0.15
 
 #--------------------------------------------------------------------------------------------
-# ORB Parameters
+# ORB Parameters 
 #--------------------------------------------------------------------------------------------
+# For Place Recogntion, ORB Features are used
+# The following parameters are used for ORB features for Place recognition 
+# and also for ORB features for Matching (if extractor.type is ORB)
+
 # ORB Extractor: Number of features per image
 ORBextractor.nFeaturesPR: 1000 # 1000
 
