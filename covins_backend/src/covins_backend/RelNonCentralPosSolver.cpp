@@ -188,7 +188,7 @@ bool RelNonCentralPosSolver::computeNonCentralRelPose(
         TransformType Tws1 = (Twc1corr * QKF->GetStateExtrinsics().inverse());
         Ts1s2 = Tws1.inverse() * Tws2;
 
-        std::cout << "T_s2s1 :" << std::endl << Ts1s2.inverse() << std::endl;
+        // std::cout << "T_s2s1 :" << std::endl << Ts1s2.inverse() << std::endl;
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////
         // TODO Shift the Covariance Computation to Seperate Function
