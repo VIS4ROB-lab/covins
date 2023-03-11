@@ -63,7 +63,7 @@ bool RelNonCentralPosSolver::computeNonCentralRelPose(
     const double threshold, Eigen::Matrix4d &Tc1c2, Eigen::Matrix<double, 6, 6> &cov_loop) {
 
   // Find matches between CKF and QKF
-  std::cout << "Attempting NON-Relative Pose Solver" << std::endl;
+  // std::cout << "Attempting NON-Relative Pose Solver" << std::endl;
 
   // 3 v 2 Matching of Multicamera Systems (See publication for reference)
   size_t n_ckfs = 3;
@@ -163,10 +163,10 @@ bool RelNonCentralPosSolver::computeNonCentralRelPose(
         sacProb.max_iterations_ = mMaxIter_17PT;
         sacProb.computeModel(0);
 
-        std::cout << "17 POINT Ransac needed " << sacProb.iterations_ << " iterations and ";
-        std::cout << std::endl;
-        std::cout << "the number of inliers is: " << sacProb.inliers_.size();
-        std::cout << std::endl << std::endl;
+        // std::cout << "17 POINT Ransac needed " << sacProb.iterations_ << " iterations and ";
+        // std::cout << std::endl;
+        // std::cout << "the number of inliers is: " << sacProb.inliers_.size();
+        // std::cout << std::endl << std::endl;
 
         if (sacProb.inliers_.size() < mMinInliers_17PT ) {
         return false;
@@ -190,22 +190,22 @@ bool RelNonCentralPosSolver::computeNonCentralRelPose(
 
         std::cout << "T_s2s1 :" << std::endl << Ts1s2.inverse() << std::endl;
 
-        ////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////////////////////////////////
         // TODO Shift the Covariance Computation to Seperate Function
 
-        // Compute Observed Covariance
+        // Compute Observed Covariance (Sampling-based Covariance)
+        // We compute the Covariance in the IMU frame since PGO has all edges in
+        // IMU frame
+        
         std::vector<std::vector<int>> inliers_17PT_vect(inliers_size.size());
         std::vector<int> inliers_postion;
         inliers_postion.push_back(0);
-        Eigen::Vector3d trans_vect = Tc1c2.block<3, 1>(0, 3);
-        trans_vect.normalize();
         
         size_t cov_rows = mCov_iter;
         std::vector<int> inliers_cov;
         Eigen::Matrix<double, Eigen::Dynamic, 6> m_s(cov_rows, 6); // Obs Matrix: First 3 cols-Rot, next 3 cols-Trans 
         
         std::random_device rd;
-        TypeDefs::QuaternionType q_ref(Tc1c2.block<3, 3>(0, 0));
         TypeDefs::QuaternionType q_ref_s(Ts1s2.block<3, 3>(0, 0));
 
         // Build a vector for knowing the positions of the inliers
@@ -300,7 +300,7 @@ bool RelNonCentralPosSolver::computeNonCentralRelPose(
                     (m_s.rowwise() - x_mean_s).matrix()) /
                    (m_s.rows() - 1);
         
-        std::cout << "Cov Mat Trace: " << cov_loop.trace() << std::endl;
+        // std::cout << "Cov Mat Trace: " << cov_loop.trace() << std::endl;
 
         if (cov_loop.trace() < mMax_cov) {
           return true;
@@ -340,7 +340,7 @@ auto RelNonCentralPosSolver::findMatches(const KeyframePtr KFPtr1,
 
     // Distance threshold + Ratio Test
     if (curr_m.distance <= covins_params::features::img_match_thres) {
-      if (curr_m.distance < 0.8 * curr_n.distance) {
+      if (curr_m.distance < covins_params::features::ratio_thres * curr_n.distance) {
         Match temp_match(curr_m.queryIdx, curr_m.trainIdx, curr_m.distance);
         img_bf_matches.push_back(temp_match);
       }
@@ -355,21 +355,6 @@ bool RelNonCentralPosSolver::computePose(const KeyframePtr KfPtr1,
                                const KeyframePtr KfPtr2,
                                Matches &ImgMatches, const double threshold,
                                Eigen::Matrix4d &Tc1c2, std::vector<int> &inlierInd) {
-
-// Find the Matching keypoint indices (For Debugging)
-const size_t num_matches = ImgMatches.size();
-
-kp_vect1_.clear();
-kp_vect2_.clear();
-kp_vect1_.reserve(num_matches);
-kp_vect2_.reserve(num_matches);
-
-for (Matches::iterator itr = ImgMatches.begin(); itr !=ImgMatches.end(); ++itr) {
-      const size_t idxA = (*itr).idxA;
-      const size_t idxB = (*itr).idxB;
-      kp_vect1_.push_back(KfPtr1->keypoints_undistorted_add_[idxA]);
-      kp_vect2_.push_back(KfPtr2->keypoints_undistorted_add_[idxB]);
-}
 
   // Setup the openGV problem to solve
   opengv::relative_pose::FrameRelativeAdapter adapter(KfPtr1,
@@ -391,11 +376,7 @@ for (Matches::iterator itr = ImgMatches.begin(); itr !=ImgMatches.end(); ++itr) 
   //Inlier keypoints
   inlierInd = sacProb.inliers_;
 
-  kp_vect1_in_.clear();
-  kp_vect2_in_.clear();
-  matches_in_.clear();
-
-  std::cout << "Inliers: "<< sacProb.inliers_.size() << " Iters: "<< sacProb.iterations_ << std::endl;
+  // std::cout << "Inliers: "<< sacProb.inliers_.size() << " Iters: "<< sacProb.iterations_ << std::endl;
 
   if (sacProb.inliers_.size() < mMinInliers || sacProb.iterations_ >=
   sacProb.max_iterations_) {

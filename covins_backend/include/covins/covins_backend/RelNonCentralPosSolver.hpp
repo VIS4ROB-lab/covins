@@ -101,9 +101,6 @@ private:
   double mThres_17PT;
   KeypointVector kp_vect1_;
   KeypointVector kp_vect2_;
-  std::vector<cv::KeyPoint> kp_vect1_in_;
-  std::vector<cv::KeyPoint> kp_vect2_in_;
-  std::vector<cv::DMatch> matches_in_;
 
 };
 

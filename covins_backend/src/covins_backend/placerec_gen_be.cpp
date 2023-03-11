@@ -37,17 +37,11 @@
 #include "covins_backend/landmark_be.hpp"
 #include "covins_backend/map_be.hpp"
 #include "covins_backend/optimization_be.hpp"
-#include "covins_backend/Se3Solver.h"
 #include "covins_backend/RelNonCentralPosSolver.hpp"
 
 // Thirdparty
-#include "matcher/MatchingAlgorithm.h"
-#include "matcher/ImageMatchingAlgorithm.h"
-#include "matcher/LandmarkMatchingAlgorithm.h"
-
 #include <covins/covins_base/utils_base.hpp>
 
-#include <random>
 namespace covins {
 
 PlaceRecognitionG::PlaceRecognitionG(ManagerPtr man, bool perform_pgo)
@@ -68,7 +62,7 @@ auto PlaceRecognitionG::ComputeSE3() -> bool {
 
     const size_t nInitialCandidates = mvpEnoughConsistentCandidates.size();
 
-    std::cout << "----> Query " << kf_query_ << " : nInitialCandidates: " << nInitialCandidates << std::endl;
+    // std::cout << "----> Query " << kf_query_ << " : nInitialCandidates: " << nInitialCandidates << std::endl;
     vector<bool> vbDiscarded;
     vbDiscarded.resize(nInitialCandidates);
     int nCandidates = 0; // candidates with enough matches
