@@ -162,7 +162,21 @@ Keyframe::Keyframe(MsgKeyframe msg, MapPtr map, VocabularyPtr voc)
             cout << COUTERROR << " !mBowVec.empty() || !mFeatVec.empty()" << endl;
             exit(-1);
         }
-        vector<cv::Mat> current_desc = Utils::ToDescriptorVector(descriptors_);
+
+        // Unless we are using SIFT descriptors, we will use the additional
+        // features for both Place Recognition and Image Matching.
+        // For SIFT features, we will use additional features (descriptors_add_)
+        // (SIFT) for Image matching and the regular features (descriptors_)
+        // (ORB) for Place Recognition
+
+        vector<cv::Mat> current_desc;
+        
+        if (covins_params::features::type == "SIFT") {
+          current_desc = Utils::ToDescriptorVector(descriptors_);
+        } else {
+          current_desc = Utils::ToDescriptorVector(descriptors_add_);
+        }
+
         // Feature vector associate features with nodes in the 4th level (from leaves up)
         // We assume the vocabulary tree has 6 levels, change the 4 otherwise
         voc->transform(current_desc,bow_vec_,feat_vec_,4);
