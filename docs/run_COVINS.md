@@ -1,9 +1,12 @@
 ## COVINS: A Framework for Collaborative Visual-Inertial SLAM and Multi-Agent 3D Mapping
 
-<a name="running"></a>
 ## Running COVINS
 
-Make sure that you have selected the correct back-end in the ```~/ws/covins_ws/src/covins/covins_backend/config/config_backend.yaml``` file. This is specified using the ```placerec.type``` parameter.
+This section explains how to run COVINS on the [EuRoC dataset](https://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets). If you want to use a different dataset, please do not forget to use a correct parameter file instead of ```covins/orb_slam3/Examples/Monocular-Inertial/EuRoC.yaml```.
+
+**Note**: We strongly recommend running every agent and the server back-end in a separate terminal each.
+
+Make sure that you have selected the correct back-end (```COVINS```) in the ```~/ws/covins_ws/src/covins/covins_backend/config/config_backend.yaml``` file. This is specified using the ```placerec.type``` parameter.
 
 ![Covisibilty graphs](/.aux/covins_config.png)
 
@@ -16,11 +19,6 @@ Make sure that you have selected the correct back-end in the ```~/ws/covins_ws/s
 5. [Parameters](#run_params)
 6. [Output Files](#run_out)
 7. [Running COVINS with ROS](#run_ros)
-
-
-This section explains how to run COVINS on the [EuRoC dataset](https://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets). If you want to use a different dataset, please do not forget to use a correct parameter file instead of ```covins/orb_slam3/Examples/Monocular-Inertial/EuRoC.yaml```.
-
-**Note**: We strongly recommend running every agent and the server back-end in a separate terminal each.
 
 #### Setting up the environment
 
