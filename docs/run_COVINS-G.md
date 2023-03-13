@@ -1,0 +1,1 @@
+## COVINS-G: A Generic Back-end for Collaborative Visual-Inertial SLAM

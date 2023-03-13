@@ -7,6 +7,7 @@ function echoUsage()
             \t -s covins server [COMM_CONFIG SERVER_CONFIG] \n\
             \t -o orbslam client [COMM_CONFIG RUN_FILE DATASET_FOLDER]\n\
             \t -r ros orbslam client [COMM_CONFIG ROS_LAUNCHFILE]\n\
+            \t -f ros frontend wrapper [COMM_CONFIG ROS_LAUNCHFILE]\n\
             \t -c run roscore \n\
             \t -t terminal \n\
             \t -h help" >&2
@@ -84,14 +85,17 @@ SERVER=0
 ROS_CLIENT=0
 CLIENT=0
 ROS_CORE=0
+FRONTEND_WRAPPER=0
 
-while getopts "hsorct" opt; do
+while getopts "hsforct" opt; do
     case "$opt" in
         h)
             echoUsage
             exit 0
             ;;
         s)  SERVER=1
+            ;;
+        f)  FRONTEND_WRAPPER=1
             ;;
         r)  ROS_CLIENT=1
             ;;
@@ -136,7 +140,20 @@ elif [ $ROS_CLIENT -eq 1 ]; then
                 "cd ${CATKIN_WS}; \
                  source devel/setup.bash; \
                  roslaunch ORB_SLAM3 launch_docker_ros_euroc.launch"
-
+elif [ $FRONTEND_WRAPPER -eq 1 ]; then
+        CONFIG_FILE_COMM=$(absPath ${*: -2:1})
+        LAUNCH_FILE=$(absPath ${*: -1})
+        docker run \
+        -it \
+        --rm \
+        --net=host \
+        --volume "${CONFIG_FILE_COMM}:${CATKIN_WS}/src/covins/covins_comm/config/config_comm.yaml" \
+        --volume "${LAUNCH_FILE}:${CATKIN_WS}/src/covins/covins_frontend/launch/vins_docker_euroc_agent.launch" \
+        covins \
+        /bin/bash -c \
+                "cd ${CATKIN_WS}; \
+                 source devel/setup.bash; \
+                 roslaunch covins_frontend vins_docker_euroc_agent.launch"
 elif [ $CLIENT -eq 1 ]; then
         CONFIG_FILE_COMM=$(absPath ${*: -3:2})
         START_FILE=$(absPath ${*: -2:1})

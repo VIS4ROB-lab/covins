@@ -1,13 +1,16 @@
 #!/bin/bash
 
 FRONTEND=false
+ORB_SLAM3=false
 
 # check command line arguments
-while getopts ":f" opt; do
+while getopts ":fo" opt; do
   case $opt in
     f)
       FRONTEND=true
-      echo "Will only build the Frontend Wrapper and not the Backend and ORBSLAM3"
+      ;;
+    o)
+      ORB_SLAM3=true
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
@@ -58,11 +61,13 @@ fi
 cd ${BASEDIR}/../..
 catkin build ${CATKIN_JOBS} covins_frontend
 
-if [ "$FRONTEND" = true ]; then
+if [ "$FRONTEND" = true ] && [ "$ORB_SLAM3" = false ]; then
   exit
 fi
 
-catkin build ${CATKIN_JOBS} covins_backend
+if [ "$ORB_SLAM3" = false ]; then
+  catkin build ${CATKIN_JOBS} covins_backend
+fi
 
 #Extract vocabulary
 cd ${BASEDIR}/covins_backend/
