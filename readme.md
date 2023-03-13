@@ -9,21 +9,24 @@ With the COVINS-G release, we make the server back-end flexible enabling compati
  We provide guidance and examples how to run COVINS and COVINS-G on the [EuRoC dataset](https://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets), as well as information beyond basic deployment, for example how the COVINS back-end can be deployed on a remote cloud computing instance. Instructions on running COVINS-G with different cameras such as Intel Realsense D455 and T265 Tracking camera, as well as different frontends like VINS-Fusion, ORB-SLAM3 and SVO-pro are also provided.
 
 ## Index
-- [COVINS-(G) -- A (Generic) Framework for Collaborative Visual-Inertial SLAM and Multi-Agent 3D Mapping](#covins-g----a-generic-framework-for-collaborative-visual-inertial-slam-and-multi-agent-3d-mapping)
-  - [Index](#index)
   - [1 Related Publications](#1-related-publications)
-      - [Video:](#video)
   - [2 License](#2-license)
   - [3 Basic Setup](#3-basic-setup)
     - [Environment Setup](#environment-setup)
-      - [Dependencies](#dependencies)
-      - [Set up your workspace](#set-up-your-workspace)
     - [COVINS Installation](#covins-installation)
-    - [Installing ROS Support for the ORB-SLAM3 Front-End](#installing-ros-support-for-the-orb-slam3-front-end)
+    - [Installing ROS Support for the ORB-SLAM3 Front-End](#setup_ros)
     - [Installing VINS-Fusion Front-End](#installing-vins-fusion-front-end)
   - [4 Running COVINS](#4-running-covins)
-    - [COVINS Back-end](#covins-back-end)
-    - [COVINS-G Back-end](#covins-g-back-end)
+    - [COVINS Back-end](#run_covins)  
+      - [Running the COVINS Server Back-End](/docs/run_COVINS.md#run_be)
+      - [Running the ORB-SLAM3 Front-End](docs/run_COVINS.md#run_fe)
+      - [Visualization](docs/run_COVINS.md#run_viz)
+      - [User Interaction](docs/run_COVINS.md#run_intercation)
+      - [Parameters](docs/run_COVINS.md#run_params)
+      - [Output Files](docs/run_COVINS.md#run_out)
+      - [Running COVINS with ROS](docs/run_COVINS.md#run_ros)
+    - [COVINS-G Back-end](#run_covinsg)
+
   - [5 Docker Implementation](#5-docker-implementation)
     - [Building the Docker Image](#building-the-docker-image)
     - [Running the Docker Image](#running-the-docker-image)
@@ -184,16 +187,17 @@ If you would like to use a VINS-Fusion Front-end (Only compatible with COVINS-G)
 <a name="running"></a>
 ## 4 Running COVINS
 
+We provide easy switching between the different backends (COVINS and COVINS_G) by specifying the ```placerec.type``` parameter in the ```~/ws/covins_ws/src/covins/covins_backend/config/config_backend.yaml``` file. In general, ```COVINS``` would be able to provide more accurate estimates after performing the Global Bundle Adjustment (GBA), but is limited by the flexibility in terms of the choice of front-end (works well with ORB_SLAM3 but not VINS-Fusion). On the other hand, ```COVINS_G``` is compatible with any arbitrary front-end but cannot perform GBA since map-points are not utilized in the back-end. We refer to the COVINS_G paper for more details about the use-cases of the different back-ends.
 
 <a name="run_covins"></a>
 ### COVINS Back-end
 
-[run instructions](/docs/run_COVINS.md)
+The instructions for running a COVINS back-end can be found [here](/docs/run_COVINS.md).
 
 <a name="run_covinsg"></a>
 ### COVINS-G Back-end
 
-[run instructions](/docs/run_COVINS-G.md)
+The instructions for running a COVINS-G back-end can be found [here](/docs/run_COVINS-G.md).
 
 <a name="docker"></a>
 ## 5 Docker Implementation
@@ -231,7 +235,7 @@ The ROS wrapper of the ORB-SLAM3 front-end can also be started in the docker con
 
 #### ROS Front-End Wrapper (Only for COVINS-G)
 The ROS Front-end wrapper can also be started in the docker container. It requires the server config file and the ROS launch file. A bag file can then for example be played on the host system.
-* ```./run.sh -r ../covins_comm/config/config_comm.yaml ../covins_frontend/launch/covins_frontend/launch/vins_docker_euroc_agent.launch```
+* ```./run.sh -f ../covins_comm/config/config_comm.yaml ../covins_frontend/launch/covins_frontend/launch/vins_docker_euroc_agent.launch```
 
 #### Terminal
 A terminal within the docker image can also be opened. This can for example be used to send `rosservice` commands.
