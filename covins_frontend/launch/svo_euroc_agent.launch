@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <launch>
 
-<arg name="ag_n" default="3" />
-<arg name="cam_topic" default="/cam0/image_raw3" />
+<arg name="ag_n" default="0" />
+<arg name="cam_topic" default="/cam0/image_raw$(arg ag_n)" />
 <arg name="odom_topic" default="/svo/odometry" />
 <arg name="config_file" default="$(find covins_frontend)/config/EuRoC.yaml" />
 

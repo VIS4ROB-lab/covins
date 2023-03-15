@@ -97,7 +97,7 @@ COVINS provides two parameter files to adjust the behavior of the system and alg
 * ```../covins_comm/config/config_comm.yaml``` contains all parameters related to communication and the agent front-end.
 * ```../covins_backend/config/config_backend.yaml``` contains all parameters related to the server back-end.
 
-The user should not be required to change any parameters to run COVINS, except paths and the server IP, as explained in this manual.
+The user should not be required to change any parameters to run COVINS, except placerecognition type, paths and the server IP, as explained in this manual.
 
 <a name="run_out"></a>
 ### Output Files
