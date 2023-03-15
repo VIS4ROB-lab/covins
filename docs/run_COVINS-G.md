@@ -210,14 +210,37 @@ We provide sample config files for the Realsense D455 camera to be used with thr
 
 * Note: In a separate experiment where we tried to run a T265 agent and a D455 agent contributing simulatenously, we found that the transforms for the T265 have an offset of around 90 degrees due to which we were unable to obtain an inter-agent loop closures using the default parameters. To solve this issue, we can increase the ```max_yaw``` parameter in the ```../covins_backend/config/config_backend.yaml``` to something like 180 degrees (So essentially this parameter will be ignored)
   
-  ![max_yaw](./aux/../../.aux/max_yaw.png)
+  ![max_yaw](/.aux/max_yaw.png)
   
 
 <a name="run_sift"></a>
 ### Using SIFT Features
 
-TODO  
-change in frontend wrapper config and config backend
+It is possible to use alternative keypoints and feature descriptors instead of the default ORB features. For example, SIFT features might be useful in cases where the viewpoint changes are quite high between the different agents (example, aerial-ground robot teaming). In order to use this functionality, one needs to use the ROS-based front-end wrapper. The following modifications will need to be done in the config files:
+
+* In ```../covins_frontend/config/EuRoC.yaml```, change the ```extractor.type``` parameter to ```SIFT```. Note, here the ```EuRoC.yaml``` is just a sample config file. make sure that you modify it in the correct config file.
+  ![sift_frontend](/.aux/sift_frontend.png)
+* In ```../covins_backend/config/config_backend.yaml```, change the ```feat.type``` and the ```feat.desc_length``` parameters to the following:
+  ![sift_backend](/.aux/sift_backend.png)
+
+Now, you can launch the agents as before, for example 2 agents on EuRoC dataset:
+* [Server back-end](#run_be)
+
+* Agent 0 (MH_01)
+  * ```cd ~/catkin_ws/src/VINS-COVINS-adaptation/docker```
+  * ```./run_vins_frontend_euroc.sh 0```
+  * ```source ~/ws/covins_ws/devel/setup.bash```
+  * ```roslaunch covins_frontend vins_euroc_agent.launch ag_n:=0```
+  * ```rosbag play MH_01_easy.bag /cam0/image_raw:=/cam0/image_raw0 /cam1/image_raw:=/cam1/image_raw0 /imu0:=/imu0```
+* Agent 1 (MH_02)
+  * ```cd ~/catkin_ws/src/VINS-COVINS-adaptation/docker```
+  * ```./run_vins_frontend_euroc.sh 1```
+  * ```source ~/ws/covins_ws/devel/setup.bash```
+  * ```roslaunch covins_frontend vins_euroc_agent.launch ag_n:=1```
+  * ```rosbag play MH_02_easy.bag /cam0/image_raw:=/cam0/image_raw1 /cam1/image_raw:=/cam1/image_raw1 /imu0:=/imu1```
+
+
+Note: The computation times for SIFT feature detection and matching would be quite higher compared to the ORB features, but it should still be possible to run it in real-time. Increasing the KF-generation thresholds to reduce the redundant KF generation might be a potential way to speed up (Don't increase it too much such that no loops are found!). 
 
 <a name="run_viz"></a>
 ### Visualization
