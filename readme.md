@@ -102,7 +102,7 @@ This will create a workspace for COVINS as ```~/ws/covins_ws```. All further com
 
 We provide a script (```covins/install_file.sh```) that will perform a full installation of COVINS, including back-end, front-end, and third-party packages, if the environment is set up correctly. **If the installation fails, we strongly recommend executing the steps in the build script manually one by one**. The script might not perform a correct installation under certain circumstances if executed multiple times.
 
-**Note**: If you are installing COVINS in a **Virtual Machine** (VM) or a computer with fewer resources, make sure to allocate enough memory and/or swap to ensure a successful installation. We have successfully tested the COVINS installation with a VM with 16 GB RAM and 10 GB swap. An instruction to change the swap size can be found [here](https://ploi.io/documentation/server/change-swap-size-in-ubuntu).
+**Note**: If you are installing COVINS in a **Virtual Machine** (VM) or a computer with fewer resources, make sure to allocate enough memory and/or swap to ensure a successful installation. We have successfully tested the COVINS installation with a VM with 16 GB RAM and 10 GB swap. Instructions how to change the swap size can be found [here](https://ploi.io/documentation/server/change-swap-size-in-ubuntu).
 
 * ```cd ~/ws/covins_ws/src```
 * ```git clone https://github.com/VIS4ROB-lab/covins.git```
