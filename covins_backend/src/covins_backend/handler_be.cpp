@@ -27,6 +27,7 @@
 #include "covins_backend/communicator_be.hpp"
 #include "covins_backend/map_be.hpp"
 #include "covins_backend/placerec_be.hpp"
+#include "covins_backend/placerec_gen_be.hpp"
 
 namespace covins {
 
@@ -39,6 +40,8 @@ AgentHandler::AgentHandler(int client_id, int newfd, VisPtr vis, ManagerPtr man)
     // Other types of place recognition system could be integrated and activated using the placerec::type parameter
     if(covins_params::placerec::type == "COVINS") {
         placerec_.reset(new PlaceRecognition(mapmanager_,covins_params::opt::perform_pgo));
+    } else if (covins_params::placerec::type == "COVINS_G") {
+        placerec_.reset(new PlaceRecognitionG(mapmanager_,covins_params::opt::perform_pgo));
     } else {
         std::cout << COUTFATAL << "Place Recognition System Type \"" << covins_params::placerec::type << "\" not valid" << std::endl;
         exit(-1);

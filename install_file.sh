@@ -1,4 +1,26 @@
 #!/bin/bash
+
+FRONTEND=false
+ORB_SLAM3=false
+
+# check command line arguments
+while getopts ":fo" opt; do
+  case $opt in
+    f)
+      FRONTEND=true
+      ;;
+    o)
+      ORB_SLAM3=true
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      ;;
+  esac
+done
+
+# shift command line arguments so that $1 is the first non-option argument
+shift "$((OPTIND-1))"
+
 if [ $# -eq 0 ]
 then
     NR_JOBS=""
@@ -37,7 +59,15 @@ then
 fi
 
 cd ${BASEDIR}/../..
-catkin build ${CATKIN_JOBS} covins_backend
+catkin build ${CATKIN_JOBS} covins_frontend
+
+if [ "$FRONTEND" = true ] && [ "$ORB_SLAM3" = false ]; then
+  exit
+fi
+
+if [ "$ORB_SLAM3" = false ]; then
+  catkin build ${CATKIN_JOBS} covins_backend
+fi
 
 #Extract vocabulary
 cd ${BASEDIR}/covins_backend/

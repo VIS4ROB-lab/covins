@@ -62,7 +62,9 @@ public:
     using LandmarkVector                = TypeDefs::LandmarkVector;
     using KeyframeSet                   = TypeDefs::KeyframeSet;
     using PoseMap                       = TypeDefs::PoseMap;
-
+    using Vector3Vector                 = TypeDefs::Vector3Vector;
+    using KfObservations                = TypeDefs::KfObservations;
+    
     struct KeypointIdentifier {
         KeyframePtr keyframe;
         LandmarkPtr landmark;

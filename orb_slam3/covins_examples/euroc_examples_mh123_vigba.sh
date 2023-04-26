@@ -21,4 +21,3 @@ sleep 30
 
 echo "Waiting for Global BA to finish"
 rosservice call /covins_gba 0 1
-

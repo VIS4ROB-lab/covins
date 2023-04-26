@@ -5,8 +5,8 @@
 #--------------------------------------------------------------------------------------------
 
 sys.port: '9033' # should not be necessary to be changed
-sys.server_ip: '192.168.1.19' # The (public) IP of the machine where the COVINS back-end is running
-
+# sys.server_ip: '192.168.1.19' # The (public) IP of the machine where the COVINS back-end is running
+sys.server_ip: '192.168.0.100' #Manthan CRS
 #--------------------------------------------------------------------------------------------
 # Communicator
 #--------------------------------------------------------------------------------------------

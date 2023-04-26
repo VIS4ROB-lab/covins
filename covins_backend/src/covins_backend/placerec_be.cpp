@@ -62,7 +62,6 @@ auto PlaceRecognition::CheckBuffer()->bool {
 
 auto PlaceRecognition::ComputeSE3()->bool {
     const size_t nInitialCandidates = mvpEnoughConsistentCandidates.size();
-
     // We compute first ORB matches for each candidate
     // If enough matches are found, we setup a Sim3Solver
     FeatureMatcher matcher(0.75,true);
@@ -75,7 +74,6 @@ auto PlaceRecognition::ComputeSE3()->bool {
 
     for (size_t i = 0; i < nInitialCandidates; i++) {
         KeyframePtr pKF = mvpEnoughConsistentCandidates[i];
-
         pKF->SetNotErase();
 
         if (pKF->IsInvalid()) {
@@ -119,9 +117,7 @@ auto PlaceRecognition::ComputeSE3()->bool {
         if (vbDiscarded[i]) {
             continue;
         }
-
         KeyframePtr pKFi = mvpEnoughConsistentCandidates[i];
-
         // Setup the RANSAC problem
         Eigen::Matrix4d Twc1;
         Se3Solver se3solver(covins_params::placerec::ransac::min_inliers,
@@ -133,14 +129,12 @@ auto PlaceRecognition::ComputeSE3()->bool {
                 ++numMatches;
             }
         }
-
         bool foundTransform = se3solver.projectiveAlignment(kf_query_, vvpMapPointMatches[i], covins_params::placerec::ransac::class_threshold, Twc1); //def: 25
 
         if (!foundTransform) {
           vbDiscarded[i] = true;
           continue;
         }
-
         // We have a potential Match --> search additional correspondences
         const Eigen::Matrix4d Twc2 = pKFi->GetPoseTwc();
         Eigen::Matrix4d T12 = Twc1.inverse()*Twc2;
@@ -155,7 +149,7 @@ auto PlaceRecognition::ComputeSE3()->bool {
         }
 
         const int numInliersOpt = Optimization::OptimizeRelativePose(kf_query_, pKFi, vvpMapPointMatches[i], T12, 4.0f);
-
+        
         if (numInliersOpt < covins_params::placerec::inliers_thres) {
               vbDiscarded[i] = true;
               continue;
@@ -330,7 +324,8 @@ auto PlaceRecognition::CorrectLoop()->bool {
             for(auto kfi : current_connections_query) {
                 map_query->UpdateCovisibilityConnections(kfi->id_);
             }
-            Optimization::PoseGraphOptimization(map_query,corrected_poses);
+            Optimization::PoseGraphOptimization(map_query, corrected_poses);
+            map_query->WriteKFsToFileAllAg();
         } else {
             std::cout << COUTNOTICE << "!!! PGO deativated !!!" << std::endl;
         }

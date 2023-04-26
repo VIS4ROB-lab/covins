@@ -60,6 +60,8 @@ set(BACKEND_SOURCE_FILES
     src/covins_backend/map_be.cpp
     src/covins_backend/optimization_be.cpp
     src/covins_backend/placerec_be.cpp
+    src/covins_backend/placerec_gen_be.cpp
+    src/covins_backend/RelNonCentralPosSolver.cpp
     src/covins_backend/Se3Solver.cpp
     src/covins_backend/visualization_be.cpp
 
@@ -67,6 +69,8 @@ set(BACKEND_SOURCE_FILES
     src/matcher/MatchingAlgorithm.cpp
     src/matcher/ImageMatchingAlgorithm.cpp
     src/matcher/LandmarkMatchingAlgorithm.cpp
+    src/matcher/opengv/frame-relative-adapter.cpp
+    src/matcher/opengv/FrameNoncentralRelativeAdapter.cpp
 
     # Dense Matcher
     src/dense_matcher/DenseMatcher.cpp
@@ -84,7 +88,9 @@ set(BACKEND_HEADER_FILES
     include/covins/covins_backend/map_be.hpp
     include/covins/covins_backend/optimization_be.hpp
     include/covins/covins_backend/placerec_be.hpp
+    include/covins/covins_backend/placerec_gen_be.hpp
     include/covins/covins_backend/Se3Solver.h
+    include/covins/covins_backend/RelNonCentralPosSolver.hpp
     include/covins/covins_backend/visualization_be.hpp
 
     # Base
@@ -95,6 +101,10 @@ set(BACKEND_HEADER_FILES
     include/covins/matcher/MatchingAlgorithm.h
     include/covins/matcher/ImageMatchingAlgorithm.h
     include/covins/matcher/LandmarkMatchingAlgorithm.h
+
+    include/covins/matcher/opengv/rel_pose/frame-relative-adapter.hpp
+    include/covins/matcher/opengv/rel_pose/FrameNoncentralRelativeAdapter.hpp
+    include/covins/matcher/opengv/sac_problems/frame-relative-pose-sac-problem.hpp
 
     # Dense Matcher
     include/covins/dense_matcher/DenseMatcher.hpp

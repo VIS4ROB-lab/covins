@@ -1,0 +1,85 @@
+%YAML:1.0
+
+#--------------------------------------------------------------------------------------------
+# Camera Parameters. Adjust them!
+#--------------------------------------------------------------------------------------------
+Camera.type: "PinHole" # Currently only Pinhole Model is supported
+
+# Camera calibration and distortion parameters (OpenCV) 
+Camera.fx: 285.952392578125
+Camera.fy: 285.89801025390625
+Camera.cx: 416.4840087890625
+Camera.cy: 400.21978759765625
+
+
+Camera.k1: -0.00859388429671526
+Camera.k2: 0.04788520932197571
+Camera.p1: -0.04412417113780975
+Camera.p2: 0.008043156005442142
+
+# Camera resolution
+Camera.width: 848
+Camera.height: 800
+
+# Camera frames per second 
+Camera.fps: 30.0
+
+# Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
+Camera.RGB: 1
+
+# Set this to 1 while using Fisheye Cameras like the T265. For now this distortion is not 
+# supported so we undistort the raw image and use it for all computations
+is_fisheye: 1
+
+# Transformation from camera to body-frame (imu)
+Tbc: !!opencv-matrix
+   rows: 4
+   cols: 4
+   dt: f
+   data: [0.0079999,  0.0000000,  0.9999680, 0.0,
+         -0.9999680,  0.0000000,  0.0079999, 0.032,
+          0.0000000, -1.0000000,  0.0000000, 0.0,
+         0.0, 0.0, 0.0, 1.0]
+
+#--------------------------------------------------------------------------------------------
+# Frontend COVINS Parameters
+#--------------------------------------------------------------------------------------------
+
+# 1 if Odometry is published in IMU frame. Set to 0 if published in Camera Frame
+odom_in_imu_frame: 0
+
+# Feature type. Currently only ORB and SIFT supported
+extractor.type: 'ORB' 
+extractor.nFeatures: 1000 # 1000 for ORB and 300 for SIFT
+
+#--------------------------------------------------------------------------------------------
+# KF genration Parameters
+#--------------------------------------------------------------------------------------------
+
+#Minimum translational distance in metres for considering a new KF
+t_min: 0.15
+#Minimum rotational angle in radians for considering a KF. A new KF is generated if either of the
+# translational or rotational condition is satisfied
+r_min: 0.15
+
+#--------------------------------------------------------------------------------------------
+# ORB Parameters 
+#--------------------------------------------------------------------------------------------
+# For Place Recogntion, ORB Features are used
+# The following parameters are used for ORB features for Place recognition 
+# and also for ORB features for Matching (if extractor.type is ORB)
+
+# ORB Extractor: Number of features per image
+ORBextractor.nFeaturesPR: 1000 # 1000
+
+# ORB Extractor: Scale factor between levels in the scale pyramid
+ORBextractor.scaleFactor: 1.2
+# ORB Extractor: Number of levels in the scale pyramid
+ORBextractor.nLevels: 8
+
+# ORB Extractor: Fast threshold
+# Image is divided in a grid. At each cell FAST are extracted imposing a minimum response.
+# Firstly we impose iniThFAST. If no corners are detected we impose a lower value minThFAST
+# You can lower these values if your images have low contrast
+ORBextractor.iniThFAST: 20
+ORBextractor.minThFAST: 7

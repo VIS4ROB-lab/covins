@@ -229,6 +229,16 @@ auto KeyframeBase::GetConnectedKeyframesByWeight(int weight)->KeyframeVector {
     }
 }
 
+auto KeyframeBase::GetConnectedNeighborKeyframes()->KeyframeVector {
+    std::unique_lock<std::mutex> lock(mtx_connections_);
+
+    if(connected_n_kfs_.empty()) {
+        return KeyframeVector();
+    } else {
+      return connected_n_kfs_;
+    }
+}
+
 auto KeyframeBase::GetConnectionWeight(KeyframePtr kf)->int {
     std::unique_lock<std::mutex> lock(mtx_connections_);
 
@@ -340,6 +350,11 @@ auto KeyframeBase::GetPoseTsw()->TransformType {
     return T_s_w_;
 }
 
+auto KeyframeBase::GetPoseTsw_vio()->TransformType {
+    std::unique_lock<std::mutex> lock(mtx_pose_);
+    return T_s_w_vio_;
+}
+
 auto KeyframeBase::GetPoseTwc()->TransformType {
     std::unique_lock<std::mutex> lock(mtx_pose_);
     return T_w_c_;
@@ -348,6 +363,11 @@ auto KeyframeBase::GetPoseTwc()->TransformType {
 auto KeyframeBase::GetPoseTws()->TransformType {
     std::unique_lock<std::mutex> lock(mtx_pose_);
     return T_w_s_;
+}
+
+auto KeyframeBase::GetPoseTws_vio()->TransformType {
+    std::unique_lock<std::mutex> lock(mtx_pose_);
+    return T_w_s_vio_;
 }
 
 auto KeyframeBase::GetPredecessor()->KeyframePtr {
@@ -407,6 +427,13 @@ auto KeyframeBase::SetPoseTws(TransformType Tws, bool lock_mtx)->void {
     T_s_w_ = T_w_s_.inverse();
     T_w_c_ = T_w_s_*T_s_c_;
     T_c_w_ = T_w_c_.inverse();
+    if(lock_mtx) mtx_pose_.unlock();
+}
+
+auto KeyframeBase::SetPoseTws_vio(TransformType Tws, bool lock_mtx)->void {
+    if(lock_mtx) mtx_pose_.lock();
+    T_w_s_vio_ = Tws;
+    T_s_w_vio_ = T_w_s_vio_.inverse();
     if(lock_mtx) mtx_pose_.unlock();
 }
 

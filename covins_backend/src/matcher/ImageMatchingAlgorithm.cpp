@@ -37,10 +37,11 @@ namespace covins {
 // Constructor
 ImageMatchingAlgorithm::ImageMatchingAlgorithm(
     float distanceThreshold,
+    float distanceRatioThreshold,
     bool epipoleCheck,
     bool triangCheck) :
   mbCheckEpi(epipoleCheck), mbCheckTriang(triangCheck),
-  distanceThreshold_(distanceThreshold)
+  distanceThreshold_(distanceThreshold), distanceRatioThreshold_(distanceRatioThreshold)
 {
     //...
 }
@@ -70,7 +71,7 @@ void ImageMatchingAlgorithm::doSetup() {
   numUncertainMatches_ = 0;
 
   // Prepare the bookkeeping for frame A
-  const size_t numA = kfPtrA_->keypoints_distorted_.size();
+  const size_t numA = kfPtrA_->keypoints_distorted_add_.size();
   skipA_.clear();
   skipA_.resize(numA, false);
 
@@ -78,35 +79,37 @@ void ImageMatchingAlgorithm::doSetup() {
   raySigmasA_.resize(numA);
   const double sqrtOfsqrtOf2 = std::sqrt(std::sqrt(2.0));
   for (size_t k = 0; k < numA; ++k) {
-    double keypointAStdDev = 0.8 * (kfPtrA_->keypoints_aors_[k][1] + 1);
-    raySigmasA_[k] = sqrtOfsqrtOf2 * keypointAStdDev / fA_;
-    if (kfPtrA_->GetLandmark(k)) {
-      skipA_[k] = true;
-    }
+    raySigmasA_[k] = 0.002;
+    // double keypointAStdDev = 0.8 * (kfPtrA_->keypoints_aors_[k][1] + 1);
+    // raySigmasA_[k] = sqrtOfsqrtOf2 * keypointAStdDev / fA_;
+    // if (kfPtrA_->GetLandmark(k)) {
+    //   skipA_[k] = true;
+    // }
   }
 
   // Prepare the bookkeeping for frame B
-  const size_t numB = kfPtrB_->keypoints_distorted_.size();
+  const size_t numB = kfPtrB_->keypoints_distorted_add_.size();
   skipB_.clear();
   skipB_.resize(numB, false);
   // Compute the ray uncertainty for frame B
   raySigmasB_.resize(numB);
   for (size_t k = 0; k < numB; ++k) {
-    double keypointBStdDev = 0.8 * (kfPtrA_->keypoints_aors_[k][1] + 1);
-    raySigmasB_[k] = sqrtOfsqrtOf2 * keypointBStdDev / fB_;
-    if (kfPtrB_->GetLandmark(k)) {
-      skipB_[k] = true;
-    }
+    raySigmasB_[k] = 0.002;
+    // double keypointBStdDev = 0.8 * (kfPtrA_->keypoints_aors_[k][1] + 1);
+    // raySigmasB_[k] = sqrtOfsqrtOf2 * keypointBStdDev / fB_;
+    // if (kfPtrB_->GetLandmark(k)) {
+    //   skipB_[k] = true;
+    // }
   }
 }
 
 // What is the size of list A?
 size_t ImageMatchingAlgorithm::sizeA() const {
-    return kfPtrA_->keypoints_distorted_.size();
+    return kfPtrA_->keypoints_distorted_add_.size();
 }
 // What is the size of list B?
 size_t ImageMatchingAlgorithm::sizeB() const {
-    return kfPtrB_->keypoints_distorted_.size();
+    return kfPtrB_->keypoints_distorted_add_.size();
 }
 
 // Set the distance threshold for which matches exceeding it will not be returned as matches.
@@ -118,6 +121,11 @@ void ImageMatchingAlgorithm::setDistanceThreshold(
 // Get the distance threshold for which matches exceeding it will not be returned as matches.
 float ImageMatchingAlgorithm::distanceThreshold() const {
   return distanceThreshold_;
+}
+
+// Get the distance threshold ratio for getting distinctive matches
+float ImageMatchingAlgorithm::distanceRatioThreshold() const {
+  return distanceRatioThreshold_;
 }
 
 // Geometric verification of a match.

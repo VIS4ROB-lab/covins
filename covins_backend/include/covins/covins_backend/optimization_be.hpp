@@ -29,7 +29,6 @@
 // COVINS
 #include "covins_base/optimization_base.hpp"
 
-
 namespace covins {
 
 class Optimization : public OptimizationBase {
@@ -41,8 +40,8 @@ public:
                                        double time_limit,
                                        bool visual_only = false,
                                        bool outlier_removal = true,
-                                       bool estimate_bias = false)                      ->void;
-
+                                       bool estimate_bias = false)                      ->void;    
+    
     static auto OptimizeRelativePose(KeyframePtr kf1, KeyframePtr kf2,
                                      LandmarkVector &matches1,
                                      TransformType& T12,
@@ -50,6 +49,7 @@ public:
 
     static auto PoseGraphOptimization(MapPtr map,
                                       PoseMap corrected_poses)                          ->void;
+        
 };
 
 } //end ns

@@ -57,7 +57,8 @@ struct MergeInformation {
     KeyframePtr                 kf_query;
     KeyframePtr                 kf_match;
     TransformType               T_smatch_squery                                         = TransformType::Zero();
-};
+    TypeDefs::Matrix6Type       cov_mat                                                 = TypeDefs::Matrix6Type::Identity();
+}; 
 
 class MapManager {
 public:
@@ -127,9 +128,10 @@ struct MsgMap {
     std::vector<TypeDefs::idpair> keyframes1;
     std::vector<TypeDefs::idpair> keyframes2;
     std::vector<TypeDefs::TransformType> transforms12;
+    std::vector<TypeDefs::Matrix6Type> cov;
 
     template<class Archive> auto serialize( Archive & archive )                         ->void {
-        archive(id_map,keyframes1,keyframes2,transforms12);
+        archive(id_map,keyframes1,keyframes2,transforms12,cov);
     }
 };
 
@@ -187,15 +189,17 @@ public:
     // Write-Out
     auto WriteKFsToFile(std::string suffix = std::string())                             ->void;
 
+    auto WriteKFsToFileAllAg(std::string prefix = std::string())                        ->void;
+
 protected:
     // Outlier Removal
     virtual auto RemoveLandmarkOutliers()                                               ->int;
 
     // Write-Out
     auto WriteStateToCsv(const std::string& filename,
-                         const size_t client_id)                                        ->void;
+                         const size_t client_id, const bool truncate = true)            ->void;
     auto WriteStateToCsvTUM(const std::string& filename,
-                         const size_t client_id)                                        ->void;
+                         const size_t client_id, const bool truncate = true)            ->void;
 
     // Loop Correction
     LoopVector                  loop_constraints_;

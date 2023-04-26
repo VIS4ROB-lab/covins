@@ -30,6 +30,7 @@
 #include "covins_backend/optimization_be.hpp"
 #include "covins_backend/visualization_be.hpp"
 #include "covins_backend/placerec_be.hpp"
+#include "covins_backend/placerec_gen_be.hpp"
 
 namespace covins {
 
@@ -254,7 +255,11 @@ auto CovinsBackend::CallbackLoadMap(covins_backend::ServiceLoadMap::Request &req
         if(covins_params::placerec::type == "COVINS") {
             placerec.reset(new PlaceRecognition(mapmanager_,perform_pgo));
             thread_placerec.reset(new std::thread(&PlacerecBase::Run,placerec));
-        } else {
+        } else if (covins_params::placerec::type == "COVINS_G") {
+            placerec.reset(new PlaceRecognitionG(mapmanager_,perform_pgo));
+            thread_placerec.reset(new std::thread(&PlacerecBase::Run,placerec));
+        }
+        else {
             std::cout << COUTFATAL << "Place Recognition System Type \"" << covins_params::placerec::type << "\" not valid" << std::endl;
             exit(-1);
         }
@@ -405,7 +410,7 @@ auto CovinsBackend::get_counter()->int {
 
 auto CovinsBackend::LoadVocabulary()->void {
     bool vocload = false;
-    if(covins_params::features::type == "ORB")
+    if(covins_params::features::type == "ORB" || covins_params::features::type == "SIFT")
     {
         std::cout << endl << "Loading ORB Vocabulary. This could take a while..." << std::endl;
         voc_.reset(new CovinsVocabulary::Vocabulary());

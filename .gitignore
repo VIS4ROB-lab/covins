@@ -30,13 +30,7 @@ briskOKVIS_k10_L6_voc_v1.yml
 brief_k10L6.bin
 
 # Trajectory Write-Out
-covins_backend/output/20*
-covins_backend/output/KF*
-covins_backend/output/RemovalPattern*
-covins_backend/output/run*
-covins_backend/output/Traj*
-covins_backend/output/map_data
-covins_backend/output/saved_maps
+covins_backend/output/*
 
 # CMake Build
 build/
@@ -46,3 +40,7 @@ lib/
 .ccls-cache/
 .ccls
 compile_commands.json
+
+# Vscode
+.cache/
+.vscode/
