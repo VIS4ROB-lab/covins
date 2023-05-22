@@ -832,15 +832,13 @@ auto Optimization::OptimizeRelativePose(KeyframePtr kf1, KeyframePtr kf2, Landma
 
 auto Optimization::PoseGraphOptimization(
     MapPtr map, PoseMap corrected_poses) -> void {
-  
-    // std::cout << "+++ PGO: Start +++" << std::endl;
 
     ceres::Problem::Options problem_options;
     problem_options.enable_fast_removal = true;
     ceres::Problem problem(problem_options);
 
     ceres::LossFunctionWrapper *loss_function = new ceres::LossFunctionWrapper(
-        new ceres::CauchyLoss(0.5), ceres::TAKE_OWNERSHIP);
+        new ceres::CauchyLoss(covins_params::opt::robust_loss_th), ceres::TAKE_OWNERSHIP);
 
     ceres::LocalParameterization *local_pose_param =
         new robopt::local_param::PoseQuaternionLocalParameterization();
@@ -1085,7 +1083,6 @@ auto Optimization::PoseGraphOptimization(
     }
 
     std::cout << "--> PGO END " << std::endl;
-    // std::cout << "--> PGO removed " << removed_lms << " LMs" << std::endl;
 }
 
 

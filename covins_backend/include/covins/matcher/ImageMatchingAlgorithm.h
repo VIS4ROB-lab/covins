@@ -116,20 +116,16 @@ class ImageMatchingAlgorithm : public MatchingAlgorithm {
    * @remark Points that absolutely don't match will return float::max.
    */
   virtual float distance(size_t indexA, size_t indexB) const {
+    const float dist = static_cast<float>(specificDescriptorDistance(
+        
+        kfPtrA_->GetDescriptor(indexA),
+        kfPtrB_->GetDescriptor(indexB)));
 
-    if (covins_params::features::type == "ORB") {
-     const float dist = static_cast<float>(
-          DescriptorDistanceHamming(kfPtrA_->GetDescriptorAddCV(indexA),
-                                    kfPtrB_->GetDescriptorAddCV(indexB)));
-      if (dist < distanceThreshold_) {
+    if (dist < distanceThreshold_) {
       if (verifyMatch(indexA, indexB))
         return dist;
     }
     return std::numeric_limits<float>::max();
-    } else {
-      std::cout << "Descriptor Not Supported Currently. Select ORB" << std::endl;
-            exit(-1);
-    }
   }
 
   /// \brief Geometric verification of a match.
@@ -211,11 +207,6 @@ class ImageMatchingAlgorithm : public MatchingAlgorithm {
 
   bool validRelativeUncertainty_ = false;
 
-  /// \brief Calculates the distance between two descriptors.
-  u_int32_t DescriptorDistanceHamming(cv::Mat descriptorA,
-                              cv::Mat descriptorB) const {
-    return cv::norm(descriptorA, descriptorB, cv::NORM_HAMMING);
-  }
 
   /// \brief Calculates the distance between two descriptors.
   // copy from BriskDescriptor.hpp

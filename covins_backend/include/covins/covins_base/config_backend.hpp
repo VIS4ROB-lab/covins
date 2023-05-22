@@ -186,6 +186,7 @@ namespace opt {
     const bool perform_pgo                              = estd2::GetValFromYaml<bool>(conf,"opt.perform_pgo");
     const bool use_nbr_kfs                              = estd2::GetValFromYaml<bool>(conf,"opt.use_nbr_kfs");
     const bool use_robust_loss                          = estd2::GetValFromYaml<bool>(conf,"opt.use_robust_loss");
+    const precision_t robust_loss_th                    = estd2::GetValFromYaml<precision_t>(conf,"opt.robust_loss_threshold");
     const bool pgo_fix_kfs_after_gba                    = estd2::GetValFromYaml<bool>(conf,"opt.pgo_fix_kfs_after_gba");
     const bool pgo_fix_poses_loaded_maps                = estd2::GetValFromYaml<bool>(conf,"opt.pgo_fix_poses_loaded_maps");
     const bool gba_fix_poses_loaded_maps                = estd2::GetValFromYaml<bool>(conf,"opt.gba_fix_poses_loaded_maps");

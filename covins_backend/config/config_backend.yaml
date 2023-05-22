@@ -65,7 +65,7 @@ mapping.kf_culling_max_time_dist: 1.0 #s - max. allowed time distance between 2 
 # activate / deactivate place recognition
 placerec.active: 1
 
-placerec.type: 'COVINS_G' # this allows to integrate other PR algorithms. Cuurently, only 'COVINS' and 'COVINS_G' is supported
+placerec.type: 'COVINS_G' # this allows to integrate other PR algorithms. Currently, only 'COVINS' and 'COVINS_G' is supported
 
 placerec.start_after_kf: 7 # map matching skips the first x KFs after map initialization
 placerec.consecutive_loop_dist: 10 # after finding a loop, the next x KFs are not considered loop closure query
@@ -122,12 +122,17 @@ opt.pgo_iteration_limit: 10 # PGO max iterations
 opt.perform_pgo: 1 # Enable Pose graph Optimization
 opt.use_nbr_kfs: 1 # Use extra Neighboring KFs in the pose graph
 opt.use_robust_loss: 1 # Use robust loss function for the loop edges
+opt.robust_loss_threshold: 0.5 # The threshold (S) for the Cauchy Robust Loss Function
 
 opt.pgo_fix_kfs_after_gba: 1 # KFs that were part of a GBA are fixed in future PGO runs
 opt.pgo_fix_poses_loaded_maps: 0
 opt.gba_fix_poses_loaded_maps: 0
 
 # PGO Weights for KF edge constraints (Computed using Expected Accuracy)
+# The R and T multipliers are used for the SQRT Information matrix of the KF relative edges constraints
+# kf_n1 multiplier is used for the direct neighbor (For both R and T terms)
+# E.g. for 2nd/3rd neighbor, the multiplier will be [wt_kf_R * (wt_kf_n1/wt_kf_n23)] for the rotational terms
+# and [wt_kf_T * (wt_kf_n1/wt_kf_n23)] for the translational terms
 opt.wt_kf_R: 10 
 opt.wt_kf_T: 1
 opt.wt_kf_n1: 10 # Multiplier for direct neighbor

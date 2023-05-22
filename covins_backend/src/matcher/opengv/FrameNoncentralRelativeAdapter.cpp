@@ -108,7 +108,7 @@ FrameNoncentralRelativeAdapter::FrameNoncentralRelativeAdapter(
     }
   }
 
-  // Build the Cam OFfset Matrix (First push all at index 0 and then all at
+  // Build the Cam Offset Matrix (First push all at index 0 and then all at
   // index 1)
   //
   // Push the Camera Translation and Rotations
