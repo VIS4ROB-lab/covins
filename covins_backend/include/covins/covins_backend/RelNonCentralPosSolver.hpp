@@ -7,9 +7,8 @@
 
 #include <eigen3/Eigen/Core>
 
-// CoVINS
+// COVINS
 #include <covins/covins_base/typedefs_base.hpp>
-
 #include "covins/matcher/MatchingAlgorithm.h"
 
 // Third Party
@@ -52,8 +51,8 @@ public:
   /// @param minInliers The minimal number of inliers needed
   /// @param ransacProb The ransac probability
   /// @param maxIter The maximal number of iterations
-  void setRansacParams(const int minInliers, const double ransacProb,
-                       const int maxIter);
+  auto setRansacParams(const int minInliers, const double ransacProb,
+                       const int maxIter) -> void;
 
 
   /// @brief Perform 17 Point Ransac using 2D-2D correspondces in non central
@@ -64,10 +63,10 @@ public:
   /// @param Tc1c2 Relative Transfomation from Frame 2 to Frame 1
   /// @param cov_loop Covariance Matrix (6x6) of the loop transformation
   /// @return Whether a Transformation with sufficients inliers was found
-  bool computeNonCentralRelPose(const KeyframePtr KeyframePtr1,
+  auto computeNonCentralRelPose(const KeyframePtr KeyframePtr1,
                                 const KeyframePtr KeyframePtr2,
                                 const double threshold, TransformType &Tc1c2,
-                                Matrix6Type &cov_loop);
+                                Matrix6Type &cov_loop) -> bool;
 
 
   /// @brief Perform 5 Point Ransac using 2D-2D correspondces to get pose.
@@ -78,9 +77,10 @@ public:
   /// @param Tc1c2 Relative Transfomation from Frame 2 to Frame 1
   /// @param inlierInd Vector containing the inlier indices
   /// @return Whether a Transformation with sufficients inliers was found
-  bool computePose(const KeyframePtr KeyframePtr1,
+  auto computePose(const KeyframePtr KeyframePtr1,
                    const KeyframePtr KeyframePtr2, Matches &ImgMatches,
-                   const double threshold, TransformType &Tc1c2, std::vector<int> &inlierInd);
+                   const double threshold, TransformType &Tc1c2,
+                   std::vector<int> &inlierInd) -> bool;
 
   auto findMatches(const KeyframePtr KeyframePtr1,
                    const KeyframePtr KeyframePtr2) -> Matches;

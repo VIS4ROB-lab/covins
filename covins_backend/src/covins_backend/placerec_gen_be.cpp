@@ -62,7 +62,6 @@ auto PlaceRecognitionG::ComputeSE3() -> bool {
 
     const size_t nInitialCandidates = mvpEnoughConsistentCandidates.size();
 
-    // std::cout << "----> Query " << kf_query_ << " : nInitialCandidates: " << nInitialCandidates << std::endl;
     vector<bool> vbDiscarded;
     vbDiscarded.resize(nInitialCandidates);
     int nCandidates = 0; // candidates with enough matches
@@ -80,12 +79,12 @@ auto PlaceRecognitionG::ComputeSE3() -> bool {
           continue;
         }
 
-        std::shared_ptr<cv::BFMatcher> matcher(nullptr);
+        std::shared_ptr<cv::DescriptorMatcher> matcher;
 
         if (covins_params::features::type == "ORB") {
-            matcher = make_shared<cv::BFMatcher>(cv::NORM_HAMMING);
+            matcher = make_shared<cv::BFMatcher>(cv::BFMatcher(cv::NORM_HAMMING));
         } else if (covins_params::features::type == "SIFT") {
-            matcher = make_shared<cv::BFMatcher>(cv::NORM_L2);
+            matcher = make_shared<cv::FlannBasedMatcher>(cv::FlannBasedMatcher());
         } else {
             std::cout << COUTERROR
                     << "Wrong Feature Type: Only ORB or SIFT is supported currently"
@@ -296,7 +295,6 @@ auto PlaceRecognitionG::DetectLoop()->bool {
         
     const DBoW2::BowVector &CurrentBowVec = kf_query_->bow_vec_;
     float minScore = 1;
-    // std::cout << "Number of neighbors: " << vpConnectedKeyFrames.size() << std::endl;
     for (size_t i = 0; i < vpConnectedKeyFrames.size(); i++) {
             KeyframePtr pKF = vpConnectedKeyFrames[i];
             if(pKF->IsInvalid()) continue;

@@ -7,7 +7,7 @@
 
 #include <eigen3/Eigen/Core>
 
-// CoVINS
+// COVINS
 #include "covins_backend/keyframe_be.hpp"
 #include "covins_base/config_backend.hpp"
 
@@ -63,7 +63,6 @@ bool RelNonCentralPosSolver::computeNonCentralRelPose(
     const double threshold, Eigen::Matrix4d &Tc1c2, Eigen::Matrix<double, 6, 6> &cov_loop) {
 
   // Find matches between CKF and QKF
-  // std::cout << "Attempting NON-Relative Pose Solver" << std::endl;
 
   // 3 v 2 Matching of Multicamera Systems (See publication for reference)
   size_t n_ckfs = 3;
@@ -163,11 +162,6 @@ bool RelNonCentralPosSolver::computeNonCentralRelPose(
         sacProb.max_iterations_ = mMaxIter_17PT;
         sacProb.computeModel(0);
 
-        // std::cout << "17 POINT Ransac needed " << sacProb.iterations_ << " iterations and ";
-        // std::cout << std::endl;
-        // std::cout << "the number of inliers is: " << sacProb.inliers_.size();
-        // std::cout << std::endl << std::endl;
-
         if (sacProb.inliers_.size() < mMinInliers_17PT ) {
         return false;
         }
@@ -188,10 +182,7 @@ bool RelNonCentralPosSolver::computeNonCentralRelPose(
         TransformType Tws1 = (Twc1corr * QKF->GetStateExtrinsics().inverse());
         Ts1s2 = Tws1.inverse() * Tws2;
 
-        // std::cout << "T_s2s1 :" << std::endl << Ts1s2.inverse() << std::endl;
-
         ////////////////////////////////////////////////////////////////////////////////////////////////////
-        // TODO Shift the Covariance Computation to Seperate Function
 
         // Compute Observed Covariance (Sampling-based Covariance)
         // We compute the Covariance in the IMU frame since PGO has all edges in
@@ -300,8 +291,6 @@ bool RelNonCentralPosSolver::computeNonCentralRelPose(
                     (m_s.rowwise() - x_mean_s).matrix()) /
                    (m_s.rows() - 1);
         
-        // std::cout << "Cov Mat Trace: " << cov_loop.trace() << std::endl;
-
         if (cov_loop.trace() < mMax_cov) {
           return true;
         }
@@ -314,12 +303,12 @@ bool RelNonCentralPosSolver::computeNonCentralRelPose(
 auto RelNonCentralPosSolver::findMatches(const KeyframePtr KFPtr1,
                                          const KeyframePtr KFPtr2) -> Matches {
 
-  std::shared_ptr<cv::BFMatcher> matcher(nullptr);
+  std::shared_ptr<cv::DescriptorMatcher> matcher;
 
   if (covins_params::features::type == "ORB") {
-      matcher = make_shared<cv::BFMatcher>(cv::NORM_HAMMING);
+      matcher = make_shared<cv::BFMatcher>(cv::BFMatcher(cv::NORM_HAMMING));
   } else if (covins_params::features::type == "SIFT") {
-      matcher = make_shared<cv::BFMatcher>(cv::NORM_L2);
+      matcher = make_shared<cv::FlannBasedMatcher>(cv::FlannBasedMatcher());
   } else {
       std::cout << COUTERROR
               << "Wrong Feature Type: Only ORB or SIFT is supported currently"
@@ -375,8 +364,6 @@ bool RelNonCentralPosSolver::computePose(const KeyframePtr KfPtr1,
 
   //Inlier keypoints
   inlierInd = sacProb.inliers_;
-
-  // std::cout << "Inliers: "<< sacProb.inliers_.size() << " Iters: "<< sacProb.iterations_ << std::endl;
 
   if (sacProb.inliers_.size() < mMinInliers || sacProb.iterations_ >=
   sacProb.max_iterations_) {
