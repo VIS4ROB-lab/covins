@@ -17,7 +17,7 @@ With the COVINS-G release, we make the server back-end flexible enabling compati
     - [Installing ROS Support for the ORB-SLAM3 Front-End](#setup_ros)
     - [Installing VINS-Fusion Front-End](#installing-vins-fusion-front-end)
   - [4 Running COVINS](#4-running-covins)
-    - [COVINS Back-end](#run_covins)  
+    - [COVINS Back-End](#run_covins)  
       - [Running the COVINS Server Back-End](/docs/run_COVINS.md#run_be)
       - [Running the ORB-SLAM3 Front-End](docs/run_COVINS.md#run_fe)
       - [Visualization](docs/run_COVINS.md#run_viz)
@@ -25,7 +25,7 @@ With the COVINS-G release, we make the server back-end flexible enabling compati
       - [Parameters](docs/run_COVINS.md#run_params)
       - [Output Files](docs/run_COVINS.md#run_out)
       - [Running COVINS with ROS](docs/run_COVINS.md#run_ros)
-    - [COVINS-G Back-end](#run_covinsg)
+    - [COVINS-G Back-End](#run_covinsg)
       - [Running the COVINS-G Server Back-End](docs/run_COVINS-G.md#run_be)
       - [ORB-SLAM3 Front-End](docs/run_COVINS-G.md#run_fe_orb)
       - [VINS-Fusion Front-End](docs/run_COVINS-G.md#run_fe_vins)
@@ -38,7 +38,6 @@ With the COVINS-G release, we make the server back-end flexible enabling compati
       - [User Interaction](docs/run_COVINS-G.md#run_intercation)
       - [Parameters](docs/run_COVINS-G.md#run_params)
       - [Output Files](docs/run_COVINS-G.md#run_out)
-
   - [5 Docker Implementation](#5-docker-implementation)
     - [Building the Docker Image](#building-the-docker-image)
     - [Running the Docker Image](#running-the-docker-image)
@@ -86,7 +85,7 @@ If you use COVINS in an academic work, please cite:
 	  year={2021}
 	}
 
-If you use the COVINS-G extension in an academic work, please cite:
+If you use the COVINS-G extension in an academic work, please cite both the original COVINS publication and additionally:
 
     @article{patel23covinsg,
       title = {COVINS-G: A Generic Back-end for Collaborative Visual-Inertial SLAM},
@@ -100,7 +99,7 @@ If you use the COVINS-G extension in an academic work, please cite:
 
 <a name="setup"></a>
 ## 3 Basic Setup
-This section explains how you can build the COVINS server back-end, as well as the provided version of the ORB-SLAM3 front-end able to communicate with the back-end. Morover, COVINS-G extension provides a generic ROS front-end wrapper to support any arbitrary VIO/tracking cameras as well as support for VINS-Fusion. We provide installation instructions for Ubuntu *18.04* as well as *20.04*. Note that we also provide a [Docker implementation](#docker) for simplified deployment of COVINS.
+This section explains how you can build the COVINS server back-end, as well as the provided version of the ORB-SLAM3 front-end able to communicate with the back-end. Morover, the COVINS-G extension provides a generic ROS front-end wrapper to support any arbitrary VIO/tracking cameras as well as support for VINS-Fusion. We provide installation instructions for Ubuntu *18.04* as well as *20.04*. Note that we also provide a [Docker implementation](#docker) for simplified deployment of COVINS.
 
 **Note**: Please pay attention to the ```CMAKE_BUILD_TYPE```. Particularly, building parts of the code with ```march=native``` can cause problems on some machines.
 
@@ -192,7 +191,7 @@ If you want to use `rosbag` files to pass sensor data to COVINS, you need to exp
 <a name="setup_vins"></a>
 ### Installing VINS-Fusion Front-End
 
-If you would like to use a VINS-Fusion Front-end (Only compatible with COVINS-G), we provide a modified version of the original VINS-Fusion repository which is made compatible with COVINS. The modified repository is available [here (VINS-COVINS-adaptation)](https://github.com/manthan99/VINS-COVINS-adaptation). Follow the Readme for installation instructions. Note, we only provide support for using VINS-Fusion with docker due to compilation issue of VINS-Fusion on Ubuntu 20.04.
+If you would like to use a VINS-Fusion Front-end (only compatible with COVINS-G), we provide a modified version of the original VINS-Fusion repository which is made compatible with COVINS. The modified repository is available [here (VINS-COVINS-adaptation)](https://github.com/manthan99/VINS-COVINS-adaptation). Follow the Readme for installation instructions. Note, we only provide support for using VINS-Fusion with docker due to compilation issue of VINS-Fusion on Ubuntu 20.04.
 
 <a name="running"></a>
 ## 4 Running COVINS
@@ -200,12 +199,12 @@ If you would like to use a VINS-Fusion Front-end (Only compatible with COVINS-G)
 We provide easy switching between the different backends (COVINS and COVINS_G) by specifying the ```placerec.type``` parameter in the ```~/ws/covins_ws/src/covins/covins_backend/config/config_backend.yaml``` file. In general, ```COVINS``` would be able to provide more accurate estimates after performing the Global Bundle Adjustment (GBA), but is limited by the flexibility in terms of the choice of front-end (works well with ORB_SLAM3 but not VINS-Fusion). On the other hand, ```COVINS_G``` is compatible with any arbitrary front-end but cannot perform GBA since map-points are not utilized in the back-end. We refer to the COVINS_G paper for more details about the use-cases of the different back-ends.
 
 <a name="run_covins"></a>
-### COVINS Back-end
+### COVINS Back-End
 
 The instructions for running a COVINS back-end can be found [here](/docs/run_COVINS.md).
 
 <a name="run_covinsg"></a>
-### COVINS-G Back-end
+### COVINS-G Back-End
 
 The instructions for running a COVINS-G back-end can be found [here](/docs/run_COVINS-G.md).
 
