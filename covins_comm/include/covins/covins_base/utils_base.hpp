@@ -117,6 +117,30 @@ public:
 
         return ypr / M_PI * 180.0;
     }
+
+    static auto ypr2R(const TypeDefs::Vector3Type &ypr)->Matrix3Type
+    {
+        auto y = ypr(0) / 180.0 * M_PI;
+        auto p = ypr(1) / 180.0 * M_PI;
+        auto r = ypr(2) / 180.0 * M_PI;
+
+        Matrix3Type Rz;
+        Rz << cos(y), -sin(y), 0,
+            sin(y), cos(y), 0,
+            0, 0, 1;
+
+        Matrix3Type Ry;
+        Ry << cos(p), 0., sin(p),
+            0., 1., 0.,
+            -sin(p), 0., cos(p);
+
+        Matrix3Type Rx;
+        Rx << 1., 0., 0.,
+            0., cos(r), -sin(r),
+            0., sin(r), cos(r);
+
+        return Rz * Ry * Rx;
+    }
 };
 
 } //end ns

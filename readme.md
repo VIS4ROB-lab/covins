@@ -1,35 +1,56 @@
-# COVINS -- A Framework for Collaborative Visual-Inertial SLAM and Multi-Agent 3D Mapping
+# COVINS-(G) -- A (Generic) Framework for Collaborative Visual-Inertial SLAM and Multi-Agent 3D Mapping
 
-**Version 1.0**
+**Version 2.0** (Support for COVINS-G: A Generic Back-end for Collaborative Visual-Inertial SLAM)
 
-COVINS is an accurate, scalable, and versatile visual-inertial collaborative SLAM system, that enables a group of agents to simultaneously co-localize and jointly map an environment.
+COVINS is an accurate, scalable, and versatile visual-inertial collaborative SLAM system, that enables a group of agents to simultaneously co-localize and jointly map an environment. COVINS provides a server back-end for collaborative SLAM, running on a local machine or a remote cloud instance, generating collaborative estimates from map data contributed by different agents running Visual-Inertial Odomety (VIO) and sharing their map with the back-end. 
 
-COVINS provides a server back-end for collaborative SLAM, running on a local machine or a remote cloud instance, generating collaborative estimates from map data contributed by different agents running Visual-Inertial Odomety (VIO) and sharing their map with the back-end. COVINS also provides a generic communication module to interface the keyframe-based VIO of your choice. Here, we provide an example of COVINS interfaced with the VIO front-end of [ORB-SLAM3](https://github.com/UZ-SLAMLab/ORB_SLAM3). We provide guidance and examples how to run COVINS on the [EuRoC dataset](https://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets), as well as information beyond basic deployment, for example how the COVINS back-end can be deployed on a remote cloud computing instance.
+With the COVINS-G release, we make the server back-end flexible enabling compatibility with any arbitrary VIO/Stereo front-end, including, for example, off-the-shelf cameras with odometry capabilities, such as the Realsense T265. 
+
+ We provide guidance and examples how to run COVINS and COVINS-G on the [EuRoC dataset](https://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets), as well as information beyond basic deployment, for example how the COVINS back-end can be deployed on a remote cloud computing instance. Instructions on running COVINS-G with different cameras such as Intel Realsense D455 and T265 Tracking camera, as well as different frontends like VINS-Fusion, ORB-SLAM3 and SVO-pro are also provided.
 
 ## Index
-1. [Related Publications](#related_publications)
-2. [License](#license)
-3. [Basic Setup](#setup)
-    * [Environment Setup](#setup_env)
-    * [COVINS Installation](#setup_covins)
-    * [Installing ROS Support for the ORB-SLAM3 Front-End](#setup_ros)
-4. [Running COVINS](#running)
-    * [Running the COVINS Server Back-End](#run_be)
-    * [Running the ORB-SLAM3 Front-End](#run_fe)
-    * [Visualization](#run_viz)
-    * [User Interaction](#run_intercation)
-    * [Parameters](#run_params)
-    * [Output Files](#run_out)
-    * [Running COVINS with ROS](#run_ros)
-5. [Docker Implementation](#docker)
-6. [Extended Functionalities](#extended)
-    * [Deployment of the COVINS Back-End in an AWS Cloud Instance](#ext_aws)
-    * [Interfacing a Custom VIO System with COVINS](#ext_comm)
-    * [Map Re-Use Onboard the Agent](#ext_reuse)
-7. [Limitations and Known Issues](#issues)
+  - [1 Related Publications](#1-related-publications)
+  - [2 License](#2-license)
+  - [3 Basic Setup](#3-basic-setup)
+    - [Environment Setup](#environment-setup)
+    - [COVINS Installation](#covins-installation)
+    - [Installing ROS Support for the ORB-SLAM3 Front-End](#setup_ros)
+    - [Installing VINS-Fusion Front-End](#installing-vins-fusion-front-end)
+  - [4 Running COVINS](#4-running-covins)
+    - [COVINS Back-End](#run_covins)  
+      - [Running the COVINS Server Back-End](/docs/run_COVINS.md#run_be)
+      - [Running the ORB-SLAM3 Front-End](docs/run_COVINS.md#run_fe)
+      - [Visualization](docs/run_COVINS.md#run_viz)
+      - [User Interaction](docs/run_COVINS.md#run_intercation)
+      - [Parameters](docs/run_COVINS.md#run_params)
+      - [Output Files](docs/run_COVINS.md#run_out)
+      - [Running COVINS with ROS](docs/run_COVINS.md#run_ros)
+    - [COVINS-G Back-End](#run_covinsg)
+      - [Running the COVINS-G Server Back-End](docs/run_COVINS-G.md#run_be)
+      - [ORB-SLAM3 Front-End](docs/run_COVINS-G.md#run_fe_orb)
+      - [VINS-Fusion Front-End](docs/run_COVINS-G.md#run_fe_vins)
+      - [ROS-based Front-End Wrapper](docs/run_COVINS-G.md#run_fe_ros)
+      - [Mixture of Front-Ends](docs/run_COVINS-G.md#run_fe_mix)
+      - [Realsense T265 Tracking Camera](docs/run_COVINS-G.md#run_t265)
+      - [Custom Dataset (Realsense D455)](docs/run_COVINS-G.md#run_d455)
+      - [Using SIFT Features](docs/run_COVINS-G.md#run_sift)
+      - [Visualization](docs/run_COVINS-G.md#run_viz)
+      - [User Interaction](docs/run_COVINS-G.md#run_intercation)
+      - [Parameters](docs/run_COVINS-G.md#run_params)
+      - [Output Files](docs/run_COVINS-G.md#run_out)
+  - [5 Docker Implementation](#5-docker-implementation)
+    - [Building the Docker Image](#building-the-docker-image)
+    - [Running the Docker Image](#running-the-docker-image)
+  - [6 Extended Functionalities](#6-extended-functionalities)
+    - [Deployment of the COVINS Back-End in an AWS Cloud Instance](#deployment-of-the-covins-back-end-in-an-aws-cloud-instance)
+    - [Interfacing a Custom VIO System with COVINS](#interfacing-a-custom-vio-system-with-covins)
+    - [Map Re-Use Onboard the Agent (Only for COVINS)](#map-re-use-onboard-the-agent-only-for-covins)
+  - [7 Limitations and Known Issues](#7-limitations-and-known-issues)
 
 <a name="related_publications"></a>
 ## 1 Related Publications
+
+[***COVINS-G***] Manthan Patel, Marco Karrer, Philipp Bänninger and Margarita Chli. **COVINS-G: A Generic Back-end for Collaborative Visual-Inertial SLAM**. *IEEE International Conference on Robotics and Automation (ICRA)*, 2023. **[PDF](https://arxiv.org/abs/2301.07147)**
 
 [***COVINS***] Patrik Schmuck, Thomas Ziegler, Marco Karrer, Jonathan Perraudin and Margarita Chli. **COVINS: Visual-Inertial SLAM for Centralized Collaboration**. *IEEE International Symposium on Mixed and Augmented Reality (ISMAR)*, 2021. **[PDF](https://www.research-collection.ethz.ch/handle/20.500.11850/507909)**
 
@@ -40,8 +61,11 @@ COVINS provides a server back-end for collaborative SLAM, running on a local mac
 [*Collaborative VI-SLAM*] Patrik Schmuck, Marco Karrer and Margarita Chli. **CVI-SLAM - Collaborative Visual-Inertial SLAM**. *IEEE Robotics and Automation Letters (RA-L)*, 2018. **[PDF](https://www.research-collection.ethz.ch/bitstream/handle/20.500.11850/294281/2018_IROS_Karrer.pdf?sequence=7&isAllowed=y)**
 
 
+
 #### Video:
-<a href="https://www.youtube.com/embed/FxJTY5x1fGE" target="_blank"><img src="https://i.ytimg.com/vi/FxJTY5x1fGE/hqdefault.jpg" alt="Mesh" width="360" height="270" border="10" /></a>
+COVINS-G: | COVINS:
+--- | ---
+<a href="https://www.youtube.com/embed/FoJfXCfaYDw" target="_blank"><img src=".aux/COVINS-G_cover.png" alt="Mesh" width="420" height="270" border="10" /></a> | <a href="https://www.youtube.com/embed/FxJTY5x1fGE" target="_blank"><img src="https://i.ytimg.com/vi/FxJTY5x1fGE/hqdefault.jpg" alt="Mesh" width="360" height="270" border="10" /></a>
 
 <a name="license"></a>
 ## 2 License
@@ -61,9 +85,21 @@ If you use COVINS in an academic work, please cite:
 	  year={2021}
 	}
 
+If you use the COVINS-G extension in an academic work, please cite both the original COVINS publication and additionally:
+
+    @article{patel23covinsg,
+      title = {COVINS-G: A Generic Back-end for Collaborative Visual-Inertial SLAM},
+      doi = {10.48550/ARXIV.2301.07147},
+      url = {https://arxiv.org/abs/2301.07147},
+      author = {Patel, Manthan and Karrer, Marco and Bänninger, Philipp and Chli, Margarita},
+      publisher = {arXiv},
+      year = {2023},
+    }
+
+
 <a name="setup"></a>
 ## 3 Basic Setup
-This section explains how you can build the COVINS server back-end, as well as the provided version of the ORB-SLAM3 front-end able to communicate with the back-end. COVINS was developed under Ubuntu *18.04*, and we provide installation instructions for *18.04* as well as *20.04*. Note that we also provide a [Docker implementation](#docker) for simplified deployment of COVINS.
+This section explains how you can build the COVINS server back-end, as well as the provided version of the ORB-SLAM3 front-end able to communicate with the back-end. Morover, the COVINS-G extension provides a generic ROS front-end wrapper to support any arbitrary VIO/tracking cameras as well as support for VINS-Fusion. We provide installation instructions for Ubuntu *18.04* as well as *20.04*. Note that we also provide a [Docker implementation](#docker) for simplified deployment of COVINS.
 
 **Note**: Please pay attention to the ```CMAKE_BUILD_TYPE```. Particularly, building parts of the code with ```march=native``` can cause problems on some machines.
 
@@ -113,7 +149,12 @@ We provide a script (```covins/install_file.sh```) that will perform a full inst
 * ```cd ~/ws/covins_ws```
 * ```chmod +x src/covins/install_file.sh```
 * ```./src/covins/install_file.sh 8```
-    * The argument ```8``` is optional, and specifies the number of jobs the build process should use. 
+    * The argument ```8``` is optional, and specifies the number of jobs the build process should use.
+    * The COVINS back-end needs to be built only on the Server. For the agents, building just the front-end is sufficient. The ROS front-end wrapper (only compatible with COVINS-G) would be useful in cases where you would like to use a Realsense T265 tracking camera or any arbitrary VIO/stereo frontend without any modifications.
+        * To build the ROS front-end Wrapper only run the following command:
+          * ```./src/covins/install_file.sh -f 8```
+        * To build ORB-SLAM3 only (No back-end), run the following command:
+          * ```./src/covins/install_file.sh -o 8```
 
 Generally, when the build process of COVINS or ORB-SLAM3 fails, make sure you have correctly sourced the workspace, and that the libraries in the third-party folders, such as ```DBoW2``` and ```g2o``` are built correctly.
 
@@ -147,128 +188,25 @@ If you want to use `rosbag` files to pass sensor data to COVINS, you need to exp
         * ```ldd Mono_Inertial | grep opencv_core```
         * This should mention ```libopencv_core.so.3.4``` as the only ```libopencv_core``` dependency
 
+<a name="setup_vins"></a>
+### Installing VINS-Fusion Front-End
+
+If you would like to use a VINS-Fusion Front-end (only compatible with COVINS-G), we provide a modified version of the original VINS-Fusion repository which is made compatible with COVINS. The modified repository is available [here (VINS-COVINS-adaptation)](https://github.com/manthan99/VINS-COVINS-adaptation). Follow the Readme for installation instructions. Note, we only provide support for using VINS-Fusion with docker due to compilation issue of VINS-Fusion on Ubuntu 20.04.
+
 <a name="running"></a>
 ## 4 Running COVINS
 
-This section explains how to run COVINS on the [EuRoC dataset](https://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets). If you want to use a different dataset, please do not forget to use a correct parameter file instead of ```covins/orb_slam3/Examples/Monocular-Inertial/EuRoC.yaml```.
+We provide easy switching between the different backends (COVINS and COVINS_G) by specifying the ```placerec.type``` parameter in the ```~/ws/covins_ws/src/covins/covins_backend/config/config_backend.yaml``` file. In general, ```COVINS``` would be able to provide more accurate estimates after performing the Global Bundle Adjustment (GBA), but is limited by the flexibility in terms of the choice of front-end (works well with ORB_SLAM3 but not VINS-Fusion). On the other hand, ```COVINS_G``` is compatible with any arbitrary front-end but cannot perform GBA since map-points are not utilized in the back-end. We refer to the COVINS_G paper for more details about the use-cases of the different back-ends.
 
-**Note**: We strongly recommend running every agent and the server back-end in a separate terminal each.
+<a name="run_covins"></a>
+### COVINS Back-End
 
-#### Setting up the environment
+The instructions for running a COVINS back-end can be found [here](/docs/run_COVINS.md).
 
-* In ```~/ws/covins_ws/src/covins/covins_comm/config/config_comm.yaml```: adjust the value of ```sys.server_ip``` to the IP of the machine where the COVINS back-end is running.
-* In *every* of the provided scripts to run the ORB-SLAM3 front-end (e.g., ```euroc_examples_mh1.sh```, in ```orb_slam3/covins_examples/```), adjust ```pathDatasetEuroc``` to the path where the dataset has been uncompressed. The default expected path is ```<pathDatasetEuroc>/MH_01_easy/mav0/...``` (for ```euroc_examples_mh1.sh```, in this case).
-* In ```~/ws/covins_ws/src/covins/covins_backend/config/config_backend.yaml```: adjust the path of ```sys.map_path0``` to the directory where you would like to load maps from.
+<a name="run_covinsg"></a>
+### COVINS-G Back-End
 
-<a name="run_be"></a>
-### Running the COVINS Server Back-End
-
-* Source your workspace: ```source ~/ws/covins_ws/devel/setup.bash```
-* In a terminal, start a roscore: ```roscore```
-* In a new terminal, start the COVINS backend by executing ```rosrun covins_backend covins_backend_node```
-
-<a name="run_fe"></a>
-### Running the ORB-SLAM3 Front-End
-
-Example scripts are provided in ```orb_slam3/covins_examples/```. Don't forget to correctly set the dataset path in every script you want to use (see above: *Setting up the environment*). You can also check the original [ORB-SLAM3 Repo](https://github.com/UZ-SLAMLab/ORB_SLAM3) for help on how to use the ORB-SLAM3 front-end.
-
-* Download the [EuRoC dataset](https://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets) (ASL dataset format)
-* Open a a new terminal.
-* Source your workspace: ```source ~/ws/covins_ws/devel/setup.bash```
-* ```cd``` to the folder with the example scripts:```cd ~/ws/covins_ws/src/covins/orb_slam3/covins_examples/```
-* Execute one of the example scripts provided in the ```orb_slam3/covins_examples/``` folder, such as ```euroc_examples_mh123_vigba```
-    * **Note**: The example scripts **must be executed from inside the ```covins_examples``` folder**
-    * ```euroc_examples_mhX.sh``` runs the front-end with a single sequence from EuRoC MH1-5.
-    * ```euroc_examples_mh123_vigba.sh``` runs a 3-agent collaborative SLAM session (sequential) followed by Bundle Adjustment.
-    * ```euroc_examples_mh12345_vigba.sh``` runs a 5-agent collaborative SLAM session (sequential) followed by Bundle Adjustment.
-    * Multiple front-ends can run in parallel. The front-ends can run on the same machine, or on different machines connected through a wireless network. However, when running multiple front-ends on the same machine, note that the performance of COVINS might degrade if the computational resources are overloaded by running too many agents simultaneously. We recommend running every front-end instance in a separate terminal.
-    * Common error sources:
-        * If the front-end is stuck after showing ```Loading images for sequence 0...LOADED!```, most likely your dataset path is wrong.
-        * If the front-end is stuck after showing ```--> Connect to server
-``` or shows an error message ```Could no establish connection - exit```, the server is not reachable - the IP might be incorrect, you might have forgotten to start the server, or there is a problem with your network (try pinging the server IP)
-
-COVINS does not support resetting the map onboard the agent. Since map resets are more frequent at the beginning of a session or dataset, for example due to faulty initialization, in the current implementation, the COVINS communication module is set up such that it only starts sending data if a pre-specified number of keyframes was already created by the front-end. This number is specified by ```comm.start_sending_after_kf``` in ```covins/covins_comm/config/config_comm.yaml```, and is currently set to 50. Also check [Limitations](#issues) for more details.
-
-<a name="run_viz"></a>
-### Visualization
-
-COVINS provides a config file for visualization with RVIZ (```covins.rviz``` in ```covins_backend/config/```)
-
-* In a new terminal: run ```tf.launch``` in ```covins_backend/launch/``` to set up the coordinate frames for visualization: ```roslaunch ~/ws/covins_ws/src/covins/covins_backend/launch/tf.launch```
-* In a new terminal: launch RVIZ: ```rviz -d ~/ws/covins_ws/src/covins/covins_backend/config/covins.rviz```
-    * Covisibility edges between keyframes from different agents are shown in red, while edges between keyframes from the same agent are colored gray (those are not shown by default, but can be activated by setting ```vis.covgraph_shared_edges_only``` to ```0``` in ```config_backend.yaml```).
-    * In case keyframes are visualized, removed keyframes are displayed in red (keyframes are not shown by default, but can be activated in RVIZ).
-    * The section _VISUALIZATION_ in ```config_backend.yaml``` provides several options to modify the visualization.
-
-![Covisibilty graphs](.aux/cov_graph_examples.png)
-
-**NOTE**: When running multiple agents in parallel, and the maps are not merged yet, the visualization in RVIZ might toggle between the visualization of both trajectories.
-
-<a name="run_intercation"></a>
-### User Interaction
-
-COVINS provides several options to interact with the map held by the back-end. This is implemented through ROS services.
-
-* Make sure your workspace is sourced: ```source ~/ws/covins_ws/devel/setup.bash```
-* **Map save:** ```rosservice call /covins_savemap <AGENT_ID>``` - this saves the map associated to the agent specified by ```AGENT_ID```.
-    * The map will be saved to the folder ```..../covins_backend/output/map_data```. Make sure the folder is empty, before you save a map (COVINS performs a brief check - if a folder named ```keyframes/``` or ```mappoints/``` exists in the target directory, it will show an error and abort the map save process. Any other files or folders will not result in an error though).
-* **Map load:** ```rosservice call /covins_loadmap 0``` - loads a map stored on disk, from the folder specified by ```sys.map_path0``` in ```config_backend.yaml```.
-    * Note: map load needs to be performed **before** registering any agent.
-    * ```0``` specifies the operation mode of the load functionality. ```0``` means "standard" map loading, while ```1``` and ```2``` will perform place recognition (```1```) and place recognition and PGO (```2```). Note that both modes with place recognition are experimental, only "standard" map load is tested and supported for the open-source version of COVINS.
-* **Bundle Adjustment:** ```rosservice call /covins_gba <AGENT_ID> <MODE>
-``` - Performs visual-inertial bundle adjustemt on the map associated to the agent specified by ```AGENT_ID```. Modes: 0: BA *without* outlier rejection, 1: BA *with* outlier rejection.
-* **Map Compression / Redundancy Removal:** ```rosservice call /covins_prunemap <AGENT_ID> <MAX_KFs>``` - performs redundancy detection and removal on the map associated to the agent specified by ```AGENT_ID```.
-    * ```MAX_KFs``` specifies the target number of keyframes held by the compressed map. If ```MAX_KFs=0```, the threshold value for measuring redundancy specified by the parameter ```kf_culling_th_red``` in ```config_backend.yaml``` will be used.
-    * All experiments with COVINS were performed specifying the target keyframe count. Therefore, we recommend resorting to this functionality.
-    * The parameter ```kf_culling_max_time_dist``` in ```config_backend.yaml``` specifies a maximum time delta permitted between two consecutive keyframes, in order to ensure limit the error of IMU integration. If no keyframe can removed without violating this constraint, map compression will stop, even if the target number of keyframes is not reached.
-* Note: After a map merge of the maps associated to Agent 0 and Agent 1, the merged map is associated to both agents, i.e. ```rosservice call /covins_savemap 0``` and ```rosservice call /covins_savemap 1``` will save the same (shared) map.
-
-<a name="run_params"></a>
-### Parameters
-
-COVINS provides two parameter files to adjust the behavior of the system and algorithms.
-
-* ```../covins_comm/config/config_comm.yaml``` contains all parameters related to communication and the agent front-end.
-* ```../covins_backend/config/config_backend.yaml``` contains all parameters related to the server back-end.
-
-The user should not be required to change any parameters to run COVINS, except paths and the server IP, as explained in this manual.
-
-<a name="run_out"></a>
-### Output Files
-
-* COVINS automatically saves the trajectory estimate of each agent to a file in ```covins_backend/output```. The file ```KF_<AGENT_ID>.csv``` stores the poses associated to the agent specified by ```AGENT_ID```. Each row represents a single pose.
-* COVINS can save the trajectory in 2 formats: *EuRoC format* and *TUM format*. Which one is used can be controlled via the parameter ```trajectory_format``` in ```config_backend.yaml```. 
-    * **TUM format** (default): ```timestamp[s] t_x t_y t_z q_x q_y q_z q_w```
-    * **EuRoC format**: ```timestamp[ns], t_x, t_y, t_z, q_w, q_x, q_y, q_z, vel_x, vel_y, vel_z, bias_gyro_x, bias_gyro_y, bias_gyro_z, bias_acc_x, bias_acc_y, bias_acc_z```
-    * Each output file contains a suffix indicating the format: ```_ftum``` or  ```_feuroc```
-* Trajectories in *TUM format* can be directly evaluated using the [evo evaluation tool](https://github.com/MichaelGrupp/evo).
-    * Run the evaluation e.g. as ```evo_ape euroc KF_0_ftum.csv gt_data.csv -vas``` to perform a Sim(3) alignment reporting trajectory RMSE and scale error.
-    * The ground truth data for the individual EuRoC sequences can be found in ```<sequence>/mav0/state_groundtruth_estimate0/data.csv```
-    * To evaluate a multi-agents estimate, the individual trajectory files must be combined, e.g. with ```cat KF_0_ftum.csv KF_1_ftum.csv KF_2_ftum.csv > mh123_est.csv```. Also, the individual ground truth information from the EuRoC sequences used to generate the estimate must be combined into a single file. We recommend doing this manually, since every file contains a header describing the data, which should not be copied multiple times.
-
-<a name="run_ros"></a>
-### Running COVINS with ROS
-
-* Make sure your workspace is sourced: ```source ~/ws/covins_ws/devel/setup.bash```
-* In ```~/ws/covins_ws/src/covins/orb_slam3/Examples/ROS/ORB_SLAM3/launch/launch_ros_euroc.launch```: adjust the paths for ```voc``` and ```cam```
-* ```cd``` to ```orb_slam3/``` and run ```roslaunch ORB_SLAM3 launch_ros_euroc.launch```
-* In a new terminal: run the rosbag file, e.g. ```rosbag play MH_01_easy.bag```
-    * When using COVINS with ROS, we recommend skipping the initialization sequence performed at the beginning of each EuRoC MH trajectory. ORB-SLAM3 often performs a map reset after this sequence, which is not supported by COVINS and will therefore cause an error. For example, for MH1, this can be easily done by running ```rosbag play MH_01_easy.bag --start 45```. (Start at: MH01: 45s; MH02: 35s; MH03-05: 15s)
-
-#### Running a second agent in parallel with ROS
-
-When you want to run 2 (or more) agents in parallel, you need to adjust the launch files that you will be using in parallel to work in this setup. Particularly
-* You need to **change the name of the ROS node**, since no 2 ROS nodes with the same name can exist simultaneously. 
-* You need to **remap the input topics**, so that ROS nodes for different agents listen to different camera and IMU topics
-* You need to **remap the topics of the bagfiles** for the individual agents, so that they 1) match the topics specified in the launch files and 2) the rosbag files played in parallel do not publish IMU and camera data under the same topic.
-
-We provide an example for two agents. For the first agent, you can execute the launch file and play the bag file as described above. For the second agent, we provide ```launch_ros_euroc_second_agent.launch```.
-* ```name``` is changed to ```ORB_SLAM3_monoi1```
-* Expected input topics are changed to ```/cam0/image_raw1``` and ```/imu1```
-* Run with ```roslaunch ORB_SLAM3 launch_ros_euroc_second_agent.launch``` 
-* Play the bag file of your choice with remapped topics by appending ```/cam0/image_raw:=/cam0/image_raw1 /cam1/image_raw:=/cam1/image_raw1 /imu0:=/imu1```. For example, for ```MH_02_easy.bag```, you would run it with ```rosbag play MH_02_easy.bag --start 35 /cam0/image_raw:=/cam0/image_raw1 /cam1/image_raw:=/cam1/image_raw1 /imu0:=/imu1```
-
-Note: if you **run multiple agents sequentially**, you only need to use ```launch_ros_euroc.launch```. After one agent has finished, just start it again using ```roslaunch ORB_SLAM3 launch_ros_euroc.launch``` and run your bagfile.
+The instructions for running a COVINS-G back-end can be found [here](/docs/run_COVINS-G.md).
 
 <a name="docker"></a>
 ## 5 Docker Implementation
@@ -303,6 +241,10 @@ The ORB-SLAM3 front-end client needs the communication server config file, the f
 #### ORB-SLAM3 ROS Front-End
 The ROS wrapper of the ORB-SLAM3 front-end can also be started in the docker container. It requires the server config file and the ROS launch file. A bag file can then for example be played on the host system.
 * ```./run.sh -r ../covins_comm/config/config_comm.yaml ../orb_slam3/Examples/ROS/ORB_SLAM3/launch/launch_docker_ros_euroc.launch```
+
+#### ROS Front-End Wrapper (Only for COVINS-G)
+The ROS Front-end wrapper can also be started in the docker container. It requires the server config file and the ROS launch file. A bag file can then for example be played on the host system.
+* ```./run.sh -f ../covins_comm/config/config_comm.yaml ../covins_frontend/launch/covins_frontend/launch/vins_docker_euroc_agent.launch```
 
 #### Terminal
 A terminal within the docker image can also be opened. This can for example be used to send `rosservice` commands.
@@ -368,7 +310,7 @@ For straightforward understanding which steps need to be taken to interface a VI
 In a nutshell, the communication interface provides a base communicator class, which is intended to be used to create a derived communicator class tailored to the VIO system. The communicator module runs in a separate thread, taking care of setting up a connection to the server, and exchanging map data. For the derived class, the user only needs to define a function that can be used to pass data to the communicator module and fill the provided data containers, and the ```Run()``` function that is continuously executed by the thread allocated to the communicator module. Furthermore, the communicator module uses the predefined message types ```MsgKeyframe``` and ```MsgLandmark``` for transmitting data to the server, therefore, the user needs to define functions that fill those messages from the custom data structures of the VIO system.
 
 <a name="ext_reuse"></a>
-### Map Re-Use Onboard the Agent
+### Map Re-Use Onboard the Agent (Only for COVINS)
 
 COVINS also provides the functionality to share data from the collaborative estimate on the server-side with the agents participating in the estimate. COVINS provides only the infrastructure to share this data, the method for map re-use needs to be implement by the user.
 

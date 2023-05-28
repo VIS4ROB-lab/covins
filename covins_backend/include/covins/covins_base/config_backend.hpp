@@ -116,6 +116,8 @@ namespace features {
     const int desc_length                               = estd2::GetValFromYaml<int>(conf,"feat.desc_length");
     const int num_octaves                               = estd2::GetValFromYaml<int>(conf,"feat.num_octaves");
     const precision_t scale_factor                      = estd2::GetValFromYaml<precision_t>(conf,"feat.scale_factor");
+    const float img_match_thres                         = estd2::GetValFromYaml<float>(conf,"extractor.img_match_thres");
+    const float ratio_thres                             = estd2::GetValFromYaml<float>(conf,"extractor.ratio_thres");
 }
 
 namespace matcher {
@@ -139,7 +141,6 @@ namespace placerec {
     const size_t consecutive_loop_dist                  = estd2::GetValFromYaml<int>(conf,"placerec.consecutive_loop_dist");
     const int min_loop_dist                             = estd2::GetValFromYaml<int>(conf,"placerec.min_loop_dist");
     const int cov_consistency_thres                     = estd2::GetValFromYaml<int>(conf,"placerec.cov_consistency_thres");
-    const int solver_iterations                         = estd2::GetValFromYaml<int>(conf,"placerec.solver_iterations");
     const int matches_thres                             = estd2::GetValFromYaml<int>(conf,"placerec.matches_thres");
     const int matches_thres_merge                       = estd2::GetValFromYaml<int>(conf,"placerec.matches_thres_merge");
     const int inliers_thres                             = estd2::GetValFromYaml<int>(conf,"placerec.inliers_thres");
@@ -149,11 +150,31 @@ namespace placerec {
     const int exclude_kfs_with_id_less_than             = estd2::GetValFromYaml<size_t>(conf,"placerec.exclude_kfs_with_id_less_than");
 
     namespace ransac {
-        const int min_inliers                           = estd2::GetValFromYaml<int>(conf,"placerec.ransac.min_inliers");
-        const precision_t probability                   = estd2::GetValFromYaml<precision_t>(conf,"placerec.ransac.probability");
-        const int max_iterations                        = estd2::GetValFromYaml<int>(conf,"placerec.ransac.max_iterations");
-        const int class_threshold                       = estd2::GetValFromYaml<int>(conf,"placerec.ransac.class_threshold");
-    }
+        const int min_inliers               = estd2::GetValFromYaml<int>(conf,"placerec.ransac.min_inliers");
+        const precision_t probability       = estd2::GetValFromYaml<precision_t>(conf,"placerec.ransac.probability");
+        const int max_iterations            = estd2::GetValFromYaml<int>(conf,"placerec.ransac.max_iterations");
+        const int class_threshold           = estd2::GetValFromYaml<int>(conf,"placerec.ransac.class_threshold");
+    } // namespace ransac
+
+    namespace nc_rel_pose {
+        const int cov_iters                 = estd2::GetValFromYaml<int>(conf,"placerec.nc_rel_pose.cov_iters");
+        const int cov_max_iters             = estd2::GetValFromYaml<int>(conf,"placerec.nc_rel_pose.cov_max_iters");
+        const int max_iters                 = estd2::GetValFromYaml<int>(conf,"placerec.nc_rel_pose.max_iters");
+        const int min_inliers               = estd2::GetValFromYaml<int>(conf,"placerec.nc_rel_pose.min_inliers");
+        const float cov_thres               = estd2::GetValFromYaml<float>(conf,"placerec.nc_rel_pose.cov_thres");
+        const float rp_error                = estd2::GetValFromYaml<float>(conf,"placerec.nc_rel_pose.rp_error");
+        const float rp_error_cov            = estd2::GetValFromYaml<float>(conf,"placerec.nc_rel_pose.rp_error_cov");
+    } //namespace nc_rel_pose
+
+    namespace rel_pose {
+        const int max_iters                 = estd2::GetValFromYaml<int>(conf,"placerec.rel_pose.max_iters");
+        const int min_inliers               = estd2::GetValFromYaml<int>(conf,"placerec.rel_pose.min_inliers");
+        const float error_thres             = estd2::GetValFromYaml<float>(conf,"placerec.rel_pose.error_thres");
+        const int min_img_matches           = estd2::GetValFromYaml<int>(conf,"placerec.rel_pose.min_img_matches");
+    } //namespace nc_rel_pose
+
+    const float max_yaw                     = estd2::GetValFromYaml<float>(conf,"placerec.max_yaw");
+    const float max_trans                   = estd2::GetValFromYaml<float>(conf,"placerec.max_trans");
 }
 
 namespace opt {
@@ -163,6 +184,9 @@ namespace opt {
     const int pgo_iteration_limit                       = estd2::GetValFromYaml<int>(conf,"opt.pgo_iteration_limit");
 
     const bool perform_pgo                              = estd2::GetValFromYaml<bool>(conf,"opt.perform_pgo");
+    const bool use_nbr_kfs                              = estd2::GetValFromYaml<bool>(conf,"opt.use_nbr_kfs");
+    const bool use_robust_loss                          = estd2::GetValFromYaml<bool>(conf,"opt.use_robust_loss");
+    const precision_t robust_loss_th                    = estd2::GetValFromYaml<precision_t>(conf,"opt.robust_loss_threshold");
     const bool pgo_fix_kfs_after_gba                    = estd2::GetValFromYaml<bool>(conf,"opt.pgo_fix_kfs_after_gba");
     const bool pgo_fix_poses_loaded_maps                = estd2::GetValFromYaml<bool>(conf,"opt.pgo_fix_poses_loaded_maps");
     const bool gba_fix_poses_loaded_maps                = estd2::GetValFromYaml<bool>(conf,"opt.gba_fix_poses_loaded_maps");
@@ -173,6 +197,13 @@ namespace opt {
     const bool pgo_use_loop_edges                       = estd2::GetValFromYaml<bool>(conf,"opt.pgo_use_loop_edges");
 
     const bool gba_use_map_loop_constraints             = estd2::GetValFromYaml<bool>(conf,"opt.gba_use_map_loop_constraints");
+
+    // For Weighting Loops and KFs in PGO
+    const float wt_kf_r             = estd2::GetValFromYaml<float>(conf,"opt.wt_kf_R");
+    const float wt_kf_t             = estd2::GetValFromYaml<float>(conf,"opt.wt_kf_T");
+    const float wt_kf_n1           = estd2::GetValFromYaml<float>(conf,"opt.wt_kf_n1");
+    const float wt_kf_n23            = estd2::GetValFromYaml<float>(conf,"opt.wt_kf_n23");
+    const float wt_kf_n45            = estd2::GetValFromYaml<float>(conf,"opt.wt_kf_n45");
 }
 
 namespace vis {

@@ -58,6 +58,10 @@ public:
                     std::vector<cv::KeyPoint>& _keypoints,
                     cv::OutputArray _descriptors, std::vector<int> &vLappingArea);
 
+    void operator()(cv::InputArray image, cv::InputArray mask,
+                    std::vector<cv::KeyPoint> &keypoints,
+                    cv::OutputArray descriptors);
+    
     int inline GetLevels(){
         return nlevels;}
 

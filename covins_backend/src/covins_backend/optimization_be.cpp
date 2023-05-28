@@ -830,13 +830,18 @@ auto Optimization::OptimizeRelativePose(KeyframePtr kf1, KeyframePtr kf2, Landma
     return numCorrespondences - numBad;
 }
 
-auto Optimization::PoseGraphOptimization(MapPtr map, PoseMap corrected_poses)->void {
+auto Optimization::PoseGraphOptimization(
+    MapPtr map, PoseMap corrected_poses) -> void {
 
     ceres::Problem::Options problem_options;
     problem_options.enable_fast_removal = true;
     ceres::Problem problem(problem_options);
 
-    ceres::LocalParameterization *local_pose_param = new robopt::local_param::PoseQuaternionLocalParameterization();
+    ceres::LossFunctionWrapper *loss_function = new ceres::LossFunctionWrapper(
+        new ceres::CauchyLoss(covins_params::opt::robust_loss_th), ceres::TAKE_OWNERSHIP);
+
+    ceres::LocalParameterization *local_pose_param =
+        new robopt::local_param::PoseQuaternionLocalParameterization();
 
     KeyframeVector keyframes = map->GetKeyframesVec();
     LandmarkVector landmarks = map->GetLandmarksVec();
@@ -867,44 +872,87 @@ auto Optimization::PoseGraphOptimization(MapPtr map, PoseMap corrected_poses)->v
         problem.AddParameterBlock(kf->ceres_extrinsics_, robopt::defs::pose::kPoseBlockSize, local_pose_param);
         problem.SetParameterBlockConstant(kf->ceres_extrinsics_);
 
-        if(kf->is_gba_optimized_ && covins_params::opt::pgo_fix_kfs_after_gba) {
-            if(kf->id_.first % 50 == 0) std::cout << COUTNOTICE << "Set GBA KFs constant" << std::endl;
-            problem.SetParameterBlockConstant(kf->ceres_pose_);
-        } else if(kf->is_loaded_ && covins_params::opt::pgo_fix_poses_loaded_maps) {
-            if(kf->id_.first % 50 == 0) std::cout << COUTNOTICE << "Set loaded KFs constant" << std::endl;
-            problem.SetParameterBlockConstant(kf->ceres_pose_);
+        if(kf->is_gba_optimized_ && covins_params::opt::pgo_fix_kfs_after_gba) {	
+            if(kf->id_.first % 50 == 0) std::cout << COUTNOTICE << "Set GBA KFs constant" << std::endl;	
+            problem.SetParameterBlockConstant(kf->ceres_pose_);	
+        } else if(kf->is_loaded_ && covins_params::opt::pgo_fix_poses_loaded_maps) {	
+            if(kf->id_.first % 50 == 0) std::cout << COUTNOTICE << "Set loaded KFs constant" << std::endl;	
+            problem.SetParameterBlockConstant(kf->ceres_pose_);	
         }
     }
 
-    Eigen::Matrix<precision_t,6,6> sqrt_info = Eigen::Matrix<precision_t,6,6>::Identity();
-    sqrt_info.topLeftCorner<3,3>() *= 100.0;
-    sqrt_info.bottomRightCorner<3,3>() *= 1e4;
+
+    // Square Root Information Matrices for the neighboring KF edges. The values
+    // have been computed using the expected accuracy of the edges. The weights
+    // will decrease as the neighbor number increases
+    
+    Eigen::Matrix<precision_t, 6, 6> sqrt_info =
+        Eigen::Matrix<precision_t, 6, 6>::Identity();
+    Eigen::Matrix<precision_t, 6, 6> sqrt_info_n23 =
+        Eigen::Matrix<precision_t, 6, 6>::Identity();
+    Eigen::Matrix<precision_t, 6, 6> sqrt_info_n45 =
+        Eigen::Matrix<precision_t, 6, 6>::Identity();
+
+    sqrt_info.topLeftCorner<3, 3>() *= covins_params::opt::wt_kf_r;
+    sqrt_info.bottomRightCorner<3, 3>() *= covins_params::opt::wt_kf_t;
+    sqrt_info *= covins_params::opt::wt_kf_n1; //wt. for neighbor 1
+    sqrt_info_n23 = sqrt_info;
+    sqrt_info_n45 = sqrt_info;
+    sqrt_info_n23 /= covins_params::opt::wt_kf_n23; //wt. for neighbor 2 and 3
+    sqrt_info_n45 /= covins_params::opt::wt_kf_n45; //wt. for neighbor 4 and 5
+
+    // Square Root Information Matrix for the loop edges
+    Eigen::Matrix<precision_t, 6, 6> sqrt_info_l = Eigen::Matrix<precision_t, 6, 6>::Identity();
+    
     std::set<std::pair<KeyframePtr,KeyframePtr>> inserted_edges;
 
-    // Current loop edges
-    {
-        Map::LoopVector loops = map->GetLoopConstraints();
-        auto i = loops[loops.size()-1];
+    // Set loop constraints
+    Map::LoopVector loops = map->GetLoopConstraints();
+
+    for (auto i : loops) {
+      
+        sqrt_info_l = Eigen::Matrix<precision_t, 6, 6>::Identity();
+        TypeDefs::Matrix6Type cov_mat = TypeDefs::Matrix6Type::Identity();
         KeyframePtr kf1 = i.kf1;
         KeyframePtr kf2 = i.kf2;
         TransformType T_12 = i.T_s1_s2;
+        cov_mat = i.cov_mat;
+
+        //Cholesky Decomposition of Cov Mat Inverse
+        Eigen::LLT<TypeDefs::Matrix6Type> lltofA(cov_mat.inverse());
+        sqrt_info_l = lltofA.matrixL().transpose();
+
+        // For COVINS, Covariance Matrix will be Identity so instead we use the
+        // weights for the loop equal to the KF edges weights
+        if (covins_params::placerec::type == "COVINS") {
+          sqrt_info_l = sqrt_info;
+        }
+
         Vector3Type t_12 = T_12.block<3,1>(0,3);
-        QuaternionType q_12(T_12.block<3,3>(0,0));
-        ceres::CostFunction* f = new robopt::posegraph::SixDofBetweenError(q_12, t_12, sqrt_info, robopt::defs::pose::PoseErrorType::kImu);
-        problem.AddResidualBlock(f, NULL, kf1->ceres_pose_, kf2->ceres_pose_, kf1->ceres_extrinsics_, kf2->ceres_extrinsics_);
+        QuaternionType q_12(T_12.block<3, 3>(0, 0));
+            
+        ceres::CostFunction* f = new robopt::posegraph::SixDofBetweenError(q_12, t_12, sqrt_info_l, robopt::defs::pose::PoseErrorType::kImu);
+        if (covins_params::opt::use_robust_loss) {
+          problem.AddResidualBlock(f, loss_function, kf1->ceres_pose_,
+                                   kf2->ceres_pose_, kf1->ceres_extrinsics_,
+                                   kf2->ceres_extrinsics_);
+        } else {
+          problem.AddResidualBlock(f, /*lossFunction*/ NULL, kf1->ceres_pose_, kf2->ceres_pose_,
+                                   kf1->ceres_extrinsics_,
+                                   kf2->ceres_extrinsics_);
+        }
     }
 
     // Set keyframe edges
     for (size_t i = 0; i < keyframes.size(); ++i) {
         KeyframePtr kf = keyframes[i];
         if(kf->IsInvalid()) continue;
-
-        TransformType T_w_si = kf->GetPoseTws();
-
+		
+        TransformType T_w_si = kf->GetPoseTws_vio();
         // Edge to successor
         KeyframePtr succ = kf->GetSuccessor();
         if(!succ) continue;
-        TransformType T_w_ssucc = succ->GetPoseTws();
+        TransformType T_w_ssucc = succ->GetPoseTws_vio();
         TransformType T_si_ssucc = T_w_si.inverse() * T_w_ssucc;
         Vector3Type t_si_ssucc = T_si_ssucc.block<3,1>(0,3);
         QuaternionType q_si_ssucc(T_si_ssucc.block<3,3>(0,0));
@@ -918,7 +966,58 @@ auto Optimization::PoseGraphOptimization(MapPtr map, PoseMap corrected_poses)->v
         }
 
         ceres::CostFunction* f = new robopt::posegraph::SixDofBetweenError(q_si_ssucc, t_si_ssucc, sqrt_info, robopt::defs::pose::PoseErrorType::kImu);
-        problem.AddResidualBlock(f, NULL, kf->ceres_pose_, succ->ceres_pose_, kf->ceres_extrinsics_, succ->ceres_extrinsics_);
+        problem.AddResidualBlock(f, /*lossFunction*/ NULL, kf->ceres_pose_,
+                                 succ->ceres_pose_, kf->ceres_extrinsics_,
+                                 succ->ceres_extrinsics_);
+    }
+
+    // Add extra neighbors KF edges
+
+    if (covins_params::opt::use_nbr_kfs) {
+        for (size_t i = 0; i < keyframes.size(); ++i) {
+            KeyframePtr kf = keyframes[i];
+            if (kf->IsInvalid())
+              continue;
+            
+            TransformType T_w_si = kf->GetPoseTws_vio();
+
+            KeyframeVector connections;
+            KeyframePtr temp_kf = keyframes[i];
+            
+            // Use 5 Previous KFs
+            for (int j = 1; j < 6; ++j) {
+              if (int(kf->id_.first) - j > 0) {
+                temp_kf = temp_kf->GetPredecessor();
+                connections.push_back(temp_kf);
+                }
+            }
+            size_t k = 0;
+            Eigen::Matrix<precision_t,6,6> sqrt_info_nbr = Eigen::Matrix<precision_t,6,6>::Identity();
+            for(auto kfc : connections) {
+                k++;
+                if (k <= 1)
+                  sqrt_info_nbr = sqrt_info;
+                else if (k <=3)
+                  sqrt_info_nbr = sqrt_info_n23;
+                else
+                  sqrt_info_nbr = sqrt_info_n45;
+                
+                TransformType T_w_sc = kfc->GetPoseTws_vio();
+                TransformType T_si_sc = T_w_si.inverse() * T_w_sc;
+                Vector3Type t_si_sc = T_si_sc.block<3,1>(0,3);
+                QuaternionType q_si_sc(T_si_sc.block<3,3>(0,0));
+
+                std::pair<KeyframePtr,KeyframePtr> kf_pair = std::make_pair(kf,kfc);
+                if(inserted_edges.count(kf_pair)) {
+                    continue;
+                } else {
+                    inserted_edges.insert(kf_pair);
+                }
+
+                ceres::CostFunction* f = new robopt::posegraph::SixDofBetweenError(q_si_sc, t_si_sc, sqrt_info_nbr, robopt::defs::pose::PoseErrorType::kImu);
+                problem.AddResidualBlock(f, /*lossFunction*/NULL, kf->ceres_pose_, kfc->ceres_pose_, kf->ceres_extrinsics_, kfc->ceres_extrinsics_);
+            }
+        }
     }
 
     // Solve
@@ -929,11 +1028,9 @@ auto Optimization::PoseGraphOptimization(MapPtr map, PoseMap corrected_poses)->v
     solver_options.trust_region_strategy_type = ceres::DOGLEG;
     solver_options.max_num_iterations = covins_params::opt::pgo_iteration_limit;
     ceres::Solver::Summary summary;
-//    std::cout << "--> Solve" << std::endl;
     ceres::Solve(solver_options, &problem, &summary);
 
     // Recover the optimized data
-
     PoseMap non_corrected_poses;
 
     // Keyframes
@@ -960,9 +1057,10 @@ auto Optimization::PoseGraphOptimization(MapPtr map, PoseMap corrected_poses)->v
         }
         KeyframePtr kf_ref = lm->GetReferenceKeyframe();
         if(!kf_ref){
-            if(!lm->GetObservations().empty())
+          if (!lm->GetObservations().empty()) {
             map->EraseLandmark(lm);
             removed_lms++;
+            }
             continue;
         }
         TransformType T_ws_uncorrected;
@@ -984,7 +1082,8 @@ auto Optimization::PoseGraphOptimization(MapPtr map, PoseMap corrected_poses)->v
         lm->SetOptimized();
     }
 
-    std::cout << "--> PGO removed " << removed_lms << " LMs" << std::endl;
+    std::cout << "--> PGO END " << std::endl;
 }
+
 
 } //end ns

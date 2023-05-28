@@ -75,7 +75,7 @@ Keyframe::Keyframe(MsgKeyframe msg, MapPtr map, VocabularyPtr voc)
                     std::cout << COUTERROR << "p3_un: " << p3_un.transpose() << std::endl;
                     exit(-1);
                 }
-                TypeDefs::KeypointType kp_as_kptype = Utils::ToKeypointType(kp_eigen);
+                TypeDefs::KeypointType kp_as_kptype = Utils::ToKeypointType(p3_un.block<2,1>(0,0));
                 keypoints_undistorted_.push_back(kp_as_kptype);
             }
         }
@@ -92,10 +92,65 @@ Keyframe::Keyframe(MsgKeyframe msg, MapPtr map, VocabularyPtr voc)
 
     img_ = msg.img;
 
+    keypoints_distorted_add_ = msg.keypoints_distorted_add;
+
+    // Add additional Keypoints and Features
+    if(keypoints_distorted_add_.empty()) {
+      // Use the original features as additional Features
+      keypoints_aors_add_ = keypoints_aors_;
+      keypoints_distorted_add_ = keypoints_distorted_;
+      keypoints_undistorted_add_ = keypoints_undistorted_;
+      descriptors_add_ = descriptors_.clone();
+    } else {
+      // Use the additional features
+      keypoints_aors_add_ = msg.keypoints_aors_add;
+      if(keypoints_aors_add_.size() != keypoints_distorted_add_.size()) {
+        std::cout << COUTERROR << "keypoints given: " << std::endl;
+        std::cout << "keypoints_distorted_.size(): " << keypoints_distorted_add_.size() << std::endl;
+        std::cout << "keypoints_aors_.size(): " << keypoints_aors_add_.size() << std::endl;
+        exit(-1);
+      }
+      keypoints_undistorted_add_ = msg.keypoints_undistorted_add;
+      if(keypoints_distorted_add_.size() != keypoints_undistorted_add_.size()) {
+        if(!keypoints_undistorted_add_.empty()) {
+            std::cout << COUTERROR << "keypoints given: " << std::endl;
+            std::cout << "keypoints_distorted_.size(): " << keypoints_distorted_add_.size() << std::endl;
+            std::cout << "keypoints_undistorted_.size(): " << keypoints_undistorted_add_.size() << std::endl;
+            exit(-1);
+        } else {
+            // Undistort
+            keypoints_undistorted_add_.reserve(keypoints_distorted_add_.size());
+            for(size_t idx_kp=0;idx_kp<keypoints_distorted_add_.size();++idx_kp) {
+                Eigen::Vector2d kp_eigen = Utils::FromKeypointType(keypoints_distorted_add_[idx_kp]);
+                Vector3Type p3D;
+                camera_->backProject3(kp_eigen,&p3D);
+                const Eigen::Vector3d p3_un = calibration_.K*p3D;
+                if(p3_un(2) != 1.0) {
+                    std::cout << COUTERROR << "p3_un: " << p3_un.transpose() << std::endl;
+                    exit(-1);
+                }
+                TypeDefs::KeypointType kp_as_kptype = Utils::ToKeypointType(p3_un.block<2,1>(0,0));
+                keypoints_undistorted_add_.push_back(kp_as_kptype);
+            }
+        }
+      }
+      descriptors_add_ = msg.descriptors_add.clone();
+    }
+
+
+    if (descriptors_add_.cols != covins_params::features::desc_length) {
+      std::cout << COUTERROR << "Descriptor Length Mismatch, Received: "
+                << descriptors_add_.cols
+                << "Expected: " << covins_params::features::desc_length
+                << std::endl;
+        exit(-1);
+    }
+
     this->AssignFeaturesToGrid();
 
     if(msg.save_to_file) {
         this->SetPoseTws(msg.T_w_s);
+        this->SetPoseTws_vio(msg.T_w_s_vio);
         msg_ = msg;
     } else {
         this->UpdatePoseFromMsg(msg,map);
@@ -107,7 +162,21 @@ Keyframe::Keyframe(MsgKeyframe msg, MapPtr map, VocabularyPtr voc)
             cout << COUTERROR << " !mBowVec.empty() || !mFeatVec.empty()" << endl;
             exit(-1);
         }
-        vector<cv::Mat> current_desc = Utils::ToDescriptorVector(descriptors_);
+
+        // Unless we are using SIFT descriptors, we will use the additional
+        // features for both Place Recognition and Image Matching.
+        // For SIFT features, we will use additional features (descriptors_add_)
+        // (SIFT) for Image matching and the regular features (descriptors_)
+        // (ORB) for Place Recognition
+
+        vector<cv::Mat> current_desc;
+        
+        if (covins_params::features::type == "SIFT") {
+          current_desc = Utils::ToDescriptorVector(descriptors_);
+        } else {
+          current_desc = Utils::ToDescriptorVector(descriptors_add_);
+        }
+
         // Feature vector associate features with nodes in the 4th level (from leaves up)
         // We assume the vocabulary tree has 6 levels, change the 4 otherwise
         voc->transform(current_desc,bow_vec_,feat_vec_,4);
@@ -116,7 +185,7 @@ Keyframe::Keyframe(MsgKeyframe msg, MapPtr map, VocabularyPtr voc)
     // PreIntegration
     if(msg.preintegration.dt.empty()) {
         preintegrated_imu_.reset(new robopt::imu::PreintegrationBase(Eigen::Vector3d::Zero(),Eigen::Vector3d::Zero(),bias_accel_,bias_gyro_,calibration_.sigma_a_c,calibration_.sigma_g_c,calibration_.sigma_aw_c,calibration_.sigma_gw_c,calibration_.g));
-        if(id_.first > 0) std::cout << COUTERROR << "KF " << id_ << ": no preintegration data!" << std::endl;
+        // if(id_.first > 0) std::cout << COUTERROR << "KF " << id_ << ": no preintegration data!" << std::endl;
     } else {
         for(size_t idx=0;idx<msg.preintegration.dt.size();++idx) {
             const double dt = msg.preintegration.dt[idx];
@@ -146,6 +215,13 @@ Keyframe::Keyframe(MsgKeyframe msg, MapPtr map, VocabularyPtr voc)
     for(size_t idx=0;idx<keypoints_undistorted_.size();++idx) {
         Vector3Type tmpBearing((keypoints_undistorted_[idx](0)-cx)*invfx, (keypoints_undistorted_[idx](1)-cy)*invfy, 1.0);
         bearings_[idx] = tmpBearing.normalized();
+    }
+
+    // Additional Bearing Vectors
+    bearings_add_.resize(keypoints_undistorted_add_.size());
+    for(size_t idx=0;idx<keypoints_undistorted_add_.size();++idx) {
+        Vector3Type tmpBearing((keypoints_undistorted_add_[idx](0)-cx)*invfx, (keypoints_undistorted_add_[idx](1)-cy)*invfy, 1.0);
+        bearings_add_[idx] = tmpBearing.normalized();
     }
 }
 
@@ -240,8 +316,14 @@ auto Keyframe::ConvertToMsgFileExport(MsgKeyframe &msg)->void {
     msg.keypoints_undistorted = keypoints_undistorted_;
     msg.descriptors = descriptors_.clone();
 
+    msg.keypoints_aors_add = keypoints_aors_add_;
+    msg.keypoints_distorted_add = keypoints_distorted_add_;
+    msg.keypoints_undistorted_add = keypoints_undistorted_add_;
+    msg.descriptors_add = descriptors_add_.clone();
+
     msg.T_s_c = T_s_c_;
     msg.T_w_s = T_w_s_;
+    msg.T_w_s_vio = T_w_s_vio_;
     msg.velocity = velocity_;
     msg.bias_accel = bias_accel_;
     msg.bias_gyro = bias_gyro_;
@@ -297,7 +379,36 @@ auto Keyframe::EstablishConnections(MsgKeyframe msg, MapPtr map)->void {
             //if MP not in Map, we ignore it. Might be deleted, or comes in later and is then added to this KF
         }
     }
+     
 }
+
+auto Keyframe::EstablishNeighbors(MsgKeyframe msg, MapPtr map) -> void {
+
+    // Add Temporal Neighbors (These are only used of COVINS_G during Plcae Recognition) 
+    int n_neigh = 20;
+    int min_neigh;
+
+    {
+        KeyframeBase::idpair curr_id = msg.id;
+        KeyframeBase::idpair temp_id = msg.id;
+
+        if (int(curr_id.first) - n_neigh <= 1) {
+        min_neigh = 1;
+        } else {
+        min_neigh = int(curr_id.first) - n_neigh;
+        }
+
+        connected_n_kfs_.clear();
+        connected_n_kfs_.reserve(2 * n_neigh);
+
+        for (int i = int(curr_id.first)-1; i > min_neigh; --i) {
+        temp_id.first = i;
+        KeyframePtr neigh = map->GetKeyframe(temp_id, false);
+        connected_n_kfs_.push_back(neigh);
+        }
+    }
+}
+
 
 auto Keyframe::FusePreintegration(PreintegrationPtr preint)->void {
     Vector3Type acc_init;
@@ -502,6 +613,7 @@ auto Keyframe::UpdatePoseFromMsg(MsgKeyframe &msg, MapPtr map)->void {
         if(id_.first == 0){
             //first KF - global pose
             this->SetPoseTws(msg.T_sref_s);
+            this->SetPoseTws_vio(msg.T_sref_s);
         } else {
             KeyframePtr kf_ref = map->GetKeyframe(msg.id_reference);
             if(!kf_ref){
@@ -511,6 +623,10 @@ auto Keyframe::UpdatePoseFromMsg(MsgKeyframe &msg, MapPtr map)->void {
             TransformType T_w_sref = kf_ref->GetPoseTws();
             TransformType Tws = T_w_sref * msg.T_sref_s;
             this->SetPoseTws(Tws);
+        
+            TransformType T_w_sref_vio = kf_ref->GetPoseTws_vio();
+            TransformType Tws_vio = T_w_sref_vio * msg.T_sref_s;
+            this->SetPoseTws_vio(Tws_vio);
         }
     }
 
@@ -522,6 +638,14 @@ auto Keyframe::UpdatePoseFromMsg(MsgKeyframe &msg, MapPtr map)->void {
         bias_accel_ = msg.bias_accel;
         bias_gyro_ = msg.bias_gyro;
     }
+}
+
+auto Keyframe::GetDescriptorAddCV(size_t ind)->cv::Mat {
+    return descriptors_add_.row(ind).clone();
+}
+
+const unsigned char* Keyframe::GetDescriptorAdd(size_t ind) {
+  return descriptors_add_.data + descriptors_add_.cols*ind;
 }
 
 } //end ns

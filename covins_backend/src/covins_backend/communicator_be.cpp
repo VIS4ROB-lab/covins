@@ -133,7 +133,8 @@ auto Communicator::ProcessKeyframeMessages()->void {
                     continue;
                 }
                 kf.reset(new Keyframe(msg,map_,voc));
-                kf->EstablishConnections(msg,map_);
+                kf->EstablishConnections(msg, map_);
+                kf->EstablishNeighbors(msg,map_);
                 map_->AddKeyframe(kf);                      // Add it to the map already here, because otherwise the next KF in 'buffer_keyframes_in_' (which is most likely the successor) will not find this KF
                 keyframes_new_.push_back(kf);
                 recent_keyframes_.push_back(kf);

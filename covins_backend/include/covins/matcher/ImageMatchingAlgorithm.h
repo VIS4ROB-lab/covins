@@ -63,7 +63,7 @@ class ImageMatchingAlgorithm : public MatchingAlgorithm {
 
   ///@brief Constructor.
   ///@param distanceThreshold   Descriptor distance threshold.
-  ImageMatchingAlgorithm(float distanceThreshold,
+  ImageMatchingAlgorithm(float distanceThreshold,  float distanceRatioThreshold = 0.8,
                          bool epipoleCheck = false,
                          bool triangCheck = false);
 
@@ -91,6 +91,10 @@ class ImageMatchingAlgorithm : public MatchingAlgorithm {
 
   /// \brief Get the distance threshold for which matches exceeding it will not be returned as matches.
   virtual float distanceThreshold() const;
+
+  /// \brief Get the distance threshold ratio for getting distinctive matches
+  virtual float distanceRatioThreshold() const;
+
   /// \brief Set the distance threshold for which matches exceeding it will not be returned as matches.
   void setDistanceThreshold(float distanceThreshold);
 
@@ -113,6 +117,7 @@ class ImageMatchingAlgorithm : public MatchingAlgorithm {
    */
   virtual float distance(size_t indexA, size_t indexB) const {
     const float dist = static_cast<float>(specificDescriptorDistance(
+        
         kfPtrA_->GetDescriptor(indexA),
         kfPtrB_->GetDescriptor(indexB)));
 
@@ -167,6 +172,9 @@ class ImageMatchingAlgorithm : public MatchingAlgorithm {
   /// Distances above this threshold will not be returned as matches.
   float distanceThreshold_;
 
+  /// If Best Match dist / Second-best match is above this, reject the match
+  float distanceRatioThreshold_;
+
   /// The number of matches.
   size_t numMatches_ = 0;
   /// The number of uncertain matches.
@@ -198,6 +206,7 @@ class ImageMatchingAlgorithm : public MatchingAlgorithm {
   Matches matches_;
 
   bool validRelativeUncertainty_ = false;
+
 
   /// \brief Calculates the distance between two descriptors.
   // copy from BriskDescriptor.hpp

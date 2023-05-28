@@ -32,7 +32,7 @@
 #include<opencv2/core/core.hpp>
 
 #include"../../../include/System.h"
-#include"../include/ImuTypes.h"
+#include "../include/ImuTypes.h"
 
 // COVINS
 #include <covins/covins_base/config_comm.hpp> //for covins_params
@@ -96,11 +96,11 @@ int main(int argc, char **argv)
 
   ImuGrabber imugb;
   ImageGrabber igb(&SLAM,&imugb,bEqual); // TODO
-  
+
   // Maximum delay, 5 seconds
   ros::Subscriber sub_imu = n.subscribe("/imu", 1000, &ImuGrabber::GrabImu, &imugb); 
   ros::Subscriber sub_img0 = n.subscribe("/camera/image_raw", 100, &ImageGrabber::GrabImage,&igb);
-
+ 
   std::thread sync_thread(&ImageGrabber::SyncWithImu,&igb);
 
   ros::spin();
@@ -178,7 +178,7 @@ void ImageGrabber::SyncWithImu()
       if(mbClahe)
         mClahe->apply(im,im);
 
-      mpSLAM->TrackMonocular(im,tIm,vImuMeas);
+      mpSLAM->TrackMonocular(im, tIm, vImuMeas);
     }
 
     std::chrono::milliseconds tSleep(1);

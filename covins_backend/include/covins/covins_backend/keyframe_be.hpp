@@ -55,8 +55,9 @@ public:
 public:
     Keyframe(MsgKeyframe msg, MapPtr map, VocabularyPtr voc);
 
-    auto EstablishConnections(MsgKeyframe msg, MapPtr map)                              ->void;     //Establishes connections to KFs/Landmarks - cannot call shared_from_this() from constructor!
+    auto EstablishConnections(MsgKeyframe msg, MapPtr map)                              ->void;    //Establishes connections to KFs/Landmarks - cannot call shared_from_this() from constructor!
 
+    auto EstablishNeighbors(MsgKeyframe msg, MapPtr map)                                ->void;    //Establishes extra neighbor connections for placerecognition (COVINS-G)
     // Interfaces
     virtual auto RemapLandmark(LandmarkPtr lm,
                                const size_t feat_id_now,
@@ -103,6 +104,16 @@ public:
     // Bearing vectors
     std::vector<Vector3Type> bearings_;
 
+    //Additional Features and bearing vectors
+    AorsVector                  keypoints_aors_add_;        
+    KeypointVector              keypoints_distorted_add_;
+    KeypointVector              keypoints_undistorted_add_;
+    cv::Mat                     descriptors_add_;
+    std::vector<Vector3Type>    bearings_add_;
+
+    auto GetDescriptorAddCV(size_t ind) -> cv::Mat;
+    const unsigned char *GetDescriptorAdd(size_t ind);
+
 protected:
 
     // Interfaces
@@ -111,7 +122,7 @@ protected:
 
     // Covisibility Graph Functions
     virtual auto UpdateCovisibilityConnections()                                        ->void;     // This function should only be called by the map
-
+    
     // Infrastructure
     bool                        pose_optimized_                                         = false;    // Indicates that this LM was part of an optimization process (important for landmark culling)
     bool                        vel_bias_optimized_                                     = false;

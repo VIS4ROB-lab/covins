@@ -19,8 +19,14 @@
 #include "KeyFrame.h"
 #include "Converter.h"
 #include "ORBmatcher.h"
+#include "ORBextractor.h"
 #include "ImuTypes.h"
 #include<mutex>
+
+#include <opencv2/opencv.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/core/eigen.hpp>
+#include <opencv2/features2d.hpp>
 
 // COVINS
 #include <eigen3/Eigen/Core>
@@ -103,12 +109,14 @@ auto KeyFrame::ConvertToMsg(covins::MsgKeyframe &msg, KeyFrame *kf_ref, bool is_
         msg.img_dim_y_max = img_height; //this->mnMaxY; -- this is not the image dimension (presumably the undistorted dimensions)
     }
 
-    if(!is_update){
-
+    if (!is_update) {
+      
+        cv::Mat img = imgLeft;
         const size_t num_keys = mvKeys.size();
         msg.keypoints_aors          = this->keys_eigen_aors_;
         msg.keypoints_distorted     = this->keys_eigen_;
-        msg.keypoints_undistorted   = this->keys_eigen_un_;
+        msg.keypoints_undistorted = this->keys_eigen_un_;
+        
     }
 
     if(!is_update) {

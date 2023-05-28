@@ -30,6 +30,7 @@
 #include "covins_backend/keyframe_be.hpp"
 #include "covins_backend/landmark_be.hpp"
 #include "covins_backend/kf_database.hpp"
+#include "covins_backend/optimization_be.hpp"
 
 namespace covins {
 
@@ -51,7 +52,7 @@ MapManager::MapManager(VocabularyPtr voc)
     : voc_(voc)
 {
     // Other types of place recognition system could be integrated and activated using the placerec::type parameter
-    if(covins_params::placerec::type == "COVINS") {
+    if(covins_params::placerec::type == "COVINS" || covins_params::placerec::type == "COVINS_G") {
         database_.reset(new KeyframeDatabase(voc_));
     } else {
         std::cout << COUTFATAL << "Place Recognition System Type \"" << covins_params::placerec::type << "\" not valid" << std::endl;
@@ -195,6 +196,7 @@ auto MapManager::PerformMerge()->void {
     KeyframePtr kf_query;
     KeyframePtr kf_match;
     TransformType T_smatch_squery;
+    TypeDefs::Matrix6Type cov_mat;
 
     std::cout << "--> Fetch merge data" << std::endl;
     {
@@ -204,6 +206,7 @@ auto MapManager::PerformMerge()->void {
         kf_query = merge.kf_query;
         kf_match = merge.kf_match;
         T_smatch_squery = merge.T_smatch_squery;
+        cov_mat = merge.cov_mat;
     }
     std::cout << "--> Process merge data" << std::endl;
 
@@ -224,7 +227,7 @@ auto MapManager::PerformMerge()->void {
 
     MapInstancePtr map_merged(new MapInstance(map_match,map_query,T_wmatch_wquery));
 
-    LoopConstraint lc(kf_match,kf_query,T_smatch_squery);
+    LoopConstraint lc(kf_match,kf_query,T_smatch_squery, cov_mat);
     map_merged->map->AddLoopConstraint(lc);
 
 //    std::cout << "Map Match: Agents|KFs|LMs :" << map_match->map->associated_clients_.size() << "|" << map_match->map->GetKeyframes().size() << "|" << map_match->map->GetLandmarks().size() << std::endl;
@@ -388,6 +391,7 @@ auto Map::AddKeyframe(covins::MapBase::KeyframePtr kf, bool suppress_output)->vo
     if(!suppress_output && !(keyframes_.size() % 50)) {
         std::cout << "Map " << this->id_map_  << " : " << keyframes_.size() << " KFs | " << landmarks_.size() << " LMs" << std::endl;
         this->WriteKFsToFile();
+        this->WriteKFsToFileAllAg();
     }
 }
 
@@ -432,10 +436,12 @@ auto Map::ConvertToMsgFileExport(MsgMap &msg)->void {
     msg.keyframes1.reserve(loop_constraints_.size());
     msg.keyframes2.reserve(loop_constraints_.size());
     msg.transforms12.reserve(loop_constraints_.size());
+    msg.cov.reserve(loop_constraints_.size());
     for(const auto& i : loop_constraints_) {
         msg.keyframes1.push_back(i.kf1->id_);
         msg.keyframes2.push_back(i.kf2->id_);
         msg.transforms12.push_back(i.T_s1_s2);
+        msg.cov.push_back(i.cov_mat);
     }
 }
 
@@ -660,6 +666,7 @@ auto Map::LoadFromFile(const std::string &path_name, VocabularyPtr voc)->void {
     for(const auto& kf : keyframes) {
         kf->SetPredecessor(this->GetKeyframe(kf->msg_.id_predecessor));
         kf->SetSuccessor(this->GetKeyframe(kf->msg_.id_successor));
+        kf->EstablishNeighbors(kf->msg_, shared_from_this());
         for(auto mit = kf->msg_.landmarks.begin(); mit!=kf->msg_.landmarks.end();++mit){
             size_t feat_id = mit->first;
             idpair lm_id = mit->second;
@@ -677,10 +684,14 @@ auto Map::LoadFromFile(const std::string &path_name, VocabularyPtr voc)->void {
 //        std::cout << "kf1: "  << kf1 << std::endl;
 //        std::cout << "kf2: "  << kf2 << std::endl;
 //        std::cout << "T12: \n"  << msg_map.transforms12[i] << std::endl;
-        LoopConstraint lc(kf1,kf2,msg_map.transforms12[i]);
+        LoopConstraint lc(kf1,kf2,msg_map.transforms12[i],msg_map.cov[i]);
         loop_constraints_.push_back(lc);
     }
+    // std::cout << "+++ Perform PGO +++" << std::endl;
+    // TypeDefs::PoseMap corrected_poses;
 
+    // Optimization::PoseGraphOptimization(shared_from_this(), corrected_poses);
+    // this->WriteKFsToFileAllAg();
     std::cout << "+++ DONE +++" << std::endl;
 }
 
@@ -948,7 +959,32 @@ auto Map::WriteKFsToFile(std::string suffix)->void{
     }
 }
 
-auto Map::WriteStateToCsv(const std::string& filename, const size_t client_id)->void {
+auto Map::WriteKFsToFileAllAg(std::string prefix) -> void {
+    for(std::set<size_t>::iterator sit = associated_clients_.begin();sit!=associated_clients_.end();++sit){
+        int client_id = *sit;
+        std::stringstream ss;
+        ss << covins_params::sys::output_dir /*<< covins_params::sys::time*/
+           << "stamped_traj_estimate" << prefix << ".txt";
+
+        if(covins_params::sys::trajectory_format == "EUROC") {
+            if(sit == associated_clients_.begin())
+              this->WriteStateToCsv(ss.str(), client_id);
+            else
+              this->WriteStateToCsv(ss.str(), client_id, false);
+        } else if(covins_params::sys::trajectory_format == "TUM") {
+            if(sit == associated_clients_.begin())
+              this->WriteStateToCsvTUM(ss.str(), client_id);
+            else
+              this->WriteStateToCsvTUM(ss.str(), client_id, false);
+        } else {
+            std::cout << COUTFATAL << "trajectory_format '" << covins_params::sys::trajectory_format << "' not in { EUROC | TUM }" << std::endl;
+            exit(-1);
+        }
+          
+    }
+}
+
+auto Map::WriteStateToCsv(const std::string& filename, const size_t client_id, const bool trnc)->void {
     KeyframeVector found_kfs;
     found_kfs.reserve(keyframes_.size());
     // Get all frames from the required client
@@ -961,14 +997,18 @@ auto Map::WriteStateToCsv(const std::string& filename, const size_t client_id)->
     }
 
     if(found_kfs.empty()) //do not overwrite files from other maps with empty files
-    return;
+        return;
 
     // Sort the keyframes by timestamp
     std::sort(found_kfs.begin(), found_kfs.end(), Keyframe::CompStamp);
 
     // Write out the keyframe data
     std::ofstream keyframes_file;
-    keyframes_file.open(filename, std::ios::out | std::ios::trunc);
+    if(trnc)
+      keyframes_file.open(filename, std::ios::out | std::ios::trunc);
+    else
+      keyframes_file.open(filename, std::ios::out | std::ios::app);
+    
     if (keyframes_file.is_open()) {
         for (KeyframeVector::const_iterator vit = found_kfs.begin(); vit != found_kfs.end(); ++vit) {
             KeyframePtr kf = (*vit);
@@ -992,9 +1032,7 @@ auto Map::WriteStateToCsv(const std::string& filename, const size_t client_id)->
         std::cout << COUTERROR << ": Unable to open file: " << filename << std::endl;
 }
 
-auto Map::WriteStateToCsvTUM(const std::string& filename, const size_t client_id)->void {
-    // TUM format for EVO: stamp tx ty tz qx qy qz qw - separated by spaces
-
+auto Map::WriteStateToCsvTUM(const std::string& filename, const size_t client_id, const bool trnc)->void {
     KeyframeVector found_kfs;
     found_kfs.reserve(keyframes_.size());
     // Get all frames from the required client
@@ -1007,14 +1045,18 @@ auto Map::WriteStateToCsvTUM(const std::string& filename, const size_t client_id
     }
 
     if(found_kfs.empty()) //do not overwrite files from other maps with empty files
-    return;
+        return;
 
     // Sort the keyframes by timestamp
     std::sort(found_kfs.begin(), found_kfs.end(), Keyframe::CompStamp);
 
     // Write out the keyframe data
     std::ofstream keyframes_file;
-    keyframes_file.open(filename, std::ios::out | std::ios::trunc);
+    if(trnc)
+      keyframes_file.open(filename, std::ios::out | std::ios::trunc);
+    else
+      keyframes_file.open(filename, std::ios::out | std::ios::app);
+    
     if (keyframes_file.is_open()) {
         for (KeyframeVector::const_iterator vit = found_kfs.begin(); vit != found_kfs.end(); ++vit) {
             KeyframePtr kf = (*vit);
@@ -1024,12 +1066,12 @@ auto Map::WriteStateToCsvTUM(const std::string& filename, const size_t client_id
 
             keyframes_file << std::setprecision(25) << stamp << " ";
             keyframes_file << Tws(0,3) << " " << Tws(1,3) << " " << Tws(2,3) << " ";
-            keyframes_file << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << std::endl;
+            keyframes_file << q.x() << " " << q.y() << " " << q.z() << " " << q.w() 
+            << std::endl;
         }
         keyframes_file.close();
     }
     else
         std::cout << COUTERROR << ": Unable to open file: " << filename << std::endl;
 }
-
 } //end ns

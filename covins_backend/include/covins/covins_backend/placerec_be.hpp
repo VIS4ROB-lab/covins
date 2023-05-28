@@ -122,7 +122,7 @@ protected:
 
     KeyframePtr                 kf_query_;
     KeyframePtr                 kf_match_;
-
+    
     precision_t                 mnCovisibilityConsistencyTh;
     vecConsistentGroup          mvConsistentGroups;
     KeyframeVector              mvpEnoughConsistentCandidates;
@@ -131,13 +131,14 @@ protected:
     LandmarkVector              mvpLoopMapPoints;
     TransformType               mTcw;
     TransformType               mTsw;
-
+    
     // Sync
     std::mutex                  mtx_in_;
     std::mutex                  mtx_finish_;
 
     bool                        finish_                                                 = false;
     bool is_finished_ = false;
+
 };
 
 } //end ns

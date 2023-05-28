@@ -84,13 +84,21 @@ public:
     TypeDefs::KeypointVector          keypoints_distorted;
     TypeDefs::KeypointVector          keypoints_undistorted;
     TypeDefs::AorsVector              keypoints_aors;                                                                                     //Angle,Octave,Response,Size
-    cv::Mat                 descriptors;
+    cv::Mat                           descriptors;
+
+    // Additonal KeyPoints and descriptors (all associated by an index)
+    TypeDefs::KeypointVector          keypoints_distorted_add;
+    TypeDefs::KeypointVector          keypoints_undistorted_add;
+    TypeDefs::AorsVector              keypoints_aors_add;                                                                                     //Angle,Octave,Response,Size
+    cv::Mat                           descriptors_add;
+
 
     // SE3 Pose, Bias, Velocity
     TransformType           T_s_c                                                               = TransformType::Identity();    // Tranformation IMU-Cam
 
     TransformType           T_sref_s                                                            = TransformType::Identity();
     TransformType           T_w_s                                                               = TransformType::Identity();
+    TransformType           T_w_s_vio                                                           = TransformType::Identity();
 
     Vector3Type             velocity                                                            = Vector3Type::Zero();
     Vector3Type             bias_gyro                                                           = Vector3Type::Zero();
@@ -124,7 +132,8 @@ protected:
                     calibration,
                     img_dim_x_min,img_dim_y_min,img_dim_x_max,img_dim_y_max,
                     keypoints_distorted,keypoints_undistorted,keypoints_aors,descriptors,
-                    T_s_c,T_w_s,
+                    keypoints_distorted_add,keypoints_undistorted_add,keypoints_aors_add,descriptors_add,
+                    T_s_c,T_w_s,T_w_s_vio,
                     velocity,bias_gyro,bias_accel,
                     lin_acc,ang_vel,
                     lin_acc_init,ang_vel_init,
@@ -142,6 +151,7 @@ protected:
                     calibration,
                     img_dim_x_min,img_dim_y_min,img_dim_x_max,img_dim_y_max,
                     keypoints_distorted,keypoints_undistorted,keypoints_aors,descriptors,
+                    keypoints_distorted_add,keypoints_undistorted_add,keypoints_aors_add,descriptors_add,
                     T_s_c,T_sref_s,velocity,bias_gyro,bias_accel,
                     lin_acc,ang_vel,
                     lin_acc_init,ang_vel_init,
@@ -160,7 +170,8 @@ protected:
                     calibration,
                     img_dim_x_min,img_dim_y_min,img_dim_x_max,img_dim_y_max,
                     keypoints_distorted,keypoints_undistorted,keypoints_aors,descriptors,
-                    T_s_c,T_w_s,
+                    keypoints_distorted_add,keypoints_undistorted_add,keypoints_aors_add,descriptors_add,
+                    T_s_c,T_w_s,T_w_s_vio,
                     velocity,bias_gyro,bias_accel,
                     lin_acc,ang_vel,
                     lin_acc_init,ang_vel_init,
@@ -178,6 +189,7 @@ protected:
                     calibration,
                     img_dim_x_min,img_dim_y_min,img_dim_x_max,img_dim_y_max,
                     keypoints_distorted,keypoints_undistorted,keypoints_aors,descriptors,
+                    keypoints_distorted_add,keypoints_undistorted_add,keypoints_aors_add,descriptors_add,
                     T_s_c,T_sref_s,velocity,bias_gyro,bias_accel,
                     lin_acc,ang_vel,
                     lin_acc_init,ang_vel_init,

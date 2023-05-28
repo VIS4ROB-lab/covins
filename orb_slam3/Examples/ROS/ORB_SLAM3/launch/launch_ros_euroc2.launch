@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<launch>
+
+<arg name="ag_n" default="1" />
+<arg name="voc" default="$(find covins_comm)/../orb_slam3/Vocabulary/ORBvoc.txt" />
+<arg name="cam" default="$(find covins_comm)/../orb_slam3/Examples/Monocular-Inertial/EuRoC.yaml" />
+
+<node pkg="ORB_SLAM3" type="Mono_Inertial" name="ORB_SLAM3_monoi$(arg ag_n)" args="$(arg voc) $(arg cam)" output="screen"> 
+
+    <remap from="/camera/image_raw" to="/cam0/image_raw$(arg ag_n)"/>
+    <remap from="/imu" to="/imu$(arg ag_n)"/>
+
+</node>
+
+</launch>
