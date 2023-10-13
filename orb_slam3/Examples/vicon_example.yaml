@@ -1,0 +1,53 @@
+session_name: covins-vicon-example
+
+environment:
+  ROBOT0: "0"
+  ROBOT1: "1"
+  ROBOT2: "2"
+  ROSBAG0: "$DATA_PATH/V2_01_easy.bag"
+  ROSBAG1: "$DATA_PATH/V2_02_medium.bag"
+  ROSBAG2: "$DATA_PATH/V2_03_difficult.bag"
+
+
+options:
+  default-command: /bin/bash
+  
+windows:
+- window_name: setup
+  layout: tiled  
+  shell_command_before:
+    - source ~/ws/covins_ws/devel/setup.bash
+
+  panes:
+    - roscore
+    - sleep 3; rosrun covins_backend covins_backend_node
+    - sleep 3; roslaunch ~/ws/covins_ws/src/covins/covins_backend/launch/tf.launch
+    - sleep 3; rviz -d ~/ws/covins_ws/src/covins/covins_backend/config/covins.rviz
+    - sleep 3; rosnode kill -a \
+
+- window_name: frontend
+  layout: tiled
+  shell_command_before:
+    - source ~/ws/covins_ws/devel/setup.bash
+    - sleep 4;
+
+  panes:
+    - roslaunch ORB_SLAM3 launch_ros_euroc.launch --wait
+    - roslaunch ORB_SLAM3 launch_ros_euroc.launch ag_n:=1 --wait
+    - roslaunch ORB_SLAM3 launch_ros_euroc.launch ag_n:=2 --wait
+    
+- window_name: rosbags
+  layout: tiled
+  shell_command_before:
+    - source ~/ws/covins_ws/devel/setup.bash
+    - sleep 10;
+
+  panes:
+    - rosbag play $ROSBAG0 /cam0/image_raw:=/cam0/image_raw0 /cam1/image_raw:=/cam1/image_raw0 /imu0:=/imu0
+    - rosbag play $ROSBAG1 /cam0/image_raw:=/cam0/image_raw1 /cam1/image_raw:=/cam1/image_raw1 /imu0:=/imu1
+    - rosbag play $ROSBAG2 /cam0/image_raw:=/cam0/image_raw2 /cam1/image_raw:=/cam1/image_raw2 /imu0:=/imu2
+
+    
+
+
+

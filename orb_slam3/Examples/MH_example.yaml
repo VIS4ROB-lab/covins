@@ -1,0 +1,59 @@
+session_name: covins-MH-example
+
+environment:
+  ROBOT0: "0"
+  ROBOT1: "1"
+  ROBOT2: "2"
+  ROBOT3: "3"
+  ROBOT4: "4"
+  ROSBAG0: "$DATA_PATH/MH_01_easy.bag"
+  ROSBAG1: "$DATA_PATH/MH_02_easy.bag"
+  ROSBAG2: "$DATA_PATH/MH_03_medium.bag"
+  ROSBAG3: "$DATA_PATH/MH_04_difficult.bag"
+  ROSBAG4: "$DATA_PATH/MH_05_difficult.bag"
+
+options:
+  default-command: /bin/bash
+  
+windows:
+- window_name: setup
+  layout: tiled  
+  shell_command_before:
+    - source ~/ws/covins_ws/devel/setup.bash
+
+  panes:
+    - roscore
+    - sleep 3; rosrun covins_backend covins_backend_node
+    - sleep 3; roslaunch ~/ws/covins_ws/src/covins/covins_backend/launch/tf.launch
+    - sleep 3; rviz -d ~/ws/covins_ws/src/covins/covins_backend/config/covins.rviz
+    - sleep 3; rosnode kill -a \
+
+- window_name: frontend
+  layout: tiled
+  shell_command_before:
+    - source ~/ws/covins_ws/devel/setup.bash
+    - sleep 4;
+
+  panes:
+    - roslaunch ORB_SLAM3 launch_ros_euroc.launch --wait
+    - roslaunch ORB_SLAM3 launch_ros_euroc.launch ag_n:=1 --wait
+    - roslaunch ORB_SLAM3 launch_ros_euroc.launch ag_n:=2 --wait
+    - roslaunch ORB_SLAM3 launch_ros_euroc.launch ag_n:=3 --wait
+    - roslaunch ORB_SLAM3 launch_ros_euroc.launch ag_n:=4 --wait
+    
+- window_name: rosbags
+  layout: tiled
+  shell_command_before:
+    - source ~/ws/covins_ws/devel/setup.bash
+    - sleep 10;
+
+  panes:
+    - rosbag play $ROSBAG0 /cam0/image_raw:=/cam0/image_raw0 /cam1/image_raw:=/cam1/image_raw0 /imu0:=/imu0 --start 45
+    - rosbag play $ROSBAG1 /cam0/image_raw:=/cam0/image_raw1 /cam1/image_raw:=/cam1/image_raw1 /imu0:=/imu1 --start 35
+    - rosbag play $ROSBAG2 /cam0/image_raw:=/cam0/image_raw2 /cam1/image_raw:=/cam1/image_raw2 /imu0:=/imu2 --start 15
+    - rosbag play $ROSBAG3 /cam0/image_raw:=/cam0/image_raw3 /cam1/image_raw:=/cam1/image_raw3 /imu0:=/imu3 --start 15
+    - rosbag play $ROSBAG4 /cam0/image_raw:=/cam0/image_raw4 /cam1/image_raw:=/cam1/image_raw4 /imu0:=/imu4 --start 15
+    
+
+
+

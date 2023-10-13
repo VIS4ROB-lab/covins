@@ -1,0 +1,73 @@
+session_name: covins-kimera-example
+
+environment:
+  ROBOT0: "acl_jackal"
+  ROBOT1: "acl_jackal2"
+  ROBOT2: "sparkal1"
+  ROBOT3: "sparkal2"
+  ROBOT4: "hathor"
+  ROBOT5: "thoth"
+  ROBOT6: "apis"
+  ROBOT7: "sobek"
+  ROSBAG0: "$DATA_PATH/12_08_acl_jackal.bag"
+  ROSBAG1: "$DATA_PATH/12_08_acl_jackal2.bag"
+  ROSBAG2: "$DATA_PATH/12_08_sparkal1.bag"
+  ROSBAG3: "$DATA_PATH/12_08_sparkal2.bag"
+  ROSBAG4: "$DATA_PATH/12_08_hathor.bag"
+  ROSBAG5: "$DATA_PATH/12_08_thoth.bag"
+  ROSBAG6: "$DATA_PATH/12_08_apis.bag"
+  ROSBAG7: "$DATA_PATH/12_08_sobek.bag"
+
+options:
+  default-command: /bin/bash
+  
+windows:
+- window_name: setup
+  layout: tiled  
+  shell_command_before:
+    - source ~/ws/covins_ws/devel/setup.bash
+
+  panes:
+    - roscore
+    - sleep 3; rosrun covins_backend covins_backend_node
+    - sleep 3; roslaunch ~/ws/covins_ws/src/covins/covins_backend/launch/tf.launch
+    - sleep 3; rviz -d ~/ws/covins_ws/src/covins/covins_backend/config/covins.rviz
+    - sleep 3; rosnode kill -a \
+
+- window_name: frontend
+  layout: tiled
+  shell_command_before:
+    - source ~/ws/covins_ws/devel/setup.bash
+    - sleep 4;
+
+  panes:
+    - roslaunch ORB_SLAM3 launch_ros_kimera.launch ag_n:=0 input_ns:=$ROBOT0 --wait
+    - sleep 1; roslaunch ORB_SLAM3 launch_ros_kimera.launch ag_n:=1 input_ns:=$ROBOT1 --wait
+    - sleep 2; roslaunch ORB_SLAM3 launch_ros_kimera.launch ag_n:=2 input_ns:=$ROBOT2 --wait
+    - sleep 3; roslaunch ORB_SLAM3 launch_ros_kimera.launch ag_n:=3 input_ns:=$ROBOT3 --wait
+    - sleep 4; roslaunch ORB_SLAM3 launch_ros_kimera.launch ag_n:=4 input_ns:=$ROBOT4 --wait
+    - sleep 5; roslaunch ORB_SLAM3 launch_ros_kimera.launch ag_n:=5 input_ns:=$ROBOT5 --wait
+    - sleep 6; roslaunch ORB_SLAM3 launch_ros_kimera.launch ag_n:=6 input_ns:=$ROBOT6 --wait
+    - sleep 7; roslaunch ORB_SLAM3 launch_ros_kimera.launch ag_n:=7 input_ns:=$ROBOT7 --wait
+    
+- window_name: rosbags
+  layout: tiled
+  shell_command_before:
+    - source ~/ws/covins_ws/devel/setup.bash
+    - sleep 15;
+
+  panes:
+    - roslaunch ORB_SLAM3 kimera_bag.launch ag_n:=0 input_ns:=$ROBOT0 start:=0 #35
+    - roslaunch ORB_SLAM3 kimera_bag.launch ag_n:=1 input_ns:=$ROBOT1 start:=0
+    - roslaunch ORB_SLAM3 kimera_bag.launch ag_n:=2 input_ns:=$ROBOT2 start:=0
+    - roslaunch ORB_SLAM3 kimera_bag.launch ag_n:=3 input_ns:=$ROBOT3 start:=0
+    - roslaunch ORB_SLAM3 kimera_bag.launch ag_n:=4 input_ns:=$ROBOT4 start:=0
+    - roslaunch ORB_SLAM3 kimera_bag.launch ag_n:=5 input_ns:=$ROBOT5 start:=0 #150
+    - roslaunch ORB_SLAM3 kimera_bag.launch ag_n:=6 input_ns:=$ROBOT6 start:=0
+    - roslaunch ORB_SLAM3 kimera_bag.launch ag_n:=7 input_ns:=$ROBOT7 start:=0
+    
+
+    
+
+
+
