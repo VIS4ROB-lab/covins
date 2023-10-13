@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<launch>
+
+    <arg name="ag_n" default="0" />
+    <arg name="input_ns"  default="acl_jackal" />
+    <arg name="voc" default="$(find covins_comm)/../orb_slam3/Vocabulary/ORBvoc.txt" />
+    <arg name="cam" default="$(find covins_comm)/../orb_slam3/Examples/Stereo-Inertial/Kimera.yaml" />
+
+    <node pkg="ORB_SLAM3" type="Stereo_Inertial" name="ORB_SLAM3_stereoi$(arg ag_n)" args="$(arg voc) $(arg cam) ONLINE_RECTIFICATION=false" output="screen"> 
+
+        <remap from="/camera/left/image_raw" to="/$(arg input_ns)/cam0/image_raw$(arg ag_n)"/>
+        <remap from="/camera/right/image_raw" to="/$(arg input_ns)/cam1/image_raw$(arg ag_n)"/>
+        <remap from="/imu" to="/$(arg input_ns)/imu$(arg ag_n)"/>
+
+    </node>
+
+</launch>

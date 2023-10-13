@@ -1,0 +1,48 @@
+<launch>
+	<arg name="input_ns"  default="acl_jackal" />
+	<arg name="output_ns" default="0" />
+	<arg name="rate"      default="1.0"   />
+    <arg name="ag_n" default="0" />
+	<arg name="start" default="0" />
+	<arg name="bagfile"   default="/home/glenn/Documents/Trial_Data/campus_hybrid_1208/12_08_$(arg input_ns).bag"/>
+
+  	<node pkg="image_transport" type="republish" name="image_republisher_$(arg input_ns)1" output="screen" 
+  		args="compressed in:=/$(arg input_ns)/forward/infra1/image_rect_raw raw out:=/$(arg input_ns)/forward/infra1/image_rect_raw">
+		<remap from="/$(arg input_ns)/forward/infra1/image_rect_raw" to="/$(arg input_ns)/cam0/image_raw$(arg ag_n)"/>
+ 	</node>
+ 
+   	<node pkg="image_transport" type="republish" name="image_republisher_$(arg input_ns)2" output="screen" 
+  		args="compressed in:=/$(arg input_ns)/forward/infra2/image_rect_raw raw out:=/$(arg input_ns)/forward/infra2/image_rect_raw">
+		<remap from="/$(arg input_ns)/forward/infra2/image_rect_raw" to="/$(arg input_ns)/cam1/image_raw$(arg ag_n)"/>
+ 	</node>
+
+	<node pkg="rosbag" type="play" name="player_$(arg input_ns)" output="screen" 
+		args="$(arg bagfile) --clock -r $(arg rate) --start $(arg start) --topics
+		/$(arg input_ns)/detection_out_topic
+		/$(arg input_ns)/forward/color/camera_info
+		/$(arg input_ns)/forward/color/image_raw/compressed
+		/$(arg input_ns)/forward/depth/camera_info
+		/$(arg input_ns)/forward/depth/image_rect_raw
+		/$(arg input_ns)/forward/imu
+		/$(arg input_ns)/forward/infra1/camera_info
+		/$(arg input_ns)/forward/infra1/image_rect_raw/compressed
+		/$(arg input_ns)/forward/infra2/camera_info
+		/$(arg input_ns)/forward/infra2/image_rect_raw/compressed
+		/$(arg input_ns)/jackal_velocity_controller/odom
+		/tf_static
+		/tf_aggregate">
+
+		<remap from="/$(arg input_ns)/detection_out_topic"                      to="/$(arg input_ns)/detection_out_topic"/>
+		<remap from="/$(arg input_ns)/forward/color/camera_info"                to="/$(arg input_ns)/forward/color/camera_info"/>
+		<remap from="/$(arg input_ns)/forward/color/image_raw/compressed"       to="/$(arg input_ns)/forward/color/image_raw/compressed"/>
+		<remap from="/$(arg input_ns)/forward/depth/camera_info"                to="/$(arg input_ns)/forward/depth/camera_info"/>
+		<remap from="/$(arg input_ns)/forward/depth/image_rect_raw"             to="/$(arg input_ns)/forward/depth/image_rect_raw"/>
+		<remap from="/$(arg input_ns)/forward/imu"                              to="/$(arg input_ns)/imu$(arg ag_n)"/>
+		<remap from="/$(arg input_ns)/forward/infra1/camera_info"               to="/$(arg input_ns)/forward/infra1/camera_info"/>
+		<remap from="/$(arg input_ns)/forward/infra2/camera_info"               to="/$(arg input_ns)/forward/infra2/camera_info"/>
+		<remap from="/$(arg input_ns)/jackal_velocity_controller/odom"          to="/$(arg input_ns)jackal_velocity_controller/odom"/>
+	</node>
+
+
+	 
+</launch>
