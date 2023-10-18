@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<launch>
+
+<arg name="ag_n" default="0" />
+<arg name="input_ns"  default="acl_jackal" />
+<arg name="cam_topic" default="$(arg input_ns)/cam0/image_raw$(arg ag_n)" />
+<arg name="odom_topic" default="/svo/odometry" />
+<arg name="config_file" default="$(find covins_frontend)/config/kimera_stereoi.yaml" />
+
+<node pkg="covins_frontend" type="covins_frontend_node" name="frontend_ag$(arg ag_n)" output="screen"> 
+    <param name="config_file" type="str" value="$(arg config_file)" />
+    <remap from="/camera/image_raw" to="$(arg cam_topic)"/>
+    <remap from="/cam_odom" to="$(arg odom_topic)"/>
+
+</node>
+
+</launch>
