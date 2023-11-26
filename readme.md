@@ -246,6 +246,20 @@ The ROS wrapper of the ORB-SLAM3 front-end can also be started in the docker con
 The ROS Front-end wrapper can also be started in the docker container. It requires the server config file and the ROS launch file. A bag file can then for example be played on the host system.
 * ```./run.sh -f ../covins_comm/config/config_comm.yaml ../covins_frontend/launch/vins_docker_euroc_agent.launch```
 
+#### Run rviz
+A terminal within the docker image can also be opened. This can for example be used to send `rosservice` commands.
+
+In one terminal:
+* ```./run.sh -t```
+* ```export ROS_IP=public_IP_of_!SERVER!```
+* ```roslaunch src/covins/covins_backend/launch/tf.launch```
+
+In another terminal:
+* ```./setup.sh```
+* ```export ROS_IP=public_IP_of_!SERVER!```
+* ```export ROS_MASTER_URI=http://IP_of_the_!SERVER!:11311```
+* ```./run.sh -v```
+
 #### Terminal
 A terminal within the docker image can also be opened. This can for example be used to send `rosservice` commands.
 * ```./run.sh -t```
