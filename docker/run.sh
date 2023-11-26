@@ -86,8 +86,9 @@ ROS_CLIENT=0
 CLIENT=0
 ROS_CORE=0
 FRONTEND_WRAPPER=0
+RVIZ=0
 
-while getopts "hsforct" opt; do
+while getopts "hsforcvt" opt; do
     case "$opt" in
         h)
             echoUsage
@@ -102,6 +103,8 @@ while getopts "hsforct" opt; do
         o)  CLIENT=1
             ;;
         c)  ROS_CORE=1
+            ;;
+        v)  RVIZ=1
             ;;
         t)  ;;
         *)
@@ -143,6 +146,8 @@ elif [ $ROS_CLIENT -eq 1 ]; then
 elif [ $FRONTEND_WRAPPER -eq 1 ]; then
         CONFIG_FILE_COMM=$(absPath ${*: -2:1})
         LAUNCH_FILE=$(absPath ${*: -1})
+        echo ${CONFIG_FILE_COMM};
+        echo ${LAUNCH_FILE};
         docker run \
         -it \
         --rm \
@@ -183,6 +188,24 @@ elif [ $ROS_CORE -eq 1 ]; then
         /bin/bash -c \
                 "cd ${CATKIN_WS}; \
                  roscore"
+elif [ $RVIZ -eq 1 ]; then
+        docker run \
+        -it \
+        --privileged \
+        --rm \
+        --net=host \
+        --env DISPLAY=${DISPLAY} \
+        --env QT_X11_NO_MITSHM=1 \
+        --env XAUTHORITY=/tmp/.docker.xauth \
+        --env ROS_IP=${ROS_IP} \
+        --env ROS_MASTER_URI=${ROS_MASTER_URI} \
+        --volume /tmp/.X11-unix:/tmp/.X11-unix:rw \
+        --volume /tmp/.docker.xauth:/tmp/.docker.xauth \
+        covins \
+        /bin/bash -c \
+                 "source devel/setup.bash; \
+                 roslaunch src/covins/covins_backend/launch/tf.launch &
+                 rviz -d /root/covins_ws/src/covins/covins_backend/config/covins.rviz"
 else
         docker run \
         -it \

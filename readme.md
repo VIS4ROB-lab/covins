@@ -236,7 +236,7 @@ The convins server back-end needs a running roscore, how to start one see above.
 
 #### ORB-SLAM3 Front-End
 The ORB-SLAM3 front-end client needs the communication server config file, the file which should be executed, and the path to the dataset. The dataset has to be given seperately since the file system of the docker container differs from the host system. Hence, the `pathDatasetEuroc` variable in the run script gets adapted automatically inside the docker container.
-* ```./run.sh -o ../covins_comm/config/config_comm.yaml ../orb_slam3/covins_examples/euroc_examples_mh1 <dataset_path, e.g. /home/pschmuck/data/euroc>```
+* ```./run.sh -o ../covins_comm/config/config_comm.yaml ../orb_slam3/covins_examples/euroc_examples_mh1.sh <dataset_path, e.g. /home/pschmuck/data/euroc>```
 
 #### ORB-SLAM3 ROS Front-End
 The ROS wrapper of the ORB-SLAM3 front-end can also be started in the docker container. It requires the server config file and the ROS launch file. A bag file can then for example be played on the host system.
@@ -244,7 +244,21 @@ The ROS wrapper of the ORB-SLAM3 front-end can also be started in the docker con
 
 #### ROS Front-End Wrapper (Only for COVINS-G)
 The ROS Front-end wrapper can also be started in the docker container. It requires the server config file and the ROS launch file. A bag file can then for example be played on the host system.
-* ```./run.sh -f ../covins_comm/config/config_comm.yaml ../covins_frontend/launch/covins_frontend/launch/vins_docker_euroc_agent.launch```
+* ```./run.sh -f ../covins_comm/config/config_comm.yaml ../covins_frontend/launch/vins_docker_euroc_agent.launch```
+
+#### Run rviz
+A terminal within the docker image can also be opened. This can for example be used to send `rosservice` commands.
+
+In one terminal:
+* ```./run.sh -t```
+* ```export ROS_IP=public_IP_of_!SERVER!```
+* ```roslaunch src/covins/covins_backend/launch/tf.launch```
+
+In another terminal:
+* ```./setup.sh```
+* ```export ROS_IP=public_IP_of_!SERVER!```
+* ```export ROS_MASTER_URI=http://IP_of_the_!SERVER!:11311```
+* ```./run.sh -v```
 
 #### Terminal
 A terminal within the docker image can also be opened. This can for example be used to send `rosservice` commands.

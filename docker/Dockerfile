@@ -5,7 +5,7 @@ FROM osrf/ros:melodic-desktop-bionic
 ENV CATKIN_WS=/root/covins_ws
 
 # fix keys see (https://github.com/googlecartographer/cartographer_ros/issues/1323)
-RUN apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
+RUN apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key 4B63CF8FDE49746E98FA01DDAD19BAB3CBF125EA
 RUN apt-key del 421C365BD9FF1F717815A3895523BAEEB01FA116
 
 # install ros packages
