@@ -32,6 +32,9 @@
 #include "covins_backend/placerec_be.hpp"
 #include "covins_backend/placerec_gen_be.hpp"
 
+// Profiling
+#include <valgrind/callgrind.h>
+
 namespace covins {
 
 AgentPackage::AgentPackage(size_t client_id, int newfd, VisPtr vis, ManagerPtr man) {
@@ -426,6 +429,7 @@ auto CovinsBackend::LoadVocabulary()->void {
         exit(-1);
     }
     std::cout << "Vocabulary loaded!" << std::endl << std::endl;
+    CALLGRIND_START_INSTRUMENTATION;
 }
 
 auto CovinsBackend::Run()->void {

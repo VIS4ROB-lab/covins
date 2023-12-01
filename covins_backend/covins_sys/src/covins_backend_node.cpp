@@ -33,6 +33,9 @@
 // Thirdparty
 #include <ros/ros.h>
 
+// Profiling
+#include <valgrind/callgrind.h>
+
 auto SignalHandler(int signum)->void {
    std::cout << "Interrupt signal (" << signum << ") received." << std::endl;
    exit(signum);
@@ -55,6 +58,6 @@ int main(int argc, char* argv[]) {
     main_thread->detach(); // Thread will be cleaned up when exiting main()
 
     ros::spin();
-
+    CALLGRIND_STOP_INSTRUMENTATION;
     return 0;
 }
